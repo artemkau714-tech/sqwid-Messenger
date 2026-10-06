@@ -1,0 +1,226 @@
+/* ============================================
+   SQWID — ВХОД / РЕГИСТРАЦИЯ (новый дизайн)
+   ============================================ */
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, 'Roboto', sans-serif;
+  background: #0a0f14;
+  color: #e9edef;
+  overflow: hidden;
+}
+
+/* ---------- Общие экраны ---------- */
+.screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  flex-direction: column;
+  padding: 24px;
+}
+.screen.active {
+  display: flex;
+  animation: screenFade 0.3s ease;
+}
+@keyframes screenFade {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ---------- Заголовок Sqwid ---------- */
+.app-title {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  margin: 0;
+  font-size: 56px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  background: linear-gradient(135deg, #ef4444 0%, #ef4444 30%, #6366f1 70%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 20px rgba(99, 102, 241, 0.35));
+}
+
+/* ---------- Поля входа (по центру, чуть выше середины) ---------- */
+.login-fields {
+  position: absolute;
+  top: 50%;
+  left: 24px;
+  right: 24px;
+  transform: translateY(-60%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.login-fields input {
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: #e9edef;
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.login-fields input::placeholder { color: #667781; }
+.login-fields input:focus {
+  border-color: rgba(99, 102, 241, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ---------- Кнопка «Зарегистрироваться» (без рамки, текстом) ---------- */
+.link-btn {
+  background: none;
+  border: none;
+  color: #8696a0;
+  font-size: 14px;
+  font-family: inherit;
+  text-align: center;
+  padding: 8px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.link-btn:active { color: #e9edef; }
+
+/* ---------- Большая кнопка с градиентом (внизу) ---------- */
+.big-gradient-btn {
+  position: absolute;
+  bottom: 30px;
+  left: 24px;
+  right: 24px;
+  padding: 18px;
+  border: none;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #ffffff;
+  font-family: inherit;
+  cursor: pointer;
+  background: linear-gradient(135deg, #ef4444 0%, #6366f1 100%);
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.15s ease;
+}
+.big-gradient-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
+}
+
+/* ---------- Экран регистрации ---------- */
+.register-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0 120px;
+}
+
+/* Аватарка */
+.reg-avatar-wrap {
+  display: block;
+  cursor: pointer;
+  margin-bottom: 26px;
+  margin-top: 20px;
+}
+.reg-avatar {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  position: relative;
+}
+.reg-avatar::after {
+  content: "📷";
+  font-size: 32px;
+  opacity: 0.5;
+}
+.reg-avatar.has-photo::after { display: none; }
+.reg-avatar-wrap:active .reg-avatar { transform: scale(0.96); }
+
+/* Поля регистрации */
+.reg-field {
+  width: 100%;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+.reg-label {
+  font-size: 11px;
+  color: #667781;
+  text-transform: lowercase;
+  margin-bottom: 6px;
+  margin-left: 4px;
+  letter-spacing: 0.3px;
+}
+.reg-field input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: #e9edef;
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.reg-field input:focus {
+  border-color: rgba(99, 102, 241, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Поле пароля с глазиком */
+.reg-pass-wrap {
+  position: relative;
+  width: 100%;
+}
+.reg-pass-wrap input {
+  padding-right: 48px;
+}
+.eye-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 18px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s ease;
+  line-height: 1;
+}
+.eye-btn:active { color: rgba(255, 255, 255, 0.6); }
+.eye-btn.active { color: rgba(255, 255, 255, 0.7); }
+
+/* Статус */
+.reg-status {
+  position: absolute;
+  bottom: 100px;
+  left: 24px;
+  right: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: #f7b500;
+  min-height: 18px;
+}

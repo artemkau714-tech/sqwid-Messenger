@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sqwid Messenger</title>
+  <link rel="stylesheet" href="chat.css">
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Sqwid">
+</head>
+<body>
+
+  <div class="aurora aurora-tl"></div>
+  <div class="aurora aurora-br"></div>
+
+  <!-- СПИСОК ЧАТОВ -->
+  <div id="screen-chats" class="screen active">
+    <header class="top-bar">
+      <button class="top-avatar-btn" id="btnBurger"><img id="myAvatar" src="" alt=""></button>
+      <div class="top-search"><input id="searchInput" placeholder="Поиск..."></div>
+      <button class="top-new-btn" id="btnNewChat">✎</button>
+    </header>
+    <ul id="chatList" class="chat-list"></ul>
+  </div>
+
+  <!-- ЧАТ -->
+  <div id="screen-messages" class="screen">
+    <header class="chat-bar">
+      <button class="chat-back" id="btnBack">←</button>
+      <div class="chat-ava" id="chatBarAva" style="cursor:pointer;">
+        <img id="chatAva" src="" alt="" style="display:none;">
+      </div>
+      <div class="chat-name" id="chatName" style="cursor:pointer;">Чат</div>
+      <button class="chat-menu-btn" id="btnChatMenu">☰</button>
+    </header>
+    <div id="messages" class="messages"></div>
+    <div id="photoPreview" class="photo-preview">
+      <img id="photoPreviewImg" alt="">
+      <div class="photo-preview-input">
+        <input id="photoCaption" placeholder="Добавьте подпись...">
+        <button class="photo-send-btn" id="btnSendPhoto">✈</button>
+      </div>
+      <button class="photo-cancel-btn" id="btnCancelPhoto">✕</button>
+    </div>
+    <div class="input-area" id="inputArea">
+      <button class="attach-btn" id="btnAttach">📎</button>
+      <input id="msgInput" placeholder="Сообщение...">
+      <button class="send-plane" id="btnSend">✈</button>
+      <input type="file" id="fileInput" accept="image/*" style="display:none;">
+    </div>
+  </div>
+
+  <!-- ПРОФИЛЬ СОБЕСЕДНИКА -->
+  <div id="screen-user-profile" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackUserProfile">←</button>
+      <div class="top-title" style="flex:1;">Профиль</div>
+    </header>
+    <div class="profile-scroll">
+      <div class="profile-top">
+        <div class="profile-ava-wrap"><div class="profile-ava" id="upAva"><span>?</span></div></div>
+        <h2 class="profile-name" id="upName">Имя</h2>
+        <div class="profile-username" id="upUsername">@username</div>
+        <div class="profile-bio" id="upBio"></div>
+      </div>
+      <div style="padding: 0 20px 20px; display:flex; flex-direction:column; gap:10px;">
+        <button class="btn-create" id="btnUpWrite" style="width:100%;">💬 Написать</button>
+        <button class="btn-create" id="btnUpGift" style="width:100%; background:#f7b500; color:#1f2c34;">🎁 Подарить</button>
+        <button class="btn-create" id="btnUpReport" style="width:100%;background:#2a3942;color:#f7b500;">🚨 Пожаловаться</button>
+      </div>
+      <div class="up-section" id="upUsernamesSection" style="display:none;">
+        <h3 class="up-section-title">🏷 Юзернеймы</h3>
+        <div class="up-chips" id="upUsernamesList"></div>
+      </div>
+      <div class="up-section" id="upPhonesSection" style="display:none;">
+        <h3 class="up-section-title">📞 Номера</h3>
+        <div class="up-chips" id="upPhonesList"></div>
+      </div>
+      <div class="up-section" id="upGiftsSection" style="display:none;">
+        <h3 class="up-section-title">🎁 Подарки</h3>
+        <div class="profile-gifts-grid" id="upGiftsGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПОДАРИТЬ -->
+  <div id="screen-give-gift" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackGiveGift">←</button>
+      <div class="top-title" style="flex:1;">Подарить</div>
+    </header>
+    <div class="gift-body">
+      <div class="gift-hero"><img id="giftRecipientPhoto" class="gift-recipient-photo" alt=""></div>
+      <h2 id="giftRecipientName" class="gift-recipient-name">Имя</h2>
+      <div class="gift-balance" id="giftMyBalance">🪙 0 SQ</div>
+      <h3 class="gift-section-title">⭐ Подарить Sqwid+</h3>
+      <div class="gift-plus-grid" id="giftPlusGrid"></div>
+      <h3 class="gift-section-title">🎁 Отправить подарок</h3>
+      <div class="gift-grid" id="giftGrid"></div>
+      <div class="gift-hint">Дарите подарки — они останутся в профиле получателя.</div>
+    </div>
+  </div>
+
+  <!-- НАСТРОЙКИ -->
+  <div id="screen-settings" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackSettings">←</button>
+      <div class="top-title" style="flex:1;">Настройки</div>
+    </header>
+    <div class="settings-body">
+      <div class="settings-section">
+        <div class="settings-section-title">Профиль</div>
+        <div class="settings-card">
+          <div class="settings-avatar-wrap">
+            <img id="settingsPhoto" class="settings-photo" alt="">
+            <label class="btn-change-avatar">
+              <input id="settingsAvatarInput" type="file" accept="image/*" style="display:none;">
+              Сменить аватар
+            </label>
+          </div>
+          <div class="settings-field"><label>Имя</label><input id="settingsName" maxlength="30" placeholder="Ваше имя"></div>
+          <div class="settings-field">
+            <label>Юзернейм (@username)</label>
+            <input id="settingsUsername" maxlength="20" placeholder="username">
+            <div class="settings-hint">Латиница, цифры и _ . От 3 до 20 символов.</div>
+          </div>
+          <div class="settings-field">
+            <label>Описание</label>
+            <textarea id="settingsBio" maxlength="120" rows="3" placeholder="О себе"></textarea>
+          </div>
+          <button class="btn-create" id="settingsSaveProfile" style="width:100%;margin-top:8px;">Сохранить профиль</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Приватность</div>
+        <div class="settings-card">
+          <label class="settings-toggle-row"><input type="checkbox" id="settingsHideEmail"><span>Скрывать email</span></label>
+          <label class="settings-toggle-row" style="margin-top:8px;"><input type="checkbox" id="settingsHideOnline"><span>Скрывать статус «в сети»</span></label>
+          <label class="settings-toggle-row" style="margin-top:8px;"><input type="checkbox" id="settingsShowUsername"><span>Показывать юзернейм другим</span></label>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">PIN-код</div>
+        <div class="settings-card">
+          <div class="settings-info-row" style="border-top:none;margin-top:0;">
+            <span>Статус</span>
+            <span id="settingsPinStatus" style="color:#8696a0;">—</span>
+          </div>
+          <button class="btn-create" id="settingsPinSet" style="width:100%;margin-top:10px;">Установить / изменить PIN</button>
+          <button class="btn-cancel" id="settingsPinRemove" style="width:100%;margin-top:8px;background:#2a3942;color:#ff6b6b;">Отключить PIN</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Аккаунт</div>
+        <div class="settings-card">
+          <div class="settings-info-row" style="border-top:none;margin-top:0;">
+            <span>Email</span>
+            <span id="settingsEmail" style="color:#8696a0;">—</span>
+          </div>
+          <div class="settings-info-row">
+            <span>Баланс</span>
+            <span id="settingsBalance" style="color:#f7b500;">🪙 0 SQ</span>
+          </div>
+          <button class="btn-create" id="settingsChangeEmail" style="width:100%;margin-top:10px;background:#2a3942;color:#e9edef;">Сменить email</button>
+          <button class="btn-create" id="settingsChangePassword" style="width:100%;margin-top:8px;background:#2a3942;color:#e9edef;">Сменить пароль</button>
+          <button class="btn-create" id="settingsLogout" style="width:100%;margin-top:8px;background:#2a3942;color:#ff6b6b;">Выйти</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Безопасность</div>
+        <div class="settings-card">
+          <button class="btn-cancel" id="settingsLogoutAll" style="width:100%;background:#2a3942;color:#ff6b6b;">Выйти и сбросить PIN-сессию</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- СВОЙ ПРОФИЛЬ -->
+  <div id="screen-profile" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBurgerFromProfile">☰</button>
+      <div class="top-title" style="flex:1;">Профиль</div>
+      <button class="top-new-btn" id="btnOpenOwnerPanel" style="display:none;font-size:20px;">👑</button>
+      <button class="top-new-btn" id="btnProfileShop" style="font-size:22px;">🛍</button>
+      <button class="top-new-btn" id="btnShareProfile">🔗</button>
+    </header>
+    <div class="profile-scroll" id="profileScroll">
+      <div class="profile-top">
+        <div class="profile-ava-wrap"><div class="profile-ava" id="profileAva"><span id="profileAvaLetter">?</span></div></div>
+        <h2 class="profile-name" id="profileName">Имя</h2>
+        <div class="profile-username" id="profileUsername">@username</div>
+        <div class="profile-bio" id="profileBio"></div>
+        <div class="mp-coins" id="profileCoins">🪙 0 SQ</div>
+      </div>
+      <div class="mp-stats" style="padding: 0 20px 20px;">
+        <div class="mp-stat"><div class="mp-stat-value" id="profileStatChats">0</div><div class="mp-stat-label">Чатов</div></div>
+        <div class="mp-stat"><div class="mp-stat-value" id="profileStatMessages">0</div><div class="mp-stat-label">Сообщений</div></div>
+        <div class="mp-stat"><div class="mp-stat-value" id="profileStatPhotos">0</div><div class="mp-stat-label">Фото</div></div>
+      </div>
+      <div style="padding: 0 20px 20px;">
+        <button class="btn-create" id="btnEditProfile" style="width:100%;">✏️ Редактировать профиль</button>
+      </div>
+      <div class="up-section" id="profileUsernamesSection" style="display:none;">
+        <h3 class="up-section-title">🏷 Мои юзернеймы</h3>
+        <div class="up-chips" id="profileUsernamesList"></div>
+      </div>
+      <div class="up-section" id="profilePhonesSection" style="display:none;">
+        <h3 class="up-section-title">📞 Мои номера</h3>
+        <div class="up-chips" id="profilePhonesList"></div>
+      </div>
+      <div class="profile-tabs" id="profileTabs">
+        <button class="profile-tab active" data-tab="gifts">🎁 Подарки</button>
+        <button class="profile-tab" data-tab="groups">👥 Группы</button>
+      </div>
+      <div class="profile-tab-content" id="profileTabGifts">
+        <div class="profile-gifts-grid" id="profileGiftsGrid"></div>
+        <div class="profile-empty" id="profileGiftsEmpty">Пока нет подарков</div>
+      </div>
+      <div class="profile-tab-content hidden" id="profileTabGroups">
+        <div class="profile-groups-list" id="profileGroupsList"></div>
+        <div class="profile-empty" id="profileGroupsEmpty">Нет общих групп</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- СОЗДАНИЕ ГРУППЫ -->
+  <div id="screen-create-group" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackCreateGroup">←</button>
+      <div class="top-title" style="flex:1;">Создать группу</div>
+      <button class="top-new-btn" id="btnNextCreateGroup" style="color:#00a884;font-size:24px;font-weight:800;">✓</button>
+    </header>
+    <div class="settings-body" style="padding-bottom:40px;">
+      <div class="create-head-card">
+        <label class="create-avatar-wrap">
+          <input id="cgAvatarInput" type="file" accept="image/*" style="display:none;">
+          <div class="create-avatar-round" id="cgAvatarPreview"><span class="create-cam">📷</span></div>
+        </label>
+        <input id="cgName" class="create-name-input" maxlength="50" placeholder="Название группы">
+      </div>
+      <div class="create-row" id="cgAutoDeleteRow">
+        <div class="create-row-icon">🕐</div>
+        <div class="create-row-text">Автоудаление сообщений</div>
+        <div class="create-row-value" id="cgAutoDeleteValue">Выкл.</div>
+      </div>
+      <div class="create-hint">Автоматически удалять сообщения в этой группе у всех участников спустя указанное время.</div>
+    </div>
+  </div>
+
+  <!-- СОЗДАНИЕ КАНАЛА -->
+  <div id="screen-create-channel" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackCreateChannel">←</button>
+      <div class="top-title" style="flex:1;">Создать канал</div>
+      <button class="top-new-btn" id="btnNextCreateChannel" style="color:#00a884;font-size:24px;font-weight:800;">✓</button>
+    </header>
+    <div class="settings-body" style="padding-bottom:40px;">
+      <div class="create-head-card">
+        <label class="create-avatar-wrap">
+          <input id="chAvatarInput" type="file" accept="image/*" style="display:none;">
+          <div class="create-avatar-round" id="chAvatarPreview"><span class="create-cam">📷</span></div>
+        </label>
+        <input id="chName" class="create-name-input" maxlength="50" placeholder="Название канала">
+      </div>
+      <div class="settings-field" style="margin-top:16px;">
+        <label>Описание</label>
+        <textarea id="chDesc" maxlength="200" rows="3" placeholder="Можете указать дополнительное описание канала."></textarea>
+      </div>
+      <div class="create-section-title">Тип канала</div>
+      <label class="create-radio">
+        <input type="radio" name="chType" value="public" checked>
+        <div class="create-radio-body">
+          <div class="create-radio-title">Публичный канал</div>
+          <div class="create-radio-desc">Публичные каналы можно найти через поиск, подписаться на них может любой пользователь.</div>
+        </div>
+      </label>
+      <label class="create-radio">
+        <input type="radio" name="chType" value="private">
+        <div class="create-radio-body">
+          <div class="create-radio-title">Частный канал</div>
+          <div class="create-radio-desc">На частные каналы можно подписаться только по ссылке-приглашению.</div>
+        </div>
+      </label>
+      <div id="chUsernameBlock">
+        <div class="create-section-title">Юзернейм канала</div>
+        <div class="create-username-row">
+          <span class="create-username-prefix">@</span>
+          <input id="chUsername" maxlength="20" placeholder="username">
+        </div>
+        <div class="create-hint">
+          Если у канала будет постоянный юзернейм, другие пользователи смогут найти его и подписаться.<br>
+          Можно использовать латиницу (a-z), цифры (0-9) и подчёркивание. Минимальная длина — 5 символов.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ВЫБОР УЧАСТНИКОВ -->
+  <div id="screen-choose-members" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackChooseMembers">←</button>
+      <div class="top-title" style="flex:1;" id="cmTitle">Добавить участников</div>
+      <button class="top-new-btn" id="btnSubmitCreate" style="color:#00a884;font-size:24px;font-weight:800;">✓</button>
+    </header>
+    <div style="padding: 12px 16px;">
+      <input id="cmSearch" class="cm-search-input" placeholder="Поиск по имени или @username">
+    </div>
+    <div id="cmSelected" class="create-selected" style="padding: 0 16px;"></div>
+    <div id="cmResults" class="create-results" style="padding: 0 16px 100px;"></div>
+  </div>
+
+  <!-- ИНФО О ЧАТЕ -->
+  <div id="screen-chat-info" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackChatInfo">←</button>
+      <div class="top-title" style="flex:1;" id="ciHeaderTitle">Информация</div>
+      <button class="top-new-btn" id="btnEditChat" style="display:none;">✎</button>
+    </header>
+    <div class="chat-info-scroll">
+      <div class="chat-info-hero">
+        <div class="chat-info-ava" id="ciAva"><span>?</span></div>
+        <h2 class="chat-info-name" id="ciName">Чат</h2>
+        <div class="chat-info-sub" id="ciSub">—</div>
+      </div>
+      <div class="chat-info-actions">
+        <button class="chat-info-action" id="ciActionMute">
+          <div class="chat-info-action-icon" id="ciMuteIcon">🔔</div>
+          <div class="chat-info-action-label" id="ciMuteLabel">Уведомления</div>
+        </button>
+        <button class="chat-info-action" id="ciActionSearch">
+          <div class="chat-info-action-icon">🔍</div>
+          <div class="chat-info-action-label">Поиск</div>
+        </button>
+        <button class="chat-info-action" id="ciActionMedia">
+          <div class="chat-info-action-icon">🖼</div>
+          <div class="chat-info-action-label">Медиа</div>
+        </button>
+      </div>
+      <div class="chat-info-section" id="ciDescSection" style="display:none;">
+        <div class="chat-info-section-label">Описание</div>
+        <div class="chat-info-section-text" id="ciDesc">—</div>
+      </div>
+      <div class="chat-info-section" id="ciUsernameSection" style="display:none;">
+        <div class="chat-info-section-label">Юзернейм канала</div>
+        <div class="chat-info-section-value" id="ciUsername" style="color:#3b82f6;font-family:'JetBrains Mono',monospace;">@—</div>
+      </div>
+      <div class="chat-info-section" id="ciAutoDeleteSection" style="display:none;">
+        <div class="chat-info-section-label">Автоудаление сообщений</div>
+        <div class="chat-info-section-value" id="ciAutoDelete">Выкл.</div>
+      </div>
+      <div class="chat-info-section" id="ciInviteSection" style="display:none;">
+        <div class="chat-info-section-label">Ссылка-приглашение</div>
+        <div class="chat-info-invite-row">
+          <span id="ciInviteLink" class="chat-info-invite-link">—</span>
+          <button class="chat-info-copy-btn" id="btnCopyInvite">Копировать</button>
+        </div>
+      </div>
+      <div class="chat-info-section">
+        <div class="chat-info-section-header">
+          <div class="chat-info-section-label" id="ciMembersLabel">Участники</div>
+          <button class="chat-info-link-btn" id="btnShowAllMembers" style="display:none;">Все →</button>
+        </div>
+        <div class="chat-info-members-preview" id="ciMembersPreview"></div>
+        <button class="chat-info-add-btn" id="btnAddMembers" style="display:none;">＋ Добавить участников</button>
+      </div>
+      <div class="chat-info-danger">
+        <button class="chat-info-danger-btn" id="btnReportChat" style="color:#f7b500;">🚨 Пожаловаться</button>
+        <button class="chat-info-danger-btn" id="btnLeaveChat">🚪 Покинуть чат</button>
+        <button class="chat-info-danger-btn danger" id="btnDeleteChatFull" style="display:none;">🗑 Удалить чат</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- РЕДАКТИРОВАНИЕ ЧАТА -->
+  <div id="screen-edit-chat" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackEditChat">←</button>
+      <div class="top-title" style="flex:1;" id="ecHeaderTitle">Редактировать</div>
+      <button class="top-new-btn" id="btnSaveEditChat" style="color:#00a884;font-size:24px;font-weight:800;">✓</button>
+    </header>
+    <div class="settings-body" style="padding-bottom:40px;">
+      <div class="create-head-card">
+        <label class="create-avatar-wrap">
+          <input id="ecAvatarInput" type="file" accept="image/*" style="display:none;">
+          <div class="create-avatar-round" id="ecAvatarPreview"><span class="create-cam">📷</span></div>
+        </label>
+        <input id="ecName" class="create-name-input" maxlength="50" placeholder="Название">
+      </div>
+      <div class="settings-field" style="margin-top:16px;">
+        <label>Описание</label>
+        <textarea id="ecDesc" maxlength="200" rows="3" placeholder="Дополнительное описание..."></textarea>
+      </div>
+      <div id="ecChannelBlock" style="display:none;">
+        <div class="create-section-title">Тип канала</div>
+        <label class="create-radio">
+          <input type="radio" name="ecType" value="public">
+          <div class="create-radio-body">
+            <div class="create-radio-title">Публичный канал</div>
+            <div class="create-radio-desc">Публичные каналы можно найти через поиск, подписаться на них может любой пользователь.</div>
+          </div>
+        </label>
+        <label class="create-radio">
+          <input type="radio" name="ecType" value="private">
+          <div class="create-radio-body">
+            <div class="create-radio-title">Частный канал</div>
+            <div class="create-radio-desc">На частные каналы можно подписаться только по ссылке-приглашению.</div>
+          </div>
+        </label>
+        <div id="ecUsernameBlock">
+          <div class="create-section-title">Юзернейм канала</div>
+          <div class="create-username-row">
+            <span class="create-username-prefix">@</span>
+            <input id="ecUsername" maxlength="20" placeholder="username">
+          </div>
+          <div class="create-hint">Латиница (a-z), цифры, _ . От 5 до 20 символов.</div>
+        </div>
+      </div>
+      <div id="ecGroupBlock" style="display:none;">
+        <div class="create-row" id="ecAutoDeleteRow">
+          <div class="create-row-icon">🕐</div>
+          <div class="create-row-text">Автоудаление сообщений</div>
+          <div class="create-row-value" id="ecAutoDeleteValue">Выкл.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- УЧАСТНИКИ -->
+  <div id="screen-chat-members" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackMembers">←</button>
+      <div class="top-title" style="flex:1;" id="cmHeaderTitle">Участники</div>
+      <button class="top-new-btn" id="btnAddMembersTop" style="color:#00a884;font-size:22px;">＋</button>
+    </header>
+    <div style="padding: 12px 16px;">
+      <input id="cmSearchMembers" class="cm-search-input" placeholder="Поиск участников">
+    </div>
+    <div id="cmMembersList" class="chat-info-members-full" style="padding: 0 16px 100px;"></div>
+  </div>
+
+  <!-- МАГАЗИН -->
+  <div id="screen-shop" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackShop">←</button>
+      <div class="top-title" style="flex:1;">🛍 Магазин</div>
+      <div class="balance-badge" id="shopBalance">🪙 0 SQ</div>
+    </header>
+    <div class="shop-tabs">
+      <button class="shop-tab active" data-tab="shop">Магазин</button>
+      <button class="shop-tab" data-tab="market">Маркет</button>
+      <button class="shop-tab" data-tab="my">Моё</button>
+    </div>
+    <div class="shop-body">
+      <div id="shopTabShop" class="shop-tab-content">
+        <div class="shop-balance-card">
+          <div class="shop-balance-label">Ваш баланс</div>
+          <div class="shop-balance-value" id="shopBalanceBig">🪙 0 SQ</div>
+        </div>
+        <div class="shop-section-title">Ники</div>
+        <div class="shop-grid" id="shopGridNicks"></div>
+        <div class="shop-section-title">Значки</div>
+        <div class="shop-grid" id="shopGridEmojis"></div>
+        <div class="shop-section-title">Рамки</div>
+        <div class="shop-grid" id="shopGridFrames"></div>
+        <div class="shop-section-title">🏷 Юзернеймы</div>
+        <div class="shop-grid" id="shopGridUsernames"></div>
+        <div class="shop-section-title">💎 VIP Юзернеймы</div>
+        <div class="shop-grid" id="shopGridVip"></div>
+        <div class="shop-section-title">📞 Номера</div>
+        <div class="shop-grid" id="shopGridPhones"></div>
+      </div>
+      <div id="shopTabMarket" class="shop-tab-content" style="display:none;">
+        <div class="shop-balance-card">
+          <div class="shop-balance-label">Ваш баланс</div>
+          <div class="shop-balance-value" id="shopBalanceBig2">🪙 0 SQ</div>
+        </div>
+        <div class="shop-section-title">🏪 Юзернеймы на продажу</div>
+        <div class="shop-grid" id="marketGrid"></div>
+      </div>
+      <div id="shopTabMy" class="shop-tab-content" style="display:none;">
+        <div class="shop-section-title">🏷 Мои юзернеймы</div>
+        <div class="shop-grid" id="myUsernamesGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ИНВЕНТАРЬ -->
+  <div id="screen-inventory" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackInventory">←</button>
+      <div class="top-title" style="flex:1;">🎒 Инвентарь</div>
+    </header>
+    <div class="shop-body">
+      <div class="shop-section-title">Активные</div>
+      <div id="inventoryActive" class="inventory-list"></div>
+      <div class="shop-section-title">Все покупки</div>
+      <div id="inventoryAll" class="inventory-list"></div>
+    </div>
+  </div>
+
+  <!-- OWNER PANEL -->
+  <div id="screen-owner" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackOwner">←</button>
+      <div class="top-title" style="flex:1;">👑 Owner Panel</div>
+      <div id="ownerRoleBadge" style="font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(247,181,0,0.15);color:#f7b500;font-weight:800;">OWNER</div>
+    </header>
+    <div class="owner-tabs">
+      <button class="owner-tab active" data-tab="overview">📊 Обзор</button>
+      <button class="owner-tab" data-tab="economy" data-owner-only="1">💰 Экономика</button>
+      <button class="owner-tab" data-tab="users">👥 Юзеры</button>
+      <button class="owner-tab" data-tab="chats">📢 Чаты</button>
+      <button class="owner-tab" data-tab="reports">🚨 Жалобы <span id="ownerReportsBadge" class="owner-badge" style="display:none;">0</span></button>
+      <button class="owner-tab" data-tab="moderators" data-owner-only="1">👮 Модераторы</button>
+      <button class="owner-tab" data-tab="shop" data-owner-only="1">🏪 Магазин</button>
+      <button class="owner-tab" data-tab="broadcast" data-owner-only="1">📣 Рассылка</button>
+    </div>
+    <div class="owner-body">
+
+      <div class="owner-pane active" data-pane="overview">
+        <div class="owner-stats-grid">
+          <div class="owner-stat-card"><div class="owner-stat-value" id="osUsers">0</div><div class="owner-stat-label">Пользователей</div></div>
+          <div class="owner-stat-card"><div class="owner-stat-value" id="osChats">0</div><div class="owner-stat-label">Чатов</div></div>
+          <div class="owner-stat-card"><div class="owner-stat-value" id="osReports" style="color:#ff6b6b;">0</div><div class="owner-stat-label">Жалоб</div></div>
+          <div class="owner-stat-card"><div class="owner-stat-value" id="osBans" style="color:#ff6b6b;">0</div><div class="owner-stat-label">Банов</div></div>
+          <div class="owner-stat-card"><div class="owner-stat-value" id="osPlus" style="color:#f7b500;">0</div><div class="owner-stat-label">Sqwid+</div></div>
+          <div class="owner-stat-card"><div class="owner-stat-value" id="osVerified" style="color:#60a5fa;">0</div><div class="owner-stat-label">Верифицировано</div></div>
+        </div>
+        <div class="owner-section-title">Сводка</div>
+        <div class="owner-card">
+          <pre id="osSummary" style="margin:0;color:#e9edef;font-size:13px;line-height:1.6;white-space:pre-wrap;font-family:inherit;">—</pre>
+        </div>
+        <div class="owner-section-title">Последние действия</div>
+        <div id="ownerLogsList" class="owner-logs-list"></div>
+      </div>
+
+      <div class="owner-pane" data-pane="economy">
+        <div class="owner-section-title">Выдать / забрать SQ</div>
+        <div class="owner-card">
+          <input id="ownerGiveSearch" class="cm-search-input" placeholder="Поиск юзера">
+          <div id="ownerGiveResults" class="create-results" style="max-height:180px;"></div>
+          <div id="ownerGivePicked" style="display:none;margin-top:10px;padding:10px;background:rgba(99,102,241,0.1);border-radius:10px;">
+            <div style="font-size:13px;color:#8696a0;margin-bottom:6px;">Выбран:</div>
+            <div id="ownerGivePickedName" style="font-weight:700;color:#e9edef;">—</div>
+          </div>
+          <div class="settings-field" style="margin-top:10px;">
+            <label>Сумма SQ</label>
+            <input id="ownerGiveAmount" type="number" min="1" value="1000">
+          </div>
+          <button class="btn-create" id="btnOwnerGiveSQ" style="width:100%;">💰 Выдать</button>
+          <button class="btn-cancel" id="btnOwnerTakeSQ" style="width:100%;margin-top:8px;background:#2a3942;color:#ff6b6b;">Забрать</button>
+        </div>
+        <div class="owner-section-title" style="margin-top:20px;">Sqwid+</div>
+        <div class="owner-card">
+          <input id="ownerPlusSearch" class="cm-search-input" placeholder="Поиск юзера">
+          <div id="ownerPlusResults" class="create-results" style="max-height:180px;"></div>
+          <div id="ownerPlusPicked" style="display:none;margin-top:10px;padding:10px;background:rgba(247,181,0,0.1);border-radius:10px;">
+            <div style="font-size:13px;color:#8696a0;margin-bottom:6px;">Выбран:</div>
+            <div id="ownerPlusPickedName" style="font-weight:700;color:#f7b500;">—</div>
+          </div>
+          <div class="settings-field" style="margin-top:10px;">
+            <label>Срок</label>
+            <select id="ownerPlusMonths" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.04);color:#e9edef;font-size:15px;font-family:inherit;outline:none;">
+              <option value="1">1 месяц</option>
+              <option value="3">3 месяца</option>
+              <option value="6">6 месяцев</option>
+              <option value="12">12 месяцев</option>
+              <option value="-1">Навсегда</option>
+            </select>
+          </div>
+          <button class="btn-create" id="btnOwnerGivePlus" style="width:100%;background:#f7b500;color:#1f2c34;">⭐ Выдать Plus</button>
+          <button class="btn-cancel" id="btnOwnerTakePlus" style="width:100%;margin-top:8px;background:#2a3942;color:#ff6b6b;">Забрать Plus</button>
+        </div>
+      </div>
+
+      <div class="owner-pane" data-pane="users">
+        <input id="ownerUsersSearch" class="cm-search-input" placeholder="Поиск: имя, @username, email">
+        <div id="ownerUsersList" class="owner-users-list" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="owner-pane" data-pane="chats">
+        <input id="ownerChatsSearch" class="cm-search-input" placeholder="Поиск чата/канала">
+        <div id="ownerChatsList" class="owner-users-list" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="owner-pane" data-pane="reports">
+        <div class="owner-filter-row">
+          <button class="owner-filter active" data-filter="new">Новые</button>
+          <button class="owner-filter" data-filter="open">В работе</button>
+          <button class="owner-filter" data-filter="resolved">Закрытые</button>
+          <button class="owner-filter" data-filter="all">Все</button>
+        </div>
+        <div id="ownerReportsList" class="owner-users-list" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="owner-pane" data-pane="moderators" data-owner-only="1">
+        <div class="owner-section-title">Активные модераторы</div>
+        <div id="ownerModsList" class="owner-users-list"></div>
+        <div class="owner-section-title" style="margin-top:20px;">Журнал действий модераторов</div>
+        <div id="ownerModLogs" class="owner-logs-list"></div>
+      </div>
+
+      <div class="owner-pane" data-pane="shop" data-owner-only="1">
+        <div class="owner-section-title">Добавить товар</div>
+        <div class="owner-card">
+          <div class="settings-field">
+            <label>Тип товара</label>
+            <select id="shopAddType" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.04);color:#e9edef;font-size:15px;font-family:inherit;outline:none;">
+              <option value="username">🏷 Юзернейм</option>
+              <option value="vip_username">💎 VIP Юзернейм</option>
+              <option value="phone">📞 Номер</option>
+              <option value="nickColor">🎨 Цвет ника</option>
+              <option value="emoji">😀 Значок</option>
+              <option value="frame">🖼 Рамка</option>
+            </select>
+          </div>
+
+          <div class="settings-field">
+            <label>ID товара (латиница, без пробелов)</label>
+            <input id="shopAddId" placeholder="например: username_artem">
+            <div class="settings-hint">Уникальный ключ. Если занят — перезапишется.</div>
+          </div>
+
+          <div class="settings-field">
+            <label>Название</label>
+            <input id="shopAddName" placeholder="например: @artem">
+          </div>
+
+          <div class="settings-field">
+            <label>Значение</label>
+            <input id="shopAddValue" placeholder="например: artem (для юз), #ff0000 (для цвета)">
+            <div class="settings-hint" id="shopAddValueHint">Для юзернейма — только латиница/цифры/_. Для цвета — HEX. Для значка — эмодзи.</div>
+          </div>
+
+          <div class="settings-field">
+            <label>Цена (SQ)</label>
+            <input id="shopAddPrice" type="number" min="0" value="1000">
+          </div>
+
+          <div class="settings-field">
+            <label>Превью (необязательно)</label>
+            <input id="shopAddPreview" placeholder="короткое описание">
+          </div>
+
+          <div class="settings-field">
+            <label>Иконка (для значков, рамок, ников)</label>
+            <input id="shopAddIcon" placeholder="🔥 или 🖼">
+          </div>
+
+          <button class="btn-create" id="btnShopAdd" style="width:100%;">➕ Добавить в магазин</button>
+        </div>
+
+        <div class="owner-section-title" style="margin-top:20px;">Все товары в магазине</div>
+        <div class="owner-filter-row">
+          <button class="owner-filter active" data-shop-filter="all">Все</button>
+          <button class="owner-filter" data-shop-filter="username">🏷 Юзернеймы</button>
+          <button class="owner-filter" data-shop-filter="vip_username">💎 VIP</button>
+          <button class="owner-filter" data-shop-filter="phone">📞 Номера</button>
+          <button class="owner-filter" data-shop-filter="nickColor">🎨 Ники</button>
+          <button class="owner-filter" data-shop-filter="emoji">😀 Значки</button>
+          <button class="owner-filter" data-shop-filter="frame">🖼 Рамки</button>
+        </div>
+
+        <input id="shopItemsSearch" class="cm-search-input" placeholder="Поиск товара" style="margin-top:10px;">
+        <div id="shopItemsList" class="owner-users-list" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="owner-pane" data-pane="broadcast" data-owner-only="1">
+        <div class="owner-section-title">Рассылка</div>
+        <div class="owner-card">
+          <div class="settings-field">
+            <label>Кому</label>
+            <select id="ownerBroadcastTarget" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.04);color:#e9edef;font-size:15px;font-family:inherit;outline:none;">
+              <option value="all">Всем</option>
+              <option value="plus">Только Sqwid+</option>
+              <option value="moderators">Модераторам</option>
+            </select>
+          </div>
+          <div class="settings-field">
+            <label>Текст</label>
+            <textarea id="ownerBroadcastText" maxlength="500" rows="4" placeholder="Текст рассылки..."></textarea>
+          </div>
+          <button class="btn-create" id="btnOwnerBroadcast" style="width:100%;">📣 Отправить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПРОСМОТР ЖАЛОБЫ -->
+  <div id="screen-report-view" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackReportView">←</button>
+      <div class="top-title" style="flex:1;">Жалоба</div>
+      <div id="reportViewStatus" style="font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(255,107,107,0.15);color:#ff6b6b;font-weight:800;">NEW</div>
+    </header>
+    <div class="chat-info-scroll">
+      <div class="chat-info-section">
+        <div class="chat-info-section-label">Тип</div>
+        <div class="chat-info-section-value" id="rvType">—</div>
+      </div>
+      <div class="chat-info-section">
+        <div class="chat-info-section-label">Причина</div>
+        <div class="chat-info-section-value" id="rvReason">—</div>
+      </div>
+      <div class="chat-info-section">
+        <div class="chat-info-section-label">Кто пожаловался</div>
+        <div class="chat-info-section-value" id="rvFrom">—</div>
+      </div>
+      <div class="chat-info-section">
+        <div class="chat-info-section-label">На кого</div>
+        <div class="chat-info-section-value" id="rvTarget">—</div>
+      </div>
+      <div class="chat-info-section">
+        <div class="chat-info-section-label">Комментарий</div>
+        <div class="chat-info-section-text" id="rvComment">—</div>
+      </div>
+      <div class="chat-info-section" id="rvMessagesSection" style="display:none;">
+        <div class="chat-info-section-label">Сообщения с нарушениями</div>
+        <div id="rvMessagesList" class="rv-messages-list"></div>
+      </div>
+      <div class="chat-info-section" id="rvChatSection" style="display:none;">
+        <div class="chat-info-section-label">Чат / канал</div>
+        <div id="rvChatInfo" class="chat-info-section-text">—</div>
+        <button class="btn-create" id="btnRvOpenChat" style="width:100%;margin-top:10px;">📂 Открыть чат</button>
+      </div>
+      <div class="chat-info-section">
+        <div class="chat-info-section-label">Действия</div>
+        <div class="rv-actions">
+          <button class="chat-info-danger-btn" id="btnRvResolve" style="color:#00a884;">✓ Закрыть</button>
+          <button class="chat-info-danger-btn" id="btnRvReject" style="color:#8696a0;">✕ Отклонить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- НИЖНЕЕ МЕНЮ -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav-btn active" data-screen="screen-chats">
+      <span class="nav-icon">💬</span><span class="nav-label">Чаты</span>
+    </button>
+    <button class="nav-btn" data-screen="screen-settings">
+      <span class="nav-icon">⚙</span><span class="nav-label">Настройки</span>
+    </button>
+    <button class="nav-btn" data-screen="screen-profile">
+      <span class="nav-icon">👤</span><span class="nav-label">Профиль</span>
+    </button>
+  </nav>
+
+  <!-- МОДАЛКИ -->
+  <div id="modal-create" class="modal">
+    <div class="modal-content">
+      <button class="menu-row" id="btnCreatePrivate">💬 Создать личный чат</button>
+      <button class="menu-row" id="btnCreateGroup">👥 Создать группу</button>
+      <button class="menu-row" id="btnCreateChannel">📢 Создать канал</button>
+      <button class="menu-row cancel" id="btnCloseCreate">Отмена</button>
+    </div>
+  </div>
+
+  <div id="modal-private" class="modal">
+    <div class="modal-content">
+      <h2>Новый личный чат</h2>
+      <div class="settings-field"><input id="privateSearch" placeholder="Поиск по имени или @username"></div>
+      <div id="privateResults" class="create-results"></div>
+      <button class="menu-row cancel" id="btnClosePrivate" style="margin-top:10px;">Отмена</button>
+    </div>
+  </div>
+
+  <div id="modal-autodelete" class="modal">
+    <div class="modal-content">
+      <h2>Автоудаление сообщений</h2>
+      <button class="menu-row" data-ad="0">Выключено</button>
+      <button class="menu-row" data-ad="86400">24 часа</button>
+      <button class="menu-row" data-ad="604800">7 дней</button>
+      <button class="menu-row" data-ad="2592000">30 дней</button>
+      <button class="menu-row cancel" id="btnCloseAutoDelete">Отмена</button>
+    </div>
+  </div>
+
+  <div id="modal-autodelete-edit" class="modal">
+    <div class="modal-content">
+      <h2>Автоудаление сообщений</h2>
+      <button class="menu-row" data-ad="0">Выключено</button>
+      <button class="menu-row" data-ad="86400">24 часа</button>
+      <button class="menu-row" data-ad="604800">7 дней</button>
+      <button class="menu-row" data-ad="2592000">30 дней</button>
+      <button class="menu-row cancel" id="btnCloseAutoDeleteEdit">Отмена</button>
+    </div>
+  </div>
+
+  <div id="modal-member-actions" class="modal">
+    <div class="modal-content">
+      <div style="text-align:center;margin-bottom:14px;">
+        <img id="maAva" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:#3b82f6;margin-bottom:8px;" alt="">
+        <div id="maName" style="font-size:17px;font-weight:700;color:#e9edef;">—</div>
+        <div id="maUsername" style="font-size:13px;color:#8696a0;">—</div>
+      </div>
+      <button class="menu-row" id="btnMaViewProfile">👤 Профиль</button>
+      <button class="menu-row" id="btnMaMakeAdmin" style="display:none;">⭐ Назначить админом</button>
+      <button class="menu-row" id="btnMaRemoveAdmin" style="display:none;">↓ Снять админа</button>
+      <button class="menu-row danger" id="btnMaKick" style="display:none;">🚫 Удалить из чата</button>
+      <button class="menu-row cancel" id="btnMaCancel">Отмена</button>
+    </div>
+  </div>
+
+  <div id="modal-owner-user" class="modal">
+    <div class="modal-content">
+      <div style="text-align:center;margin-bottom:14px;">
+        <img id="ouAva" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:#3b82f6;margin-bottom:8px;" alt="">
+        <div id="ouName" style="font-size:17px;font-weight:700;color:#e9edef;">—</div>
+        <div id="ouUsername" style="font-size:13px;color:#8696a0;">—</div>
+      </div>
+      <button class="menu-row" id="btnOuProfile">👤 Профиль</button>
+      <button class="menu-row" id="btnOuVerify" style="color:#60a5fa;">✓ Верифицировать</button>
+      <button class="menu-row" id="btnOuUnverify" style="color:#8696a0;display:none;">✕ Снять верификацию</button>
+      <button class="menu-row" id="btnOuBan" style="color:#ff6b6b;">🚫 Забанить</button>
+      <button class="menu-row" id="btnOuUnban" style="color:#00a884;display:none;">✓ Разбанить</button>
+      <button class="menu-row" id="btnOuMute" style="color:#f7b500;">🔇 Замутить</button>
+      <button class="menu-row" id="btnOuUnmute" style="color:#00a884;display:none;">🔊 Размутить</button>
+      <button class="menu-row" id="btnOuFreeze" style="color:#3b82f6;">❄ Заморозить баланс</button>
+      <button class="menu-row" id="btnOuUnfreeze" style="color:#00a884;display:none;">🔥 Разморозить</button>
+      <button class="menu-row" id="btnOuMakeModerator" data-owner-only="1" style="color:#a855f7;">⭐ Назначить модератором</button>
+      <button class="menu-row" id="btnOuRemoveModerator" data-owner-only="1" style="color:#ff6b6b;display:none;">↓ Снять модератора</button>
+      <button class="menu-row cancel" id="btnOuCancel">Отмена</button>
+    </div>
+  </div>
+
+  <div id="modal-report" class="modal">
+    <div class="modal-content">
+      <h2>🚨 Жалоба</h2>
+      <div style="font-size:13.5px;color:#8696a0;margin-bottom:12px;" id="reportTargetInfo">—</div>
+      <div class="settings-field">
+        <label>Причина</label>
+        <select id="reportReason" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.04);color:#e9edef;font-size:15px;font-family:inherit;outline:none;">
+          <option value="spam">Спам</option>
+          <option value="abuse">Оскорбления</option>
+          <option value="violence">Насилие / угрозы</option>
+          <option value="adult">18+ контент</option>
+          <option value="scam">Мошенничество</option>
+          <option value="other">Другое</option>
+        </select>
+      </div>
+      <div class="settings-field">
+        <label>Комментарий (необязательно)</label>
+        <textarea id="reportComment" maxlength="300" rows="3" placeholder="Опишите подробнее..."></textarea>
+      </div>
+      <button class="btn-create" id="btnReportSubmit" style="width:100%;background:#ef4444;">Отправить жалобу</button>
+      <button class="btn-cancel" id="btnReportCancel" style="width:100%;margin-top:8px;">Отмена</button>
+    </div>
+  </div>
+
+  <div id="modal-chatMenu" class="modal">
+    <div class="modal-content">
+      <button class="menu-row" id="btnBlockUser">🚫 Заблокировать</button>
+      <button class="menu-row danger" id="btnDeleteChat">🗑 Удалить чат</button>
+      <button class="menu-row cancel" id="btnCloseChatMenu">Отмена</button>
+    </div>
+  </div>
+
+  <div id="modal-msgMenu" class="modal">
+    <div class="modal-content">
+      <button class="menu-row" id="btnReactMsg">😊 Реакция</button>
+      <button class="menu-row" id="btnEditMsg">✎ Изменить</button>
+      <button class="menu-row danger" id="btnDeleteMsg">🗑 Удалить</button>
+      <button class="menu-row danger" id="btnReportMsg">🚨 Пожаловаться</button>
+      <button class="menu-row cancel" id="btnCloseMsgMenu">Отмена</button>
+    </div>
+  </div>
+
+  <div id="modal-react" class="modal">
+    <div class="modal-content react-content">
+      <div class="react-grid" id="reactGrid"></div>
+      <button class="menu-row cancel" id="btnCloseReact">Отмена</button>
+    </div>
+  </div>
+
+  <div id="modal-prompt" class="modal">
+    <div class="modal-content">
+      <h2 id="promptTitle">Введите</h2>
+      <input id="promptInput" placeholder="" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#e9edef;font-size:15px;box-sizing:border-box;font-family:inherit;outline:none;margin-bottom:12px;">
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button class="btn-cancel" id="promptCancel" style="flex:1;">Отмена</button>
+        <button class="btn-create" id="promptOk" style="flex:1;">ОК</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-alert" class="modal">
+    <div class="modal-content" style="text-align:center;">
+      <h2 id="alertTitle" style="margin:0 0 10px;">Сообщение</h2>
+      <div id="alertText" style="color:#8696a0;font-size:15px;line-height:1.5;margin-bottom:18px;white-space:pre-wrap;word-break:break-word;"></div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-cancel" id="alertCancel" style="flex:1;display:none;">Отмена</button>
+        <button class="btn-create" id="alertOk" style="flex:1;">ОК</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-item-info" class="modal">
+    <div class="modal-content" style="text-align:center;">
+      <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px;">
+        <img id="itemInfoAvatar" style="width:80px;height:80px;border-radius:50%;object-fit:cover;background:#00a884;margin-bottom:10px;" alt="">
+        <div id="itemInfoOwnerName" style="font-size:18px;font-weight:700;color:#e9edef;">—</div>
+        <div id="itemInfoOwnerUsername" style="font-size:13px;color:#8696a0;">—</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:14px 16px;margin-bottom:14px;">
+        <div style="font-size:16px;font-weight:800;color:#00a884;margin-bottom:10px;" id="itemInfoValue">—</div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;color:#e9edef;padding:6px 0;">
+          <span style="color:#8696a0;">Цена:</span>
+          <span id="itemInfoPrice">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;color:#e9edef;padding:6px 0;">
+          <span style="color:#8696a0;">Куплен:</span>
+          <span id="itemInfoDate">—</span>
+        </div>
+      </div>
+      <button class="btn-create" id="btnItemInfoClose" style="width:100%;">Закрыть</button>
+    </div>
+  </div>
+
+  <div id="modal-gift-info" class="modal">
+    <div class="modal-content" style="text-align:center;">
+      <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px;">
+        <img id="giftInfoImage" style="width:120px;height:120px;object-fit:contain;margin-bottom:12px;filter:drop-shadow(0 6px 18px rgba(247,181,0,0.5));" alt="">
+        <div id="giftInfoName" style="font-size:20px;font-weight:800;color:#f7b500;">Подарок</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:14px 16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;font-size:14px;color:#e9edef;padding:6px 0;">
+          <span style="color:#8696a0;">Цена:</span>
+          <span id="giftInfoPrice" style="color:#f7b500;font-weight:700;">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;color:#e9edef;padding:6px 0;">
+          <span style="color:#8696a0;">Дата:</span>
+          <span id="giftInfoDate">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;color:#e9edef;padding:6px 0;">
+          <span style="color:#8696a0;">От кого:</span>
+          <span id="giftInfoFrom" style="color:#00a884;font-weight:600;">—</span>
+        </div>
+      </div>
+      <button class="btn-create" id="btnGiftInfoClose" style="width:100%;">Закрыть</button>
+    </div>
+  </div>
+
+  <div id="modal-send-gift" class="modal">
+    <div class="modal-content" style="text-align:center;">
+      <h2 id="sendGiftTitle">Отправить подарок?</h2>
+      <img id="sendGiftImage" style="width:120px;height:120px;object-fit:contain;margin:16px 0;filter:drop-shadow(0 6px 18px rgba(247,181,0,0.5));" alt="">
+      <div id="sendGiftName" style="font-size:18px;font-weight:700;color:#f7b500;margin-bottom:8px;">Подарок</div>
+      <div style="color:#8696a0;font-size:14px;margin-bottom:16px;">
+        Стоимость: <b id="sendGiftPrice" style="color:#f7b500;">0</b> SQ
+      </div>
+      <input id="sendGiftMessage" placeholder="Сообщение (необязательно)" maxlength="120" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#e9edef;font-size:15px;box-sizing:border-box;font-family:inherit;outline:none;margin-bottom:12px;">
+      <label class="settings-toggle-row" style="margin-bottom:16px;">
+        <input type="checkbox" id="sendGiftHideName">
+        <span>Скрыть моё имя</span>
+      </label>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-cancel" id="btnSendGiftCancel" style="flex:1;">Отмена</button>
+        <button class="btn-create" id="btnSendGiftConfirm" style="flex:1;background:#f7b500;color:#1f2c34;">Отправить</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-sell" class="modal">
+    <div class="modal-content">
+      <h2>🏪 Продать юзернейм</h2>
+      <p style="color:#8696a0;font-size:14px;">Ты продаёшь: <b id="sellItemName" style="color:#f7b500;"></b></p>
+      <div class="settings-field"><label>Цена в SQ</label><input id="sellPrice" type="number" min="1" value="1000"></div>
+      <button class="btn-create" id="btnSellConfirm" style="width:100%;">Выставить</button>
+      <button class="btn-cancel" id="btnSellCancel" style="width:100%;margin-top:8px;">Отмена</button>
+    </div>
+  </div>
+<!-- ПРОСМОТР ФОТО (внутри приложения) -->
+<div id="screen-viewer" class="screen">
+  <header class="top-bar" style="background:rgba(0,0,0,0.9);">
+    <button class="top-new-btn" id="btnBackViewer">←</button>
+    <div class="top-title" style="flex:1;" id="viewerTitle">Фото</div>
+    <button class="top-new-btn" id="btnDownloadPhoto" style="font-size:18px;">⬇</button>
+  </header>
+
+  <div class="viewer-body">
+    <button class="viewer-nav viewer-prev" id="btnViewerPrev">‹</button>
+    <img id="viewerImage" class="viewer-image" alt="">
+    <button class="viewer-nav viewer-next" id="btnViewerNext">›</button>
+  </div>
+
+  <div class="viewer-info">
+    <div id="viewerSender" class="viewer-sender">—</div>
+    <div id="viewerTime" class="viewer-time">—</div>
+    <div id="viewerCaption" class="viewer-caption"></div>
+  </div>
+</div>
+  <script type="module" src="shop.js"></script>
+  <script type="module" src="chat-main.js"></script>
+  <script type="module" src="chat-settings.js"></script>
+  <script type="module" src="chat-profile.js"></script>
+  <script type="module" src="profileNN.js"></script>
+  <script type="module" src="gifts.js"></script>
+  <script type="module" src="chat-info.js"></script>
+  <script type="module" src="owner.js"></script>
+  <script type="module" src="viewer.js"></script>
+</body>
+</html>

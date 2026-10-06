@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sqwid Messenger</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- ЭКРАН 1: ВХОД -->
+  <div id="screen-login" class="screen active">
+    <h1 class="app-title">Sqwid</h1>
+
+    <div class="login-fields">
+      <input id="loginEmail" type="email" placeholder="Введите email" autocomplete="email">
+      <input id="loginPassword" type="password" placeholder="Введите пароль" autocomplete="current-password">
+      <button id="btnGoRegister" class="link-btn">Зарегистрироваться</button>
+    </div>
+
+    <button id="btnLogin" class="big-gradient-btn">ВОЙТИ</button>
+  </div>
+
+  <!-- ЭКРАН 2: РЕГИСТРАЦИЯ -->
+  <div id="screen-register" class="screen">
+    <div class="register-body">
+
+      <!-- Аватарка -->
+      <label class="reg-avatar-wrap">
+        <input id="regAvatarInput" type="file" accept="image/*" style="display:none;">
+        <div class="reg-avatar" id="regAvatarPreview"></div>
+      </label>
+
+      <!-- Email -->
+      <div class="reg-field">
+        <div class="reg-label">введите ваш email</div>
+        <input id="regEmail" type="email" autocomplete="email">
+      </div>
+
+      <!-- Пароль с глазиком -->
+      <div class="reg-field">
+        <div class="reg-label">придумайте пароль</div>
+        <div class="reg-pass-wrap">
+          <input id="regPassword" type="password" autocomplete="new-password">
+          <button type="button" class="eye-btn" id="btnTogglePass">👁</button>
+        </div>
+      </div>
+
+      <!-- Имя -->
+      <div class="reg-field">
+        <div class="reg-label">как вас зовут?</div>
+        <input id="regName" type="text" maxlength="30">
+      </div>
+
+    </div>
+
+    <button id="btnContinue" class="big-gradient-btn">ПРОДОЛЖИТЬ</button>
+    <div id="regStatus" class="reg-status"></div>
+  </div>
+
+  <script type="module" src="index.js"></script>
+</body>
+</html>
