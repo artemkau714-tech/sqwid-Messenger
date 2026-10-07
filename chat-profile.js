@@ -1,5 +1,5 @@
 /* ============================================================
-   chat-profile.js — свой профиль (юзы, номера, подарки)
+   chat-profile.js — свой профиль (юзы, номера, подарки, обмен, игры)
    ============================================================ */
 
 console.log("🚀 chat-profile.js загружен, жду Sqwid...");
@@ -19,7 +19,7 @@ function waitForSqwidProfile(cb) {
 }
 
 waitForSqwidProfile((S) => {
-  const { db, ref, get, onValue, currentUser } = S;
+  const { db, ref, get, set, push, update, remove, onValue, currentUser } = S;
   if (!currentUser) return;
 
   console.log("🔥 chat-profile.js активирован");
@@ -195,12 +195,20 @@ waitForSqwidProfile((S) => {
 
     names.forEach(uname => {
       const isMain = myData.username === uname;
+
+      let itemId = null;
+      for (const id in inv) {
+        if (!inv[id]) continue;
+        const it = shopItems.find(i => i.id === id);
+        if (it && it.type === "username" && it.value === uname) { itemId = id; break; }
+      }
+
       const chip = document.createElement("div");
       chip.className = "up-chip" + (isMain ? " is-main" : "");
       chip.textContent = "@" + uname;
       chip.onclick = () => openItemInfo({
         value: "@" + uname,
-        itemId: "uname_" + uname.toLowerCase(),
+        itemId: itemId || ("uname_" + uname.toLowerCase()),
         ownerUid: currentUser.uid
       });
       list.appendChild(chip);
@@ -229,26 +237,34 @@ waitForSqwidProfile((S) => {
 
     phones.forEach(ph => {
       const isMain = myData.phone === ph;
+
+      let itemId = null;
+      for (const id in inv) {
+        if (!inv[id]) continue;
+        const it = shopItems.find(i => i.id === id);
+        if (it && it.type === "phone" && it.value === ph) { itemId = id; break; }
+      }
+
       const chip = document.createElement("div");
       chip.className = "up-chip" + (isMain ? " is-main" : "");
       chip.textContent = ph;
       chip.onclick = () => openItemInfo({
         value: ph,
-        itemId: "phone_" + ph.replace(/\D/g, "").slice(-6),
+        itemId: itemId || ("phone_" + ph.replace(/\D/g, "").slice(-6)),
         ownerUid: currentUser.uid
       });
       list.appendChild(chip);
     });
   }
 
-  /* ---------- ПОДАРКИ ---------- */
+  /* ---------- ПОДАРКИ С ОБМЕНОМ ---------- */
   function renderGifts() {
     const grid = document.getElementById("profileGiftsGrid");
     const empty = document.getElementById("profileGiftsEmpty");
     if (!grid) return;
     grid.innerHTML = "";
 
-    const arr = Object.values(myGifts);
+    const arr = Object.entries(myGifts).map(([gid, g]) => ({ gid, ...g }));
     if (arr.length === 0) {
       if (empty) empty.style.display = "block";
       return;
@@ -259,14 +275,138 @@ waitForSqwidProfile((S) => {
       if (!g) return;
       const card = document.createElement("div");
       card.className = "profile-gift-card";
+
+      const canExchange = canExchangeGift(g);
+      const timeLeft = canExchange ? getExchangeTimeLeft(g) : "";
+
+      let exchangeBtn = "";
+      if (canExchange) {
+        exchangeBtn = `<button class="profile-gift-exchange" data-exchange="${g.gid}">🔄 ${timeLeft}</button>`;
+      }
+
       card.innerHTML = `
         <img src="${g.icon}" alt="">
         <div class="profile-gift-name">${escH(g.name || "Подарок")}</div>
+        ${exchangeBtn}
       `;
-      card.onclick = () => openGiftInfo(g);
+
+      card.onclick = (e) => {
+        if (e.target.dataset.exchange) return;
+        openGiftInfo(g);
+      };
+
+      const btn = card.querySelector("[data-exchange]");
+      if (btn) {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          openExchangeModal(g.gid, g);
+        };
+      }
+
       grid.appendChild(card);
     });
   }
+
+  function canExchangeGift(g) {
+    if (!g || !g.receivedAt || g.exchanged) return false;
+    if (!g.price || g.price <= 0) return false;
+    const age = Date.now() - g.receivedAt;
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    return age < sevenDays;
+  }
+
+  function getExchangeTimeLeft(g) {
+    const age = Date.now() - g.receivedAt;
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    const left = sevenDays - age;
+    if (left <= 0) return "0д";
+    const days = Math.floor(left / (24 * 60 * 60 * 1000));
+    const hours = Math.floor((left % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    if (days > 0) return days + "д";
+    if (hours > 0) return hours + "ч";
+    return "<1ч";
+  }
+
+  /* ---------- МОДАЛКА ОБМЕНА ---------- */
+  let exchangeGiftId = null;
+  let exchangeGiftData = null;
+
+  function openExchangeModal(giftId, gift) {
+    if (!canExchangeGift(gift)) {
+      S.showToast("Срок обмена истёк", "error");
+      return;
+    }
+
+    exchangeGiftId = giftId;
+    exchangeGiftData = gift;
+
+    const price = gift.price || 0;
+    const half = Math.floor(price / 2);
+
+    document.getElementById("exGiftImage").src = gift.icon || "sqwidstar.png";
+    document.getElementById("exGiftName").textContent = gift.name || "Подарок";
+    document.getElementById("exGiftPrice").textContent = price + " SQ";
+    document.getElementById("exGiftBack").textContent = "+" + half + " SQ";
+    document.getElementById("exGiftBurn").textContent = "-" + (price - half) + " SQ";
+
+    document.getElementById("modal-exchange-gift").classList.add("active");
+  }
+
+  const btnExCancel = document.getElementById("btnExchangeCancel");
+  if (btnExCancel) btnExCancel.addEventListener("click", () => {
+    document.getElementById("modal-exchange-gift").classList.remove("active");
+    exchangeGiftId = null;
+    exchangeGiftData = null;
+  });
+
+  const btnExConfirm = document.getElementById("btnExchangeConfirm");
+  if (btnExConfirm) btnExConfirm.addEventListener("click", async () => {
+    if (!exchangeGiftId || !exchangeGiftData) return;
+
+    const gift = exchangeGiftData;
+    const price = gift.price || 0;
+    const half = Math.floor(price / 2);
+
+    try {
+      const meSnap = await get(ref(db, "users/" + currentUser.uid));
+      const me = meSnap.val() || {};
+      const newCoins = (me.coins || 0) + half;
+
+      await update(ref(db, "users/" + currentUser.uid), { coins: newCoins });
+
+      await update(ref(db, "users/" + currentUser.uid + "/gifts/" + exchangeGiftId), {
+        exchanged: true,
+        exchangedAt: Date.now(),
+        exchangeBack: half,
+        exchangeBurn: price - half
+      });
+
+      const gidToDelete = exchangeGiftId;
+      setTimeout(async () => {
+        await remove(ref(db, "users/" + currentUser.uid + "/gifts/" + gidToDelete));
+      }, 1000);
+
+      if (gift.fromUid && gift.hideName !== true) {
+        const botRef = push(ref(db, "botChat/" + gift.fromUid));
+        await set(botRef, {
+          from: "Sqwid Moderator",
+          text: `🔄 Подарок «${gift.name}», который вы подарили, был обменян получателем.`,
+          timestamp: Date.now(),
+          type: "system",
+          kind: "moderator"
+        });
+      }
+
+      S.showToast("+" + half + " SQ зачислено", "ok");
+
+    } catch (e) {
+      S.showToast("Ошибка: " + e.message, "error");
+    } finally {
+      document.getElementById("modal-exchange-gift").classList.remove("active");
+      exchangeGiftId = null;
+      exchangeGiftData = null;
+    }
+  });
 
   /* ---------- МОДАЛКА ИНФО О ПОДАРКЕ ---------- */
   async function openGiftInfo(g) {
@@ -299,7 +439,7 @@ waitForSqwidProfile((S) => {
         fromEl.classList.add("clickable");
         fromEl.onclick = () => {
           document.getElementById("modal-gift-info").classList.remove("active");
-          openOtherProfile(g.fromUid);
+          if (window.Sqwid.openOtherProfile) window.Sqwid.openOtherProfile(g.fromUid);
         };
       } else {
         fromEl.classList.remove("clickable");
@@ -353,39 +493,6 @@ waitForSqwidProfile((S) => {
     modal.classList.add("active");
   }
 
-  /* ---------- ПЕРЕХОД В ЧУЖОЙ ПРОФИЛЬ ---------- */
-  async function openOtherProfile(uid) {
-    if (!uid || uid === currentUser.uid) {
-      S.showScreen("screen-profile");
-      return;
-    }
-    if (window.Sqwid && window.Sqwid.openOtherProfile) {
-      window.Sqwid.openOtherProfile(uid);
-      return;
-    }
-
-    const snap = await get(ref(db, "users/" + uid));
-    const u = snap.val() || {};
-
-    const avaEl = document.getElementById("upAva");
-    if (avaEl) {
-      if (u.photo && u.photo.startsWith("data:image")) {
-        avaEl.innerHTML = `<img src="${u.photo}" alt="">`;
-      } else {
-        const letter = (u.name || u.email || "?").trim().charAt(0).toUpperCase();
-        avaEl.innerHTML = `<span>${letter}</span>`;
-      }
-    }
-    const nameEl2 = document.getElementById("upName");
-    if (nameEl2) nameEl2.textContent = u.name || u.email || "Пользователь";
-    const unEl2 = document.getElementById("upUsername");
-    if (unEl2) unEl2.textContent = u.username ? "@" + u.username : "";
-    const bioEl2 = document.getElementById("upBio");
-    if (bioEl2) bioEl2.textContent = u.bio || "";
-
-    S.showScreen("screen-user-profile");
-  }
-
   /* ---------- ГРУППЫ ---------- */
   onValue(ref(db, "chats"), (snap) => {
     const chats = snap.val() || {};
@@ -411,16 +518,21 @@ waitForSqwidProfile((S) => {
     common.forEach(c => {
       const row = document.createElement("div");
       row.className = "profile-group-row";
+      row.style.cursor = "pointer";
       const avatarContent = (c.photo && c.photo.startsWith("data:image"))
         ? `<img src="${c.photo}">`
         : escH((c.name || "?").charAt(0).toUpperCase());
+      const badge = c.type === "channel" ? "📢 " : "";
       row.innerHTML = `
         <div class="profile-group-ava">${avatarContent}</div>
         <div class="profile-group-info">
-          <div class="profile-group-name">${escH(c.name || "Группа")}</div>
+          <div class="profile-group-name">${badge}${escH(c.name || "Группа")}</div>
           <div class="profile-group-sub">${Object.keys(c.members || {}).length} участников</div>
         </div>
       `;
+      row.addEventListener("click", () => {
+        if (window.Sqwid && window.Sqwid.openChat) window.Sqwid.openChat(c.id);
+      });
       list.appendChild(row);
     });
   });
@@ -454,6 +566,19 @@ waitForSqwidProfile((S) => {
   }
 
   /* ---------- КНОПКИ ---------- */
+  const btnGames = document.getElementById("btnOpenGames");
+  if (btnGames) {
+    btnGames.addEventListener("click", () => {
+      console.log("🎮 открываю игры");
+      if (window.Sqwid && typeof window.Sqwid.openGames === "function") {
+        window.Sqwid.openGames();
+      } else {
+        S.showToast("Игровой бот не загрузился", "error");
+        console.warn("openGames не найден");
+      }
+    });
+  }
+
   const btnShare = document.getElementById("btnShareProfile");
   if (btnShare) {
     btnShare.addEventListener("click", async () => {
@@ -481,7 +606,18 @@ waitForSqwidProfile((S) => {
 
   const btnBurger = document.getElementById("btnBurgerFromProfile");
   if (btnBurger) {
-    btnBurger.addEventListener("click", () => S.showAlert("Меню скоро", "Инфо"));
+    btnBurger.addEventListener("click", () => {
+      const modal = document.getElementById("modal-profile-menu");
+      if (!modal) {
+        S.showAlert("Меню скоро", "Инфо");
+        return;
+      }
+      const isOwner = currentUser.email === "artemkau714@gmail.com";
+      const isMod = myData && myData.role === "moderator";
+      const pm = document.getElementById("pmOpenOwner");
+      if (pm) pm.style.display = (isOwner || isMod) ? "block" : "none";
+      modal.classList.add("active");
+    });
   }
 
   /* ---------- ЗАКРЫТИЕ МОДАЛОК ---------- */

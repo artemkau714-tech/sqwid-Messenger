@@ -1,11 +1,13 @@
 /* ============================================================
-   owner.js — Owner-панель + жалобы + логи + верификация + магазин
+   owner.js — Owner-панель + жалобы + логи + верификация + магазин + лимиты + защита владельца
    ============================================================ */
 
 console.log("🚀 owner.js загружен, жду Sqwid...");
 
 const OWNER_EMAIL = "artemkau714@gmail.com";
 const MODERATOR_EMAILS = ["orionovik@gmail.com"];
+const DAILY_LIMIT_EMAILS = ["orionovik@gmail.com"];
+const DAILY_LIMIT_SQ = 500000;
 
 function waitForSqwidOwner(cb) {
   let tries = 0;
@@ -49,7 +51,7 @@ waitForSqwidOwner((S) => {
   let reportContext = null;
 
   function canManageShop() {
-    return isOwner || MODERATOR_EMAILS.includes(currentUser.email);
+    return isOwner || isSpecialMod;
   }
 
   /* ============================================================
@@ -89,11 +91,9 @@ waitForSqwidOwner((S) => {
     const me = s.val() || {};
     isModerator = isOwner || isSpecialMod || me.role === "moderator";
 
-    // Кнопка 👑 в шапке профиля
     const btn = document.getElementById("btnOpenOwnerPanel");
     if (btn) btn.style.display = (isOwner || isModerator) ? "block" : "none";
 
-    // Вкладка "Магазин" — только owner + special mod
     const canShop = canManageShop();
     document.querySelectorAll('.owner-tab[data-tab="shop"]').forEach(el => {
       el.style.display = canShop ? "" : "none";
@@ -101,6 +101,16 @@ waitForSqwidOwner((S) => {
     document.querySelectorAll('.owner-pane[data-pane="shop"]').forEach(el => {
       el.style.display = canShop ? "" : "none";
     });
+
+    const canEconomy = isOwner || isSpecialMod;
+    document.querySelectorAll('.owner-tab[data-tab="economy"]').forEach(el => {
+      el.style.display = canEconomy ? "" : "none";
+    });
+    document.querySelectorAll('.owner-pane[data-pane="economy"]').forEach(el => {
+      el.style.display = canEconomy ? "" : "none";
+    });
+
+    refreshDailyLimitUI();
   });
 
   /* ============================================================
@@ -146,6 +156,68 @@ waitForSqwidOwner((S) => {
   }
 
   /* ============================================================
+     ЗАЩИТА: НЕЛЬЗЯ ТРОГАТЬ ВЛАДЕЛЬЦА
+     ============================================================ */
+  function isSelf(uid) {
+    return uid === currentUser.uid;
+  }
+  function isTargetOwner(uid) {
+    const u = allUsers[uid];
+    if (!u) return false;
+    return (u.email || "").toLowerCase() === OWNER_EMAIL.toLowerCase();
+  }
+  function guardOwner(uid, action) {
+    if (isTargetOwner(uid)) {
+      S.showToast("Владельца нельзя " + action, "error");
+      return false;
+    }
+    return true;
+  }
+
+  /* ============================================================
+     ДНЕВНОЙ ЛИМИТ НА ВЫДАЧУ SQ
+     ============================================================ */
+  function todayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  }
+
+  function hasDailyLimit() {
+    return DAILY_LIMIT_EMAILS.includes(currentUser.email) && !isOwner;
+  }
+
+  async function getTodayLimitUsed() {
+    if (!hasDailyLimit()) return 0;
+    const snap = await get(ref(db, "users/" + currentUser.uid + "/dailyLimit"));
+    const data = snap.val() || {};
+    const today = todayKey();
+    if (data.date === today) return data.used || 0;
+    return 0;
+  }
+
+  async function addToDailyLimit(amount) {
+    if (!hasDailyLimit()) return;
+    const used = await getTodayLimitUsed();
+    const newUsed = used + amount;
+    await update(ref(db, "users/" + currentUser.uid + "/dailyLimit"), {
+      date: todayKey(),
+      used: newUsed
+    });
+  }
+
+  async function refreshDailyLimitUI() {
+    const block = document.getElementById("ownerDailyLimit");
+    if (!block) return;
+    if (!hasDailyLimit()) {
+      block.style.display = "none";
+      return;
+    }
+    block.style.display = "block";
+    const used = await getTodayLimitUsed();
+    setText("ownerDailyUsed", used.toLocaleString("ru-RU"));
+  }
+
+  /* ============================================================
      ЛОГИ
      ============================================================ */
   async function logAction(action, note, targetUid, targetType) {
@@ -183,11 +255,17 @@ waitForSqwidOwner((S) => {
     document.querySelectorAll('[data-owner-only="1"]').forEach(el => {
       el.style.display = isOwner ? "" : "none";
     });
-    // Магазин отдельно — owner + special mod
+
     if (canManageShop()) {
       document.querySelectorAll('.owner-tab[data-tab="shop"]').forEach(el => el.style.display = "");
       document.querySelectorAll('.owner-pane[data-pane="shop"]').forEach(el => el.style.display = "");
     }
+
+    if (isOwner || isSpecialMod) {
+      document.querySelectorAll('.owner-tab[data-tab="economy"]').forEach(el => el.style.display = "");
+      document.querySelectorAll('.owner-pane[data-pane="economy"]').forEach(el => el.style.display = "");
+    }
+
     const badge = document.getElementById("ownerRoleBadge");
     if (badge) {
       badge.textContent = isOwner ? "OWNER" : "MODERATOR";
@@ -308,7 +386,7 @@ Sqwid+: ${plusCount}
      ЭКОНОМИКА
      ============================================================ */
   function renderEconomy() {
-    if (!isOwner) return;
+    if (!isOwner && !isSpecialMod) return;
     const gs = document.getElementById("ownerGiveSearch");
     const ps = document.getElementById("ownerPlusSearch");
     if (gs) gs.oninput = () => renderPickList("ownerGiveResults", gs.value, (uid) => {
@@ -323,6 +401,7 @@ Sqwid+: ${plusCount}
       document.getElementById("ownerPlusPicked").style.display = "block";
       document.getElementById("ownerPlusPickedName").textContent = u.name || u.email || "—";
     });
+    refreshDailyLimitUI();
   }
 
   function renderPickList(containerId, query, onPick) {
@@ -365,22 +444,39 @@ Sqwid+: ${plusCount}
     });
   }
 
+  /* --- ВЫДАТЬ SQ --- */
   const btnGiveSQ = document.getElementById("btnOwnerGiveSQ");
   if (btnGiveSQ) btnGiveSQ.addEventListener("click", async () => {
-    if (!isOwner) return;
+    if (!isOwner && !isSpecialMod) return;
     if (!givePickedUid) return S.showToast("Выбери пользователя", "error");
     const amt = parseInt(document.getElementById("ownerGiveAmount").value) || 0;
     if (amt <= 0) return S.showToast("Сумма > 0", "error");
+
+    if (hasDailyLimit()) {
+      const used = await getTodayLimitUsed();
+      if (used + amt > DAILY_LIMIT_SQ) {
+        const left = Math.max(0, DAILY_LIMIT_SQ - used);
+        S.showAlert(
+          `Превышен дневной лимит.\n\nЛимит: ${DAILY_LIMIT_SQ.toLocaleString("ru-RU")} SQ\nУже выдано: ${used.toLocaleString("ru-RU")} SQ\nОсталось: ${left.toLocaleString("ru-RU")} SQ`,
+          "Лимит"
+        );
+        return;
+      }
+    }
+
     const u = allUsers[givePickedUid];
     const newBal = (u.coins || 0) + amt;
     await update(ref(db, "users/" + givePickedUid), { coins: newBal });
+    await addToDailyLimit(amt);
     await logAction("Выдал SQ", `${amt} SQ → ${u.name || u.email}`, givePickedUid, "user");
     S.showToast(`+${amt} SQ`, "ok");
+    refreshDailyLimitUI();
   });
 
+  /* --- ЗАБРАТЬ SQ --- */
   const btnTakeSQ = document.getElementById("btnOwnerTakeSQ");
   if (btnTakeSQ) btnTakeSQ.addEventListener("click", async () => {
-    if (!isOwner) return;
+    if (!isOwner && !isSpecialMod) return;
     if (!givePickedUid) return S.showToast("Выбери пользователя", "error");
     const amt = parseInt(document.getElementById("ownerGiveAmount").value) || 0;
     if (amt <= 0) return S.showToast("Сумма > 0", "error");
@@ -391,9 +487,10 @@ Sqwid+: ${plusCount}
     S.showToast(`-${amt} SQ`, "ok");
   });
 
+  /* --- ВЫДАТЬ SQWID+ --- */
   const btnGivePlus = document.getElementById("btnOwnerGivePlus");
   if (btnGivePlus) btnGivePlus.addEventListener("click", async () => {
-    if (!isOwner) return;
+    if (!isOwner && !isSpecialMod) return;
     if (!plusPickedUid) return S.showToast("Выбери пользователя", "error");
     const months = parseInt(document.getElementById("ownerPlusMonths").value);
     const u = allUsers[plusPickedUid];
@@ -412,9 +509,10 @@ Sqwid+: ${plusCount}
     S.showToast("Sqwid+ выдан", "ok");
   });
 
+  /* --- ЗАБРАТЬ SQWID+ --- */
   const btnTakePlus = document.getElementById("btnOwnerTakePlus");
   if (btnTakePlus) btnTakePlus.addEventListener("click", async () => {
-    if (!isOwner) return;
+    if (!isOwner && !isSpecialMod) return;
     if (!plusPickedUid) return S.showToast("Выбери пользователя", "error");
     const u = allUsers[plusPickedUid];
     await update(ref(db, "users/" + plusPickedUid), { plusUntil: null });
@@ -556,6 +654,25 @@ Sqwid+: ${plusCount}
     setText("ouName", u.name || "Без имени");
     setText("ouUsername", u.username ? "@" + u.username : (u.email || ""));
 
+    // ЗАЩИТА ВЛАДЕЛЬЦА
+    const targetIsOwner = isTargetOwner(ownerUserModalUid);
+    if (targetIsOwner) {
+      // Скрываем все опасные кнопки
+      show("btnOuBan", false);
+      show("btnOuMute", false);
+      show("btnOuFreeze", false);
+      show("btnOuUnverify", false);
+      show("btnOuMakeModerator", false);
+      show("btnOuRemoveModerator", false);
+      // Показываем только «разблокировать», если вдруг владелец каким-то образом забанен
+      show("btnOuUnban", !!u.banned);
+      show("btnOuUnmute", !!u.muted);
+      show("btnOuUnfreeze", !!u.frozen);
+      show("btnOuVerify", false);
+      return;
+    }
+
+    // Обычная логика
     show("btnOuBan", !u.banned);
     show("btnOuUnban", !!u.banned);
     show("btnOuMute", !u.muted);
@@ -587,7 +704,12 @@ Sqwid+: ${plusCount}
     if (window.Sqwid.openOtherProfile) window.Sqwid.openOtherProfile(ownerUserModalUid);
   });
 
+  /* ============================================================
+     ДЕЙСТВИЯ С ЮЗЕРОМ (с защитой владельца)
+     ============================================================ */
   bindUserAction("btnOuBan", async () => {
+    if (!guardOwner(ownerUserModalUid, "забанить")) return;
+    if (isSelf(ownerUserModalUid)) return S.showToast("Нельзя забанить себя", "error");
     await update(ref(db, "users/" + ownerUserModalUid), { banned: true });
     await logAction("Забанил", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
     S.showToast("Забанен", "ok");
@@ -598,6 +720,8 @@ Sqwid+: ${plusCount}
     S.showToast("Разбанен", "ok");
   });
   bindUserAction("btnOuMute", async () => {
+    if (!guardOwner(ownerUserModalUid, "замутить")) return;
+    if (isSelf(ownerUserModalUid)) return S.showToast("Нельзя замутить себя", "error");
     await update(ref(db, "users/" + ownerUserModalUid), { muted: true });
     await logAction("Замутил", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
     S.showToast("Замучен", "ok");
@@ -608,13 +732,15 @@ Sqwid+: ${plusCount}
     S.showToast("Размучен", "ok");
   });
   bindUserAction("btnOuFreeze", async () => {
+    if (!guardOwner(ownerUserModalUid, "заморозить")) return;
+    if (isSelf(ownerUserModalUid)) return S.showToast("Нельзя заморозить себя", "error");
     await update(ref(db, "users/" + ownerUserModalUid), { frozen: true });
-    await logAction("Заморозил баланс", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
+    await logAction("Заморозил", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
     S.showToast("Заморожен", "ok");
   });
   bindUserAction("btnOuUnfreeze", async () => {
     await update(ref(db, "users/" + ownerUserModalUid), { frozen: null });
-    await logAction("Разморозил баланс", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
+    await logAction("Разморозил", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
     S.showToast("Разморожен", "ok");
   });
   bindUserAction("btnOuVerify", async () => {
@@ -629,12 +755,14 @@ Sqwid+: ${plusCount}
     S.showToast("Верифицирован", "ok");
   });
   bindUserAction("btnOuUnverify", async () => {
+    if (!guardOwner(ownerUserModalUid, "снять верификацию")) return;
     await update(ref(db, "users/" + ownerUserModalUid), { verified: null });
     await logAction("Снял верификацию", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
     S.showToast("Снято", "ok");
   });
   bindUserAction("btnOuMakeModerator", async () => {
     if (!isOwner) return;
+    if (!guardOwner(ownerUserModalUid, "назначить модератором")) return;
     await update(ref(db, "users/" + ownerUserModalUid), { role: "moderator" });
     await logAction("Назначил модератором", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
     const botRef = push(ref(db, "botChat/" + ownerUserModalUid));
@@ -647,6 +775,7 @@ Sqwid+: ${plusCount}
   });
   bindUserAction("btnOuRemoveModerator", async () => {
     if (!isOwner) return;
+    if (!guardOwner(ownerUserModalUid, "снять модератора")) return;
     await update(ref(db, "users/" + ownerUserModalUid), { role: null });
     await logAction("Снял модератора", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
     S.showToast("Снят", "ok");
@@ -1038,7 +1167,7 @@ Sqwid+: ${plusCount}
   }
 
   /* ============================================================
-     КНОПКА ОТКРЫТИЯ ПАНЕЛИ (в шапке профиля)
+     КНОПКА ОТКРЫТИЯ ПАНЕЛИ
      ============================================================ */
   setInterval(() => {
     const btn = document.getElementById("btnOpenOwnerPanel");
@@ -1049,7 +1178,7 @@ Sqwid+: ${plusCount}
   }, 800);
 
   /* ============================================================
-     ПУБЛИЧНАЯ ФУНКЦИЯ: ЖАЛОБА
+     ЖАЛОБА
      ============================================================ */
   window.Sqwid.openReportModal = function ({ targetType, targetUid, chatId, messageIds, targetLabel }) {
     reportContext = { targetType, targetUid, chatId, messageIds, targetLabel };

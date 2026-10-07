@@ -5,11 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Sqwid Messenger</title>
   <link rel="stylesheet" href="chat.css">
-  <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000000">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Sqwid">
 </head>
 <body>
 
@@ -37,6 +32,7 @@
       <button class="chat-menu-btn" id="btnChatMenu">☰</button>
     </header>
     <div id="messages" class="messages"></div>
+
     <div id="photoPreview" class="photo-preview">
       <img id="photoPreviewImg" alt="">
       <div class="photo-preview-input">
@@ -45,6 +41,12 @@
       </div>
       <button class="photo-cancel-btn" id="btnCancelPhoto">✕</button>
     </div>
+
+    <div class="chat-deleted-banner" id="chatDeletedBanner" style="display:none;">
+      <div class="chat-deleted-text" id="chatDeletedText">🚫 Пользователь заблокирован</div>
+      <button class="chat-deleted-btn" id="btnDeleteChatFromBanner">🗑 Удалить чат</button>
+    </div>
+
     <div class="input-area" id="inputArea">
       <button class="attach-btn" id="btnAttach">📎</button>
       <input id="msgInput" placeholder="Сообщение...">
@@ -69,6 +71,7 @@
       <div style="padding: 0 20px 20px; display:flex; flex-direction:column; gap:10px;">
         <button class="btn-create" id="btnUpWrite" style="width:100%;">💬 Написать</button>
         <button class="btn-create" id="btnUpGift" style="width:100%; background:#f7b500; color:#1f2c34;">🎁 Подарить</button>
+        <button class="btn-create" id="btnUpTrade" style="width:100%;background:#00a884;color:#fff;">🤝 Торг</button>
         <button class="btn-create" id="btnUpReport" style="width:100%;background:#2a3942;color:#f7b500;">🚨 Пожаловаться</button>
       </div>
       <div class="up-section" id="upUsernamesSection" style="display:none;">
@@ -200,7 +203,8 @@
         <div class="mp-stat"><div class="mp-stat-value" id="profileStatMessages">0</div><div class="mp-stat-label">Сообщений</div></div>
         <div class="mp-stat"><div class="mp-stat-value" id="profileStatPhotos">0</div><div class="mp-stat-label">Фото</div></div>
       </div>
-      <div style="padding: 0 20px 20px;">
+      <div style="padding: 0 20px 20px; display:flex; flex-direction:column; gap:10px;">
+        <button class="btn-create" id="btnOpenGames" style="width:100%;background:#f7b500;color:#1f2c34;">🎮 Sqwid Games</button>
         <button class="btn-create" id="btnEditProfile" style="width:100%;">✏️ Редактировать профиль</button>
       </div>
       <div class="up-section" id="profileUsernamesSection" style="display:none;">
@@ -510,7 +514,7 @@
     </header>
     <div class="owner-tabs">
       <button class="owner-tab active" data-tab="overview">📊 Обзор</button>
-      <button class="owner-tab" data-tab="economy" data-owner-only="1">💰 Экономика</button>
+      <button class="owner-tab" data-tab="economy">💰 Экономика</button>
       <button class="owner-tab" data-tab="users">👥 Юзеры</button>
       <button class="owner-tab" data-tab="chats">📢 Чаты</button>
       <button class="owner-tab" data-tab="reports">🚨 Жалобы <span id="ownerReportsBadge" class="owner-badge" style="display:none;">0</span></button>
@@ -519,7 +523,6 @@
       <button class="owner-tab" data-tab="broadcast" data-owner-only="1">📣 Рассылка</button>
     </div>
     <div class="owner-body">
-
       <div class="owner-pane active" data-pane="overview">
         <div class="owner-stats-grid">
           <div class="owner-stat-card"><div class="owner-stat-value" id="osUsers">0</div><div class="owner-stat-label">Пользователей</div></div>
@@ -549,6 +552,9 @@
           <div class="settings-field" style="margin-top:10px;">
             <label>Сумма SQ</label>
             <input id="ownerGiveAmount" type="number" min="1" value="1000">
+          </div>
+          <div id="ownerDailyLimit" style="display:none;background:rgba(247,181,0,0.1);border:1px solid rgba(247,181,0,0.3);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#f7b500;font-weight:700;">
+            Сегодня: <span id="ownerDailyUsed">0</span> / 500 000 SQ
           </div>
           <button class="btn-create" id="btnOwnerGiveSQ" style="width:100%;">💰 Выдать</button>
           <button class="btn-cancel" id="btnOwnerTakeSQ" style="width:100%;margin-top:8px;background:#2a3942;color:#ff6b6b;">Забрать</button>
@@ -617,42 +623,34 @@
               <option value="frame">🖼 Рамка</option>
             </select>
           </div>
-
           <div class="settings-field">
             <label>ID товара (латиница, без пробелов)</label>
             <input id="shopAddId" placeholder="например: username_artem">
             <div class="settings-hint">Уникальный ключ. Если занят — перезапишется.</div>
           </div>
-
           <div class="settings-field">
             <label>Название</label>
             <input id="shopAddName" placeholder="например: @artem">
           </div>
-
           <div class="settings-field">
             <label>Значение</label>
             <input id="shopAddValue" placeholder="например: artem (для юз), #ff0000 (для цвета)">
             <div class="settings-hint" id="shopAddValueHint">Для юзернейма — только латиница/цифры/_. Для цвета — HEX. Для значка — эмодзи.</div>
           </div>
-
           <div class="settings-field">
             <label>Цена (SQ)</label>
             <input id="shopAddPrice" type="number" min="0" value="1000">
           </div>
-
           <div class="settings-field">
             <label>Превью (необязательно)</label>
             <input id="shopAddPreview" placeholder="короткое описание">
           </div>
-
           <div class="settings-field">
             <label>Иконка (для значков, рамок, ников)</label>
             <input id="shopAddIcon" placeholder="🔥 или 🖼">
           </div>
-
           <button class="btn-create" id="btnShopAdd" style="width:100%;">➕ Добавить в магазин</button>
         </div>
-
         <div class="owner-section-title" style="margin-top:20px;">Все товары в магазине</div>
         <div class="owner-filter-row">
           <button class="owner-filter active" data-shop-filter="all">Все</button>
@@ -663,7 +661,6 @@
           <button class="owner-filter" data-shop-filter="emoji">😀 Значки</button>
           <button class="owner-filter" data-shop-filter="frame">🖼 Рамки</button>
         </div>
-
         <input id="shopItemsSearch" class="cm-search-input" placeholder="Поиск товара" style="margin-top:10px;">
         <div id="shopItemsList" class="owner-users-list" style="margin-top:12px;"></div>
       </div>
@@ -697,26 +694,11 @@
       <div id="reportViewStatus" style="font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(255,107,107,0.15);color:#ff6b6b;font-weight:800;">NEW</div>
     </header>
     <div class="chat-info-scroll">
-      <div class="chat-info-section">
-        <div class="chat-info-section-label">Тип</div>
-        <div class="chat-info-section-value" id="rvType">—</div>
-      </div>
-      <div class="chat-info-section">
-        <div class="chat-info-section-label">Причина</div>
-        <div class="chat-info-section-value" id="rvReason">—</div>
-      </div>
-      <div class="chat-info-section">
-        <div class="chat-info-section-label">Кто пожаловался</div>
-        <div class="chat-info-section-value" id="rvFrom">—</div>
-      </div>
-      <div class="chat-info-section">
-        <div class="chat-info-section-label">На кого</div>
-        <div class="chat-info-section-value" id="rvTarget">—</div>
-      </div>
-      <div class="chat-info-section">
-        <div class="chat-info-section-label">Комментарий</div>
-        <div class="chat-info-section-text" id="rvComment">—</div>
-      </div>
+      <div class="chat-info-section"><div class="chat-info-section-label">Тип</div><div class="chat-info-section-value" id="rvType">—</div></div>
+      <div class="chat-info-section"><div class="chat-info-section-label">Причина</div><div class="chat-info-section-value" id="rvReason">—</div></div>
+      <div class="chat-info-section"><div class="chat-info-section-label">Кто пожаловался</div><div class="chat-info-section-value" id="rvFrom">—</div></div>
+      <div class="chat-info-section"><div class="chat-info-section-label">На кого</div><div class="chat-info-section-value" id="rvTarget">—</div></div>
+      <div class="chat-info-section"><div class="chat-info-section-label">Комментарий</div><div class="chat-info-section-text" id="rvComment">—</div></div>
       <div class="chat-info-section" id="rvMessagesSection" style="display:none;">
         <div class="chat-info-section-label">Сообщения с нарушениями</div>
         <div id="rvMessagesList" class="rv-messages-list"></div>
@@ -736,6 +718,195 @@
     </div>
   </div>
 
+  <!-- ПОИСК ПО СООБЩЕНИЯМ -->
+  <div id="screen-search-messages" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackSearchMsg">←</button>
+      <div class="top-search" style="flex:1;">
+        <input id="msgSearchInput" placeholder="Поиск по сообщениям...">
+      </div>
+    </header>
+    <div id="msgSearchResults" class="msg-search-results"></div>
+    <div id="msgSearchEmpty" class="gallery-empty" style="display:none;">
+      <div style="font-size:48px;margin-bottom:12px;">🔍</div>
+      <div>Ничего не найдено</div>
+    </div>
+  </div>
+
+  <!-- МЕДИА-ГАЛЕРЕЯ -->
+  <div id="screen-gallery" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackGallery">←</button>
+      <div class="top-title" style="flex:1;" id="galleryTitle">Медиа</div>
+      <div id="galleryCount" style="font-size:13px;color:#8696a0;font-weight:700;">0</div>
+    </header>
+    <div class="gallery-body">
+      <div id="galleryGrid" class="gallery-grid"></div>
+      <div id="galleryEmpty" class="gallery-empty" style="display:none;">
+        <div style="font-size:48px;margin-bottom:12px;">🖼</div>
+        <div>Пока нет фото</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПРОСМОТР ФОТО -->
+  <div id="screen-viewer" class="screen">
+    <header class="top-bar" style="background:rgba(0,0,0,0.9);">
+      <button class="top-new-btn" id="btnBackViewer">←</button>
+      <div class="top-title" style="flex:1;" id="viewerTitle">Фото</div>
+      <button class="top-new-btn" id="btnDownloadPhoto" style="font-size:18px;">⬇</button>
+    </header>
+    <div class="viewer-body">
+      <button class="viewer-nav viewer-prev" id="btnViewerPrev">‹</button>
+      <img id="viewerImage" class="viewer-image" alt="">
+      <button class="viewer-nav viewer-next" id="btnViewerNext">›</button>
+    </div>
+    <div class="viewer-info">
+      <div id="viewerSender" class="viewer-sender">—</div>
+      <div id="viewerTime" class="viewer-time">—</div>
+      <div id="viewerCaption" class="viewer-caption"></div>
+    </div>
+  </div>
+
+  <!-- ТОРГ -->
+  <div id="screen-trade" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackTrade">←</button>
+      <div class="top-title" style="flex:1;">🤝 Торг</div>
+      <div id="tradeStatus" style="font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(247,181,0,0.15);color:#f7b500;font-weight:800;">ОЖИДАНИЕ</div>
+    </header>
+
+    <div class="trade-body">
+      <div class="trade-side">
+        <div class="trade-side-title">Вы предлагаете</div>
+        <div id="tradeMyItems" class="trade-items"></div>
+        <button class="trade-add-btn" id="btnTradeAddMy">＋ Добавить предмет</button>
+      </div>
+
+      <div class="trade-vs">⇄</div>
+
+      <div class="trade-side">
+        <div class="trade-side-title" id="tradeOtherTitle">Собеседник предлагает</div>
+        <div id="tradeOtherItems" class="trade-items"></div>
+      </div>
+    </div>
+
+    <div class="trade-actions">
+      <button class="trade-btn trade-btn-reject" id="btnTradeReject">✕ Отказ</button>
+      <button class="trade-btn trade-btn-accept" id="btnTradeAccept">✓ Принять</button>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: ВЫБОР ПРЕДМЕТА ДЛЯ ТОРГА -->
+  <div id="modal-trade-pick" class="modal">
+    <div class="modal-content">
+      <h2>Что предложить?</h2>
+      <div class="owner-filter-row" style="margin-bottom:12px;">
+        <button class="owner-filter active" data-trade-tab="usernames">🏷 Юзернеймы</button>
+        <button class="owner-filter" data-trade-tab="phones">📞 Номера</button>
+        <button class="owner-filter" data-trade-tab="gifts">🎁 Подарки</button>
+      </div>
+      <div id="tradePickList" class="trade-pick-list"></div>
+      <button class="menu-row cancel" id="btnTradePickCancel" style="margin-top:10px;">Отмена</button>
+    </div>
+  </div>
+
+  <!-- ИГРОВОЙ БОТ -->
+  <div id="screen-games" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn" id="btnBackGames">←</button>
+      <div class="top-title" style="flex:1;">🎮 Sqwid Games</div>
+      <div id="gamesBalance" style="font-size:13px;padding:6px 12px;border-radius:999px;background:rgba(247,181,0,0.15);color:#f7b500;font-weight:800;">🪙 0 SQ</div>
+    </header>
+
+    <div class="games-body">
+      <div class="games-hero">
+        <div style="font-size:56px;">🎮</div>
+        <div style="font-size:15px;color:#8696a0;margin-top:8px;">Играй и зарабатывай SQ за навык и активность</div>
+      </div>
+
+      <div class="games-section-title">Мини-игры</div>
+      <div class="games-grid">
+        <button class="games-card" data-game="quiz">
+          <div class="games-card-icon">🧠</div>
+          <div class="games-card-name">Викторина</div>
+          <div class="games-card-desc">5 вопросов · +50 за каждый</div>
+        </button>
+        <button class="games-card" data-game="guess">
+          <div class="games-card-icon">🎯</div>
+          <div class="games-card-name">Угадай число</div>
+          <div class="games-card-desc">1–100 · 5 попыток</div>
+        </button>
+        <button class="games-card" data-game="reaction">
+          <div class="games-card-icon">⚡</div>
+          <div class="games-card-name">Реакция</div>
+          <div class="games-card-desc">Успей тапнуть</div>
+        </button>
+      </div>
+
+      <div class="games-section-title">Ежедневные квесты</div>
+      <div id="gamesQuests" class="games-quests"></div>
+
+      <div class="games-hint">Все награды — за навык и активность. Лимит выигрыша: 100 000 SQ в день.</div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: ВИКТОРИНА -->
+  <div id="modal-quiz" class="modal">
+    <div class="modal-content">
+      <h2>🧠 Викторина</h2>
+      <div id="quizProgress" style="font-size:13px;color:#8696a0;margin-bottom:10px;">Вопрос 1 / 5</div>
+      <div id="quizQuestion" style="font-size:18px;font-weight:700;color:#e9edef;margin-bottom:16px;line-height:1.4;">—</div>
+      <div id="quizAnswers" class="game-choices"></div>
+      <div id="quizResult" style="text-align:center;font-size:15px;font-weight:700;min-height:24px;margin-bottom:12px;"></div>
+      <button class="btn-cancel" id="btnQuizClose" style="width:100%;">Закрыть</button>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: УГАДАЙ ЧИСЛО -->
+  <div id="modal-guess" class="modal">
+    <div class="modal-content" style="text-align:center;">
+      <h2>🎯 Угадай число</h2>
+      <div id="guessInfo" style="font-size:14px;color:#8696a0;margin-bottom:10px;">Я загадал число от 1 до 100</div>
+      <div id="guessAttempts" style="font-size:13px;color:#f7b500;font-weight:700;margin-bottom:14px;">Попыток осталось: 5</div>
+      <div id="guessResult" style="font-size:48px;margin:12px 0;">🤔</div>
+      <div id="guessResultText" style="font-size:15px;font-weight:700;color:#e9edef;margin-bottom:14px;min-height:22px;"></div>
+      <div class="settings-field">
+        <input id="guessInput" type="number" min="1" max="100" placeholder="Число 1–100">
+      </div>
+      <button class="btn-create" id="btnGuessSubmit" style="width:100%;background:#f7b500;color:#1f2c34;">Проверить</button>
+      <button class="btn-cancel" id="btnGuessClose" style="width:100%;margin-top:8px;">Закрыть</button>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: РЕАКЦИЯ -->
+  <div id="modal-reaction" class="modal">
+    <div class="modal-content" style="text-align:center;padding:30px 20px;">
+      <h2>⚡ Реакция</h2>
+      <div id="reactionStage" style="background:rgba(255,255,255,0.05);border-radius:16px;padding:40px 20px;margin:16px 0;font-size:16px;font-weight:700;color:#8696a0;cursor:pointer;user-select:none;">
+        Нажми «Старт»
+      </div>
+      <div id="reactionResult" style="font-size:15px;font-weight:700;min-height:22px;margin-bottom:12px;"></div>
+      <button class="btn-create" id="btnReactionStart" style="width:100%;background:#00a884;">Старт</button>
+      <button class="btn-cancel" id="btnReactionClose" style="width:100%;margin-top:8px;">Закрыть</button>
+    </div>
+  </div>
+
+  <!-- ЭКРАН: БАН -->
+  <div id="screen-banned" class="screen">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;">
+      <div style="font-size:80px;margin-bottom:20px;">🚫</div>
+      <h2 style="font-size:24px;font-weight:800;color:#ff6b6b;margin:0 0 12px;">Аккаунт заблокирован</h2>
+      <div style="font-size:15px;color:#8696a0;line-height:1.5;max-width:300px;">
+        Ваш аккаунт был заблокирован администрацией Sqwid.
+        Если вы считаете это ошибкой — обратитесь в поддержку.
+      </div>
+      <button class="btn-cancel" id="btnBannedLogout" style="margin-top:30px;background:#2a3942;color:#ff6b6b;width:100%;max-width:300px;">
+        Выйти из аккаунта
+      </button>
+    </div>
+  </div>
+
   <!-- НИЖНЕЕ МЕНЮ -->
   <nav class="bottom-nav" id="bottomNav">
     <button class="nav-btn active" data-screen="screen-chats">
@@ -750,257 +921,220 @@
   </nav>
 
   <!-- МОДАЛКИ -->
-  <div id="modal-create" class="modal">
-    <div class="modal-content">
-      <button class="menu-row" id="btnCreatePrivate">💬 Создать личный чат</button>
-      <button class="menu-row" id="btnCreateGroup">👥 Создать группу</button>
-      <button class="menu-row" id="btnCreateChannel">📢 Создать канал</button>
-      <button class="menu-row cancel" id="btnCloseCreate">Отмена</button>
-    </div>
-  </div>
+  <div id="modal-create" class="modal"><div class="modal-content">
+    <button class="menu-row" id="btnCreatePrivate">💬 Создать личный чат</button>
+    <button class="menu-row" id="btnCreateGroup">👥 Создать группу</button>
+    <button class="menu-row" id="btnCreateChannel">📢 Создать канал</button>
+    <button class="menu-row cancel" id="btnCloseCreate">Отмена</button>
+  </div></div>
 
-  <div id="modal-private" class="modal">
-    <div class="modal-content">
-      <h2>Новый личный чат</h2>
-      <div class="settings-field"><input id="privateSearch" placeholder="Поиск по имени или @username"></div>
-      <div id="privateResults" class="create-results"></div>
-      <button class="menu-row cancel" id="btnClosePrivate" style="margin-top:10px;">Отмена</button>
-    </div>
-  </div>
+  <div id="modal-private" class="modal"><div class="modal-content">
+    <h2>Новый личный чат</h2>
+    <div class="settings-field"><input id="privateSearch" placeholder="Поиск по имени или @username"></div>
+    <div id="privateResults" class="create-results"></div>
+    <button class="menu-row cancel" id="btnClosePrivate" style="margin-top:10px;">Отмена</button>
+  </div></div>
 
-  <div id="modal-autodelete" class="modal">
-    <div class="modal-content">
-      <h2>Автоудаление сообщений</h2>
-      <button class="menu-row" data-ad="0">Выключено</button>
-      <button class="menu-row" data-ad="86400">24 часа</button>
-      <button class="menu-row" data-ad="604800">7 дней</button>
-      <button class="menu-row" data-ad="2592000">30 дней</button>
-      <button class="menu-row cancel" id="btnCloseAutoDelete">Отмена</button>
-    </div>
-  </div>
+  <div id="modal-autodelete" class="modal"><div class="modal-content">
+    <h2>Автоудаление сообщений</h2>
+    <button class="menu-row" data-ad="0">Выключено</button>
+    <button class="menu-row" data-ad="86400">24 часа</button>
+    <button class="menu-row" data-ad="604800">7 дней</button>
+    <button class="menu-row" data-ad="2592000">30 дней</button>
+    <button class="menu-row cancel" id="btnCloseAutoDelete">Отмена</button>
+  </div></div>
 
-  <div id="modal-autodelete-edit" class="modal">
-    <div class="modal-content">
-      <h2>Автоудаление сообщений</h2>
-      <button class="menu-row" data-ad="0">Выключено</button>
-      <button class="menu-row" data-ad="86400">24 часа</button>
-      <button class="menu-row" data-ad="604800">7 дней</button>
-      <button class="menu-row" data-ad="2592000">30 дней</button>
-      <button class="menu-row cancel" id="btnCloseAutoDeleteEdit">Отмена</button>
-    </div>
-  </div>
+  <div id="modal-autodelete-edit" class="modal"><div class="modal-content">
+    <h2>Автоудаление сообщений</h2>
+    <button class="menu-row" data-ad="0">Выключено</button>
+    <button class="menu-row" data-ad="86400">24 часа</button>
+    <button class="menu-row" data-ad="604800">7 дней</button>
+    <button class="menu-row" data-ad="2592000">30 дней</button>
+    <button class="menu-row cancel" id="btnCloseAutoDeleteEdit">Отмена</button>
+  </div></div>
 
-  <div id="modal-member-actions" class="modal">
-    <div class="modal-content">
-      <div style="text-align:center;margin-bottom:14px;">
-        <img id="maAva" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:#3b82f6;margin-bottom:8px;" alt="">
-        <div id="maName" style="font-size:17px;font-weight:700;color:#e9edef;">—</div>
-        <div id="maUsername" style="font-size:13px;color:#8696a0;">—</div>
-      </div>
-      <button class="menu-row" id="btnMaViewProfile">👤 Профиль</button>
-      <button class="menu-row" id="btnMaMakeAdmin" style="display:none;">⭐ Назначить админом</button>
-      <button class="menu-row" id="btnMaRemoveAdmin" style="display:none;">↓ Снять админа</button>
-      <button class="menu-row danger" id="btnMaKick" style="display:none;">🚫 Удалить из чата</button>
-      <button class="menu-row cancel" id="btnMaCancel">Отмена</button>
+  <div id="modal-member-actions" class="modal"><div class="modal-content">
+    <div style="text-align:center;margin-bottom:14px;">
+      <img id="maAva" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:#3b82f6;margin-bottom:8px;" alt="">
+      <div id="maName" style="font-size:17px;font-weight:700;color:#e9edef;">—</div>
+      <div id="maUsername" style="font-size:13px;color:#8696a0;">—</div>
     </div>
-  </div>
+    <button class="menu-row" id="btnMaViewProfile">👤 Профиль</button>
+    <button class="menu-row" id="btnMaMakeAdmin" style="display:none;">⭐ Назначить админом</button>
+    <button class="menu-row" id="btnMaRemoveAdmin" style="display:none;">↓ Снять админа</button>
+    <button class="menu-row danger" id="btnMaKick" style="display:none;">🚫 Удалить из чата</button>
+    <button class="menu-row cancel" id="btnMaCancel">Отмена</button>
+  </div></div>
 
-  <div id="modal-owner-user" class="modal">
-    <div class="modal-content">
-      <div style="text-align:center;margin-bottom:14px;">
-        <img id="ouAva" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:#3b82f6;margin-bottom:8px;" alt="">
-        <div id="ouName" style="font-size:17px;font-weight:700;color:#e9edef;">—</div>
-        <div id="ouUsername" style="font-size:13px;color:#8696a0;">—</div>
-      </div>
-      <button class="menu-row" id="btnOuProfile">👤 Профиль</button>
-      <button class="menu-row" id="btnOuVerify" style="color:#60a5fa;">✓ Верифицировать</button>
-      <button class="menu-row" id="btnOuUnverify" style="color:#8696a0;display:none;">✕ Снять верификацию</button>
-      <button class="menu-row" id="btnOuBan" style="color:#ff6b6b;">🚫 Забанить</button>
-      <button class="menu-row" id="btnOuUnban" style="color:#00a884;display:none;">✓ Разбанить</button>
-      <button class="menu-row" id="btnOuMute" style="color:#f7b500;">🔇 Замутить</button>
-      <button class="menu-row" id="btnOuUnmute" style="color:#00a884;display:none;">🔊 Размутить</button>
-      <button class="menu-row" id="btnOuFreeze" style="color:#3b82f6;">❄ Заморозить баланс</button>
-      <button class="menu-row" id="btnOuUnfreeze" style="color:#00a884;display:none;">🔥 Разморозить</button>
-      <button class="menu-row" id="btnOuMakeModerator" data-owner-only="1" style="color:#a855f7;">⭐ Назначить модератором</button>
-      <button class="menu-row" id="btnOuRemoveModerator" data-owner-only="1" style="color:#ff6b6b;display:none;">↓ Снять модератора</button>
-      <button class="menu-row cancel" id="btnOuCancel">Отмена</button>
+  <div id="modal-owner-user" class="modal"><div class="modal-content">
+    <div style="text-align:center;margin-bottom:14px;">
+      <img id="ouAva" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:#3b82f6;margin-bottom:8px;" alt="">
+      <div id="ouName" style="font-size:17px;font-weight:700;color:#e9edef;">—</div>
+      <div id="ouUsername" style="font-size:13px;color:#8696a0;">—</div>
     </div>
-  </div>
+    <button class="menu-row" id="btnOuProfile">👤 Профиль</button>
+    <button class="menu-row" id="btnOuVerify" style="color:#60a5fa;">✓ Верифицировать</button>
+    <button class="menu-row" id="btnOuUnverify" style="color:#8696a0;display:none;">✕ Снять верификацию</button>
+    <button class="menu-row" id="btnOuBan" style="color:#ff6b6b;">🚫 Забанить</button>
+    <button class="menu-row" id="btnOuUnban" style="color:#00a884;display:none;">✓ Разбанить</button>
+    <button class="menu-row" id="btnOuMute" style="color:#f7b500;">🔇 Замутить</button>
+    <button class="menu-row" id="btnOuUnmute" style="color:#00a884;display:none;">🔊 Размутить</button>
+    <button class="menu-row" id="btnOuFreeze" style="color:#3b82f6;">❄ Заморозить</button>
+    <button class="menu-row" id="btnOuUnfreeze" style="color:#00a884;display:none;">🔥 Разморозить</button>
+    <button class="menu-row" id="btnOuMakeModerator" data-owner-only="1" style="color:#a855f7;">⭐ Назначить модератором</button>
+    <button class="menu-row" id="btnOuRemoveModerator" data-owner-only="1" style="color:#ff6b6b;display:none;">↓ Снять модератора</button>
+    <button class="menu-row cancel" id="btnOuCancel">Отмена</button>
+  </div></div>
 
-  <div id="modal-report" class="modal">
-    <div class="modal-content">
-      <h2>🚨 Жалоба</h2>
-      <div style="font-size:13.5px;color:#8696a0;margin-bottom:12px;" id="reportTargetInfo">—</div>
-      <div class="settings-field">
-        <label>Причина</label>
-        <select id="reportReason" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.04);color:#e9edef;font-size:15px;font-family:inherit;outline:none;">
-          <option value="spam">Спам</option>
-          <option value="abuse">Оскорбления</option>
-          <option value="violence">Насилие / угрозы</option>
-          <option value="adult">18+ контент</option>
-          <option value="scam">Мошенничество</option>
-          <option value="other">Другое</option>
-        </select>
-      </div>
-      <div class="settings-field">
-        <label>Комментарий (необязательно)</label>
-        <textarea id="reportComment" maxlength="300" rows="3" placeholder="Опишите подробнее..."></textarea>
-      </div>
-      <button class="btn-create" id="btnReportSubmit" style="width:100%;background:#ef4444;">Отправить жалобу</button>
-      <button class="btn-cancel" id="btnReportCancel" style="width:100%;margin-top:8px;">Отмена</button>
+  <div id="modal-report" class="modal"><div class="modal-content">
+    <h2>🚨 Жалоба</h2>
+    <div style="font-size:13.5px;color:#8696a0;margin-bottom:12px;" id="reportTargetInfo">—</div>
+    <div class="settings-field">
+      <label>Причина</label>
+      <select id="reportReason" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.04);color:#e9edef;font-size:15px;font-family:inherit;outline:none;">
+        <option value="spam">Спам</option>
+        <option value="abuse">Оскорбления</option>
+        <option value="violence">Насилие / угрозы</option>
+        <option value="adult">18+ контент</option>
+        <option value="scam">Мошенничество</option>
+        <option value="other">Другое</option>
+      </select>
     </div>
-  </div>
-
-  <div id="modal-chatMenu" class="modal">
-    <div class="modal-content">
-      <button class="menu-row" id="btnBlockUser">🚫 Заблокировать</button>
-      <button class="menu-row danger" id="btnDeleteChat">🗑 Удалить чат</button>
-      <button class="menu-row cancel" id="btnCloseChatMenu">Отмена</button>
+    <div class="settings-field">
+      <label>Комментарий (необязательно)</label>
+      <textarea id="reportComment" maxlength="300" rows="3" placeholder="Опишите подробнее..."></textarea>
     </div>
-  </div>
+    <button class="btn-create" id="btnReportSubmit" style="width:100%;background:#ef4444;">Отправить жалобу</button>
+    <button class="btn-cancel" id="btnReportCancel" style="width:100%;margin-top:8px;">Отмена</button>
+  </div></div>
 
-  <div id="modal-msgMenu" class="modal">
-    <div class="modal-content">
-      <button class="menu-row" id="btnReactMsg">😊 Реакция</button>
-      <button class="menu-row" id="btnEditMsg">✎ Изменить</button>
-      <button class="menu-row danger" id="btnDeleteMsg">🗑 Удалить</button>
-      <button class="menu-row danger" id="btnReportMsg">🚨 Пожаловаться</button>
-      <button class="menu-row cancel" id="btnCloseMsgMenu">Отмена</button>
+  <div id="modal-chatMenu" class="modal"><div class="modal-content">
+    <button class="menu-row" id="btnBlockUser">🚫 Заблокировать</button>
+    <button class="menu-row danger" id="btnDeleteChat">🗑 Удалить чат</button>
+    <button class="menu-row cancel" id="btnCloseChatMenu">Отмена</button>
+  </div></div>
+
+  <div id="modal-msgMenu" class="modal"><div class="modal-content">
+    <button class="menu-row" id="btnReactMsg">😊 Реакция</button>
+    <button class="menu-row" id="btnEditMsg">✎ Изменить</button>
+    <button class="menu-row danger" id="btnDeleteMsg">🗑 Удалить</button>
+    <button class="menu-row danger" id="btnReportMsg">🚨 Пожаловаться</button>
+    <button class="menu-row cancel" id="btnCloseMsgMenu">Отмена</button>
+  </div></div>
+
+  <div id="modal-react" class="modal"><div class="modal-content react-content">
+    <div class="react-grid" id="reactGrid"></div>
+    <button class="menu-row cancel" id="btnCloseReact">Отмена</button>
+  </div></div>
+
+  <div id="modal-prompt" class="modal"><div class="modal-content">
+    <h2 id="promptTitle">Введите</h2>
+    <input id="promptInput" placeholder="" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#e9edef;font-size:15px;box-sizing:border-box;font-family:inherit;outline:none;margin-bottom:12px;">
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn-cancel" id="promptCancel" style="flex:1;">Отмена</button>
+      <button class="btn-create" id="promptOk" style="flex:1;">ОК</button>
     </div>
-  </div>
+  </div></div>
 
-  <div id="modal-react" class="modal">
-    <div class="modal-content react-content">
-      <div class="react-grid" id="reactGrid"></div>
-      <button class="menu-row cancel" id="btnCloseReact">Отмена</button>
+  <div id="modal-alert" class="modal"><div class="modal-content" style="text-align:center;">
+    <h2 id="alertTitle" style="margin:0 0 10px;">Сообщение</h2>
+    <div id="alertText" style="color:#8696a0;font-size:15px;line-height:1.5;margin-bottom:18px;white-space:pre-wrap;word-break:break-word;"></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-cancel" id="alertCancel" style="flex:1;display:none;">Отмена</button>
+      <button class="btn-create" id="alertOk" style="flex:1;">ОК</button>
     </div>
-  </div>
+  </div></div>
 
-  <div id="modal-prompt" class="modal">
-    <div class="modal-content">
-      <h2 id="promptTitle">Введите</h2>
-      <input id="promptInput" placeholder="" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#e9edef;font-size:15px;box-sizing:border-box;font-family:inherit;outline:none;margin-bottom:12px;">
-      <div style="display:flex;gap:10px;margin-top:8px;">
-        <button class="btn-cancel" id="promptCancel" style="flex:1;">Отмена</button>
-        <button class="btn-create" id="promptOk" style="flex:1;">ОК</button>
-      </div>
+  <div id="modal-item-info" class="modal"><div class="modal-content" style="text-align:center;">
+    <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px;">
+      <img id="itemInfoAvatar" style="width:80px;height:80px;border-radius:50%;object-fit:cover;background:#00a884;margin-bottom:10px;" alt="">
+      <div id="itemInfoOwnerName" style="font-size:18px;font-weight:700;color:#e9edef;">—</div>
+      <div id="itemInfoOwnerUsername" style="font-size:13px;color:#8696a0;">—</div>
     </div>
-  </div>
+    <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:14px 16px;margin-bottom:14px;">
+      <div style="font-size:16px;font-weight:800;color:#00a884;margin-bottom:10px;" id="itemInfoValue">—</div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;color:#e9edef;padding:6px 0;"><span style="color:#8696a0;">Цена:</span><span id="itemInfoPrice">—</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;color:#e9edef;padding:6px 0;"><span style="color:#8696a0;">Куплен:</span><span id="itemInfoDate">—</span></div>
+    </div>
+    <button class="btn-create" id="btnItemInfoClose" style="width:100%;">Закрыть</button>
+  </div></div>
 
-  <div id="modal-alert" class="modal">
+  <div id="modal-gift-info" class="modal"><div class="modal-content" style="text-align:center;">
+    <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px;">
+      <img id="giftInfoImage" style="width:120px;height:120px;object-fit:contain;margin-bottom:12px;filter:drop-shadow(0 6px 18px rgba(247,181,0,0.5));" alt="">
+      <div id="giftInfoName" style="font-size:20px;font-weight:800;color:#f7b500;">Подарок</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:14px 16px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;font-size:14px;color:#e9edef;padding:6px 0;"><span style="color:#8696a0;">Цена:</span><span id="giftInfoPrice" style="color:#f7b500;font-weight:700;">—</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;color:#e9edef;padding:6px 0;"><span style="color:#8696a0;">Дата:</span><span id="giftInfoDate">—</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;color:#e9edef;padding:6px 0;"><span style="color:#8696a0;">От кого:</span><span id="giftInfoFrom" style="color:#00a884;font-weight:600;">—</span></div>
+    </div>
+    <button class="btn-create" id="btnGiftInfoClose" style="width:100%;">Закрыть</button>
+  </div></div>
+
+  <div id="modal-send-gift" class="modal"><div class="modal-content" style="text-align:center;">
+    <h2 id="sendGiftTitle">Отправить подарок?</h2>
+    <img id="sendGiftImage" style="width:120px;height:120px;object-fit:contain;margin:16px 0;filter:drop-shadow(0 6px 18px rgba(247,181,0,0.5));" alt="">
+    <div id="sendGiftName" style="font-size:18px;font-weight:700;color:#f7b500;margin-bottom:8px;">Подарок</div>
+    <div style="color:#8696a0;font-size:14px;margin-bottom:16px;">Стоимость: <b id="sendGiftPrice" style="color:#f7b500;">0</b> SQ</div>
+    <input id="sendGiftMessage" placeholder="Сообщение (необязательно)" maxlength="120" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#e9edef;font-size:15px;box-sizing:border-box;font-family:inherit;outline:none;margin-bottom:12px;">
+    <label class="settings-toggle-row" style="margin-bottom:16px;"><input type="checkbox" id="sendGiftHideName"><span>Скрыть моё имя</span></label>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-cancel" id="btnSendGiftCancel" style="flex:1;">Отмена</button>
+      <button class="btn-create" id="btnSendGiftConfirm" style="flex:1;background:#f7b500;color:#1f2c34;">Отправить</button>
+    </div>
+  </div></div>
+
+  <div id="modal-exchange-gift" class="modal">
     <div class="modal-content" style="text-align:center;">
-      <h2 id="alertTitle" style="margin:0 0 10px;">Сообщение</h2>
-      <div id="alertText" style="color:#8696a0;font-size:15px;line-height:1.5;margin-bottom:18px;white-space:pre-wrap;word-break:break-word;"></div>
+      <h2 style="margin-bottom:14px;">Обменять подарок?</h2>
+      <img id="exGiftImage" style="width:120px;height:120px;object-fit:contain;margin:12px 0;filter:drop-shadow(0 6px 18px rgba(247,181,0,0.5));" alt="">
+      <div id="exGiftName" style="font-size:18px;font-weight:700;color:#f7b500;margin-bottom:12px;">Подарок</div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:14px 16px;margin-bottom:14px;text-align:left;">
+        <div style="display:flex;justify-content:space-between;font-size:14px;padding:6px 0;">
+          <span style="color:#8696a0;">Стоимость подарка:</span>
+          <span id="exGiftPrice" style="color:#e9edef;font-weight:700;">0 SQ</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;padding:6px 0;">
+          <span style="color:#8696a0;">Вы получите (50%):</span>
+          <span id="exGiftBack" style="color:#00a884;font-weight:800;">0 SQ</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;padding:6px 0;">
+          <span style="color:#8696a0;">Сгорит:</span>
+          <span id="exGiftBurn" style="color:#ff6b6b;font-weight:700;">0 SQ</span>
+        </div>
+      </div>
+      <div style="background:rgba(247,181,0,0.1);border:1px solid rgba(247,181,0,0.3);border-radius:12px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;color:#f7b500;line-height:1.4;">
+        ⚠️ После обмена подарок исчезнет из вашего профиля. Действие необратимо.
+      </div>
       <div style="display:flex;gap:10px;">
-        <button class="btn-cancel" id="alertCancel" style="flex:1;display:none;">Отмена</button>
-        <button class="btn-create" id="alertOk" style="flex:1;">ОК</button>
+        <button class="btn-cancel" id="btnExchangeCancel" style="flex:1;">Отмена</button>
+        <button class="btn-create" id="btnExchangeConfirm" style="flex:1;background:#f7b500;color:#1f2c34;">Обменять</button>
       </div>
     </div>
   </div>
 
-  <div id="modal-item-info" class="modal">
-    <div class="modal-content" style="text-align:center;">
-      <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px;">
-        <img id="itemInfoAvatar" style="width:80px;height:80px;border-radius:50%;object-fit:cover;background:#00a884;margin-bottom:10px;" alt="">
-        <div id="itemInfoOwnerName" style="font-size:18px;font-weight:700;color:#e9edef;">—</div>
-        <div id="itemInfoOwnerUsername" style="font-size:13px;color:#8696a0;">—</div>
-      </div>
-      <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:14px 16px;margin-bottom:14px;">
-        <div style="font-size:16px;font-weight:800;color:#00a884;margin-bottom:10px;" id="itemInfoValue">—</div>
-        <div style="display:flex;justify-content:space-between;font-size:14px;color:#e9edef;padding:6px 0;">
-          <span style="color:#8696a0;">Цена:</span>
-          <span id="itemInfoPrice">—</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:14px;color:#e9edef;padding:6px 0;">
-          <span style="color:#8696a0;">Куплен:</span>
-          <span id="itemInfoDate">—</span>
-        </div>
-      </div>
-      <button class="btn-create" id="btnItemInfoClose" style="width:100%;">Закрыть</button>
-    </div>
-  </div>
+  <div id="modal-sell" class="modal"><div class="modal-content">
+    <h2>🏪 Продать юзернейм</h2>
+    <p style="color:#8696a0;font-size:14px;">Ты продаёшь: <b id="sellItemName" style="color:#f7b500;"></b></p>
+    <div class="settings-field"><label>Цена в SQ</label><input id="sellPrice" type="number" min="1" value="1000"></div>
+    <button class="btn-create" id="btnSellConfirm" style="width:100%;">Выставить</button>
+    <button class="btn-cancel" id="btnSellCancel" style="width:100%;margin-top:8px;">Отмена</button>
+  </div></div>
 
-  <div id="modal-gift-info" class="modal">
-    <div class="modal-content" style="text-align:center;">
-      <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px;">
-        <img id="giftInfoImage" style="width:120px;height:120px;object-fit:contain;margin-bottom:12px;filter:drop-shadow(0 6px 18px rgba(247,181,0,0.5));" alt="">
-        <div id="giftInfoName" style="font-size:20px;font-weight:800;color:#f7b500;">Подарок</div>
-      </div>
-      <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:14px 16px;margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;font-size:14px;color:#e9edef;padding:6px 0;">
-          <span style="color:#8696a0;">Цена:</span>
-          <span id="giftInfoPrice" style="color:#f7b500;font-weight:700;">—</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:14px;color:#e9edef;padding:6px 0;">
-          <span style="color:#8696a0;">Дата:</span>
-          <span id="giftInfoDate">—</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:14px;color:#e9edef;padding:6px 0;">
-          <span style="color:#8696a0;">От кого:</span>
-          <span id="giftInfoFrom" style="color:#00a884;font-weight:600;">—</span>
-        </div>
-      </div>
-      <button class="btn-create" id="btnGiftInfoClose" style="width:100%;">Закрыть</button>
-    </div>
-  </div>
-
-  <div id="modal-send-gift" class="modal">
-    <div class="modal-content" style="text-align:center;">
-      <h2 id="sendGiftTitle">Отправить подарок?</h2>
-      <img id="sendGiftImage" style="width:120px;height:120px;object-fit:contain;margin:16px 0;filter:drop-shadow(0 6px 18px rgba(247,181,0,0.5));" alt="">
-      <div id="sendGiftName" style="font-size:18px;font-weight:700;color:#f7b500;margin-bottom:8px;">Подарок</div>
-      <div style="color:#8696a0;font-size:14px;margin-bottom:16px;">
-        Стоимость: <b id="sendGiftPrice" style="color:#f7b500;">0</b> SQ
-      </div>
-      <input id="sendGiftMessage" placeholder="Сообщение (необязательно)" maxlength="120" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#e9edef;font-size:15px;box-sizing:border-box;font-family:inherit;outline:none;margin-bottom:12px;">
-      <label class="settings-toggle-row" style="margin-bottom:16px;">
-        <input type="checkbox" id="sendGiftHideName">
-        <span>Скрыть моё имя</span>
-      </label>
-      <div style="display:flex;gap:10px;">
-        <button class="btn-cancel" id="btnSendGiftCancel" style="flex:1;">Отмена</button>
-        <button class="btn-create" id="btnSendGiftConfirm" style="flex:1;background:#f7b500;color:#1f2c34;">Отправить</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="modal-sell" class="modal">
-    <div class="modal-content">
-      <h2>🏪 Продать юзернейм</h2>
-      <p style="color:#8696a0;font-size:14px;">Ты продаёшь: <b id="sellItemName" style="color:#f7b500;"></b></p>
-      <div class="settings-field"><label>Цена в SQ</label><input id="sellPrice" type="number" min="1" value="1000"></div>
-      <button class="btn-create" id="btnSellConfirm" style="width:100%;">Выставить</button>
-      <button class="btn-cancel" id="btnSellCancel" style="width:100%;margin-top:8px;">Отмена</button>
-    </div>
-  </div>
-<!-- ПРОСМОТР ФОТО (внутри приложения) -->
-<div id="screen-viewer" class="screen">
-  <header class="top-bar" style="background:rgba(0,0,0,0.9);">
-    <button class="top-new-btn" id="btnBackViewer">←</button>
-    <div class="top-title" style="flex:1;" id="viewerTitle">Фото</div>
-    <button class="top-new-btn" id="btnDownloadPhoto" style="font-size:18px;">⬇</button>
-  </header>
-
-  <div class="viewer-body">
-    <button class="viewer-nav viewer-prev" id="btnViewerPrev">‹</button>
-    <img id="viewerImage" class="viewer-image" alt="">
-    <button class="viewer-nav viewer-next" id="btnViewerNext">›</button>
-  </div>
-
-  <div class="viewer-info">
-    <div id="viewerSender" class="viewer-sender">—</div>
-    <div id="viewerTime" class="viewer-time">—</div>
-    <div id="viewerCaption" class="viewer-caption"></div>
-  </div>
-</div>
   <script type="module" src="shop.js"></script>
   <script type="module" src="chat-main.js"></script>
+  <script type="module" src="moderation.js"></script>
   <script type="module" src="chat-settings.js"></script>
   <script type="module" src="chat-profile.js"></script>
   <script type="module" src="profileNN.js"></script>
   <script type="module" src="gifts.js"></script>
   <script type="module" src="chat-info.js"></script>
   <script type="module" src="owner.js"></script>
+  <script type="module" src="search.js"></script>
+  <script type="module" src="gallery.js"></script>
   <script type="module" src="viewer.js"></script>
+  <script type="module" src="trade.js"></script>
+  <script type="module" src="games.js"></script>
 </body>
 </html>

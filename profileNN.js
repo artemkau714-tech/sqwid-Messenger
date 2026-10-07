@@ -63,45 +63,51 @@ waitForSqwidNN((S) => {
 
     viewingUserName = u.name || u.email || "Пользователь";
 
-    const avaEl = document.getElementById("upAva");
-    if (avaEl) {
-      if (u.photo && u.photo.startsWith("data:image")) {
-        avaEl.innerHTML = `<img src="${u.photo}" alt="">`;
-      } else {
-        const letter = (u.name || u.email || "?").trim().charAt(0).toUpperCase();
-        avaEl.innerHTML = `<span>${escH(letter)}</span>`;
-      }
-    }
-    const nameEl = document.getElementById("upName");
-    if (nameEl) {
-      let nameHTML = escH(u.name || u.email || "Пользователь");
-      if (u.verified) nameHTML += ` <img src="verify.png" style="width:16px;height:16px;vertical-align:middle;margin-left:4px;">`;
-      nameEl.innerHTML = nameHTML;
-    }
-    const unEl = document.getElementById("upUsername");
-    if (unEl) unEl.textContent = u.username ? "@" + u.username : "";
-    const bioEl = document.getElementById("upBio");
-    if (bioEl) bioEl.textContent = u.bio || "";
+    applyProfileStatus(u);
 
-    /* Кнопка "Написать" */
+    /* --- Кнопка "Написать" --- */
     const btnWrite = document.getElementById("btnUpWrite");
     if (btnWrite) {
       btnWrite.onclick = () => openPrivateChatWith(uid, u.name || u.email || "Пользователь");
+      btnWrite.disabled = u.banned === true;
+      btnWrite.style.opacity = u.banned === true ? "0.4" : "1";
     }
 
-    /* Кнопка "Подарить" */
+    /* --- Кнопка "Подарить" --- */
     const btnGift = document.getElementById("btnUpGift");
     if (btnGift) {
       btnGift.onclick = () => {
+        if (u.banned === true) {
+          if (window.Sqwid && window.Sqwid.showToast) window.Sqwid.showToast("🚫 Пользователь заблокирован", "error");
+          return;
+        }
         if (window.Sqwid && typeof window.Sqwid.openGiftScreen === "function") {
           window.Sqwid.openGiftScreen(uid);
         } else {
           showScreen("screen-give-gift");
         }
       };
+      btnGift.style.opacity = u.banned === true ? "0.4" : "1";
     }
 
-    /* Кнопка "Пожаловаться" */
+    /* --- Кнопка "Торг" --- */
+    const btnTrade = document.getElementById("btnUpTrade");
+    if (btnTrade) {
+      btnTrade.onclick = () => {
+        if (u.banned === true) {
+          if (window.Sqwid && window.Sqwid.showToast) window.Sqwid.showToast("🚫 Пользователь заблокирован", "error");
+          return;
+        }
+        if (window.Sqwid && window.Sqwid.openTrade) {
+          window.Sqwid.openTrade(uid);
+        } else {
+          if (window.Sqwid && window.Sqwid.showToast) window.Sqwid.showToast("Торг недоступен", "error");
+        }
+      };
+      btnTrade.style.opacity = u.banned === true ? "0.4" : "1";
+    }
+
+    /* --- Кнопка "Пожаловаться" --- */
     const btnReport = document.getElementById("btnUpReport");
     if (btnReport) {
       btnReport.onclick = () => {
@@ -124,6 +130,74 @@ waitForSqwidNN((S) => {
     showScreen("screen-user-profile");
   }
 
+  function applyProfileStatus(u) {
+    const banned = u.banned === true;
+    const frozen = u.frozen === true;
+
+    const avaEl = document.getElementById("upAva");
+    if (avaEl) {
+      if (banned) {
+        avaEl.innerHTML = `<span style="font-size:44px;">🚫</span>`;
+        avaEl.classList.add("banned-ava");
+        avaEl.classList.remove("frozen-ava");
+      } else if (frozen) {
+        avaEl.innerHTML = `<span style="font-size:48px;">❄</span>`;
+        avaEl.classList.add("frozen-ava");
+        avaEl.classList.remove("banned-ava");
+      } else if (u.photo && u.photo.startsWith("data:image")) {
+        avaEl.innerHTML = `<img src="${u.photo}" alt="">`;
+        avaEl.classList.remove("frozen-ava", "banned-ava");
+      } else {
+        const letter = (u.name || u.email || "?").trim().charAt(0).toUpperCase();
+        avaEl.innerHTML = `<span>${escH(letter)}</span>`;
+        avaEl.classList.remove("frozen-ava", "banned-ava");
+      }
+    }
+
+    const nameEl = document.getElementById("upName");
+    if (nameEl) {
+      let nameHTML = escH(u.name || u.email || "Пользователь");
+      if (u.verified && !banned) {
+        nameHTML += ` <img src="verify.PNG" style="width:16px;height:16px;vertical-align:middle;margin-left:4px;">`;
+      }
+      if (banned) {
+        nameHTML += ` <span style="color:#ff6b6b;font-size:12px;font-weight:700;margin-left:6px;">ЗАБЛОКИРОВАН</span>`;
+      }
+      nameEl.innerHTML = nameHTML;
+      nameEl.classList.remove("frozen-name");
+      if (banned) nameEl.classList.add("banned-name");
+      else if (frozen) nameEl.classList.add("frozen-name");
+    }
+
+    let banner = document.getElementById("upBannedBanner");
+    if (banned) {
+      if (!banner) {
+        banner = document.createElement("div");
+        banner.id = "upBannedBanner";
+        banner.className = "up-banned-banner";
+        banner.innerHTML = `🚫 Этот аккаунт заблокирован администрацией Sqwid`;
+        const top = document.querySelector("#screen-user-profile .profile-top");
+        if (top) top.insertBefore(banner, top.firstChild);
+      }
+    } else {
+      if (banner) banner.remove();
+    }
+
+    let frozenBanner = document.getElementById("upFrozenBanner");
+    if (frozen && !banned) {
+      if (!frozenBanner) {
+        frozenBanner = document.createElement("div");
+        frozenBanner.id = "upFrozenBanner";
+        frozenBanner.className = "up-frozen-banner";
+        frozenBanner.innerHTML = `❄ Аккаунт заморожен — временно не может тратить SQ`;
+        const top = document.querySelector("#screen-user-profile .profile-top");
+        if (top) top.insertBefore(frozenBanner, top.firstChild);
+      }
+    } else {
+      if (frozenBanner) frozenBanner.remove();
+    }
+  }
+
   if (window.Sqwid) window.Sqwid.openOtherProfile = openOtherProfile;
 
   function subscribeUser(uid) {
@@ -137,16 +211,7 @@ waitForSqwidNN((S) => {
       const fresh = snap.val();
       if (fresh && viewingUid === uid) {
         viewingUserName = fresh.name || fresh.email || "Пользователь";
-        const nameEl = document.getElementById("upName");
-        if (nameEl) {
-          let nameHTML = escH(viewingUserName);
-          if (fresh.verified) nameHTML += ` <img src="verify.png" style="width:16px;height:16px;vertical-align:middle;margin-left:4px;">`;
-          nameEl.innerHTML = nameHTML;
-        }
-        const unEl = document.getElementById("upUsername");
-        if (unEl) unEl.textContent = fresh.username ? "@" + fresh.username : "";
-        const bioEl = document.getElementById("upBio");
-        if (bioEl) bioEl.textContent = fresh.bio || "";
+        applyProfileStatus(fresh);
         renderUsernames(uid, fresh);
         renderPhones(uid, fresh);
       }

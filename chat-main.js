@@ -1,5 +1,5 @@
 /* ============================================================
-   chat-main.js — список чатов + чат + создание групп/каналов
+   chat-main.js — список чатов + чат + создание + модерация
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -54,6 +54,9 @@ let cgAvatarBase64 = null;
 let chAvatarBase64 = null;
 let cgAutoDelete = 0;
 
+let memberAddMode = false;
+let memberAddChatId = null;
+
 /* ============================================================
    ХЕЛПЕРЫ
    ============================================================ */
@@ -81,7 +84,7 @@ function svgLetter(text) {
   return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
 }
 function verifiedIcon(flag) {
-  return flag ? `<img src="verify.png" style="width:14px;height:14px;vertical-align:middle;margin-left:4px;">` : "";
+  return flag ? `<img src="verify.PNG" style="width:14px;height:14px;vertical-align:middle;margin-left:4px;">` : "";
 }
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
@@ -94,7 +97,9 @@ function showScreen(id) {
   const hideNav = [
     "screen-messages", "screen-create-group", "screen-create-channel",
     "screen-choose-members", "screen-chat-info", "screen-edit-chat",
-    "screen-chat-members", "screen-owner", "screen-report-view"
+    "screen-chat-members", "screen-owner", "screen-report-view",
+    "screen-search-messages", "screen-gallery", "screen-viewer",
+    "screen-banned"
   ].includes(id);
   if (nav) nav.style.display = hideNav ? "none" : "flex";
 }
@@ -207,12 +212,14 @@ onAuthStateChanged(auth, async (user) => {
     openChat: (id) => openChat(id),
     showScreen: (id) => showScreen(id),
     svgAvatar: (t) => svgLetter(t),
-    showAlert, showConfirm, showPrompt, showToast
+    showAlert, showConfirm, showPrompt, showToast,
+    openAddMembersToChat: (id) => openAddMembersToChat(id)
   };
 
   if (unsubUserSelf) unsubUserSelf();
   unsubUserSelf = onValue(ref(db, "users/" + user.uid), (snap) => {
     currentUserData = snap.val() || {};
+    window._currentUserData = currentUserData;
     if (window.Sqwid) window.Sqwid.currentUserData = currentUserData;
     const ava = document.getElementById("myAvatar");
     if (ava) {
@@ -260,6 +267,7 @@ function loadChats() {
       let displayName = c.name || "Чат";
       let avatarUrl = "";
       let verified = false;
+      let isFrozen = false;
       if (c.type === "private") {
         const otherUid = Object.keys(c.members || {}).find(u => u !== currentUser.uid);
         if (otherUid) {
@@ -267,26 +275,29 @@ function loadChats() {
           displayName = ou.name || ou.email || displayName;
           avatarUrl = isImg(ou.photo) ? ou.photo : svgLetter(displayName);
           verified = ou.verified;
+          isFrozen = ou.frozen === true;
         }
       } else {
         avatarUrl = isImg(c.photo) ? c.photo : svgLetter(displayName);
         verified = c.verified;
       }
 
-      const avatarHTML = avatarUrl
-        ? `<img src="${avatarUrl}" alt="">`
-        : escH(displayName.charAt(0).toUpperCase());
+      const avatarHTML = isFrozen
+        ? `<span style="font-size:26px;">❄</span>`
+        : (avatarUrl ? `<img src="${avatarUrl}" alt="">` : escH(displayName.charAt(0).toUpperCase()));
 
       const time = c.lastMsgAt ? fmtShortTime(c.lastMsgAt) : "";
       const last = c.lastMsg || "";
       const isChannel = c.type === "channel";
       const badge = isChannel ? `<span style="font-size:11px;color:#00a884;margin-left:6px;">📢</span>` : "";
+      const frozenClass = isFrozen ? " frozen-name" : "";
+      const frozenAvaClass = isFrozen ? " frozen-ava" : "";
 
       li.innerHTML = `
-        <div class="chat-ava">${avatarHTML}</div>
+        <div class="chat-ava${frozenAvaClass}">${avatarHTML}</div>
         <div class="chat-info">
           <div class="chat-name-row">
-            <div class="chat-name">${escH(displayName)}${verifiedIcon(verified)}${badge}</div>
+            <div class="chat-name${frozenClass}">${escH(displayName)}${verifiedIcon(verified)}${badge}</div>
             <div class="chat-time">${time}</div>
           </div>
           <div class="chat-last">${escH(last)}</div>
@@ -314,6 +325,7 @@ async function openChat(chatId) {
   let displayName = chat.name || "Чат";
   let avatarUrl = "";
   let verified = false;
+  let isFrozen = false;
   if (chat.type === "private") {
     const otherUid = Object.keys(chat.members || {}).find(u => u !== currentUser.uid);
     if (otherUid) {
@@ -321,23 +333,67 @@ async function openChat(chatId) {
       displayName = ou.name || ou.email || displayName;
       avatarUrl = isImg(ou.photo) ? ou.photo : svgLetter(displayName);
       verified = ou.verified;
+      isFrozen = ou.frozen === true;
     }
   } else {
     avatarUrl = isImg(chat.photo) ? chat.photo : svgLetter(displayName);
     verified = chat.verified;
   }
-  const nameEl = document.getElementById("chatName");
-  if (nameEl) nameEl.innerHTML = escH(displayName) + verifiedIcon(verified);
-  const ava = document.getElementById("chatAva");
-  if (ava) ava.innerHTML = avatarUrl ? `<img src="${avatarUrl}">` : escH(displayName.charAt(0).toUpperCase());
 
-  const inputArea = document.getElementById("inputArea");
-  const isChannel = chat.type === "channel";
-  const isAdmin = chat.owner === currentUser.uid || (chat.admins && chat.admins[currentUser.uid]);
-  if (inputArea) {
-    if (isChannel && !isAdmin) inputArea.style.display = "none";
-    else inputArea.style.display = "flex";
+  const nameEl = document.getElementById("chatName");
+  if (nameEl) {
+    nameEl.innerHTML = escH(displayName) + verifiedIcon(verified);
+    if (isFrozen) nameEl.classList.add("frozen-name");
+    else nameEl.classList.remove("frozen-name");
   }
+  const ava = document.getElementById("chatAva");
+  if (ava) {
+    if (isFrozen) ava.innerHTML = `<span style="font-size:22px;">❄</span>`;
+    else ava.innerHTML = avatarUrl ? `<img src="${avatarUrl}">` : escH(displayName.charAt(0).toUpperCase());
+    ava.classList.toggle("frozen-ava", isFrozen);
+  }
+
+const inputArea = document.getElementById("inputArea");
+const banner = document.getElementById("chatDeletedBanner");
+const bannerText = document.getElementById("chatDeletedText");
+const isChannel = chat.type === "channel";
+const isAdmin = chat.owner === currentUser.uid || (chat.admins && chat.admins[currentUser.uid]);
+
+let canWrite = true;
+let cannotReason = "";
+
+if (isChannel && !isAdmin) {
+  canWrite = false;
+  cannotReason = "📢 Писать могут только администраторы канала";
+}
+
+if (chat.type === "private") {
+  const otherUid = Object.keys(chat.members || {}).find(u => u !== currentUser.uid);
+  const other = otherUid ? (userMap[otherUid] || {}) : {};
+  if (other.banned === true) {
+    canWrite = false;
+    cannotReason = "🚫 Пользователь заблокирован — писать нельзя";
+  } else if (other.frozen === true) {
+    canWrite = false;
+    cannotReason = "❄ Пользователь заморожен — писать нельзя";
+  }
+}
+
+if (window._currentUserData && window._currentUserData.banned === true) {
+  canWrite = false;
+  cannotReason = "🚫 Ваш аккаунт заблокирован";
+}
+
+if (inputArea && banner) {
+  if (canWrite) {
+    inputArea.style.display = "flex";
+    banner.style.display = "none";
+  } else {
+    inputArea.style.display = "none";
+    banner.style.display = "flex";
+    if (bannerText) bannerText.textContent = cannotReason;
+  }
+}
 
   const msgsBox = document.getElementById("messages");
   if (msgsBox) msgsBox.innerHTML = "";
@@ -346,26 +402,25 @@ async function openChat(chatId) {
   if (unsubMessages) unsubMessages();
   const msgsRef = query(ref(db, "messages/" + chatId), orderByChild("timestamp"), limitToLast(200));
   unsubMessages = onValue(msgsRef, (snapshot) => {
-  const box = document.getElementById("messages");
-  if (!box) return;
-  box.innerHTML = "";
-  const all = snapshot.val() || {};
-  const arr = Object.values(all).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    const box = document.getElementById("messages");
+    if (!box) return;
+    box.innerHTML = "";
+    const all = snapshot.val() || {};
+    const arr = Object.values(all).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
-  // Собираем все фото этого чата для просмотрщика
-  window._chatPhotos = arr
-    .filter(m => m.type === "photo" && m.photo)
-    .map(m => ({
-      id: m.id,
-      photo: m.photo,
-      text: m.text || "",
-      sender: m.sender,
-      timestamp: m.timestamp
-    }));
+    window._chatPhotos = arr
+      .filter(m => m.type === "photo" && m.photo)
+      .map(m => ({
+        id: m.id,
+        photo: m.photo,
+        text: m.text || "",
+        sender: m.sender,
+        timestamp: m.timestamp
+      }));
 
-  arr.forEach(m => renderMessage(m, chatId));
-  box.scrollTop = box.scrollHeight;
-});
+    arr.forEach(m => renderMessage(m, chatId));
+    box.scrollTop = box.scrollHeight;
+  });
 }
 
 /* ============================================================
@@ -383,7 +438,9 @@ function renderMessage(msg, chatId) {
   let senderHTML = "";
   if (!isOwn && isGroup && msg.sender) {
     const su = userMap[msg.sender] || {};
-    senderHTML = `<div class="msg-sender" style="font-size:11.5px;font-weight:700;color:#6366f1;margin-bottom:3px;">${escH(su.name || su.email || "Пользователь")}${verifiedIcon(su.verified)}</div>`;
+    const isFrozen = su.frozen === true;
+    const frozenClass = isFrozen ? " frozen-name" : "";
+    senderHTML = `<div class="msg-sender${frozenClass}" style="font-size:11.5px;font-weight:700;color:#6366f1;margin-bottom:3px;">${escH(su.name || su.email || "Пользователь")}${verifiedIcon(su.verified)}</div>`;
   }
 
   let contentHTML = "";
@@ -429,7 +486,6 @@ function renderMessage(msg, chatId) {
     <div class="msg-time">${fmtTime(msg.timestamp || Date.now())}</div>
   `;
 
-  // Кнопка "Пожаловаться" на чужом сообщении
   if (!isOwn && msg.type !== "gift") {
     const reportBtn = document.createElement("button");
     reportBtn.className = "msg-report-btn";
@@ -452,15 +508,15 @@ function renderMessage(msg, chatId) {
   }
 
   const img = div.querySelector(".msg-photo");
-if (img) img.addEventListener("click", () => {
-  if (!window.Sqwid || !window.Sqwid.openPhotoViewer) return;
-  const list = window._chatPhotos || [];
-  const idx = list.findIndex(p => p.id === msg.id);
-  window.Sqwid.openPhotoViewer({
-    photosArr: list,
-    index: idx >= 0 ? idx : 0
+  if (img) img.addEventListener("click", () => {
+    if (!window.Sqwid || !window.Sqwid.openPhotoViewer) return;
+    const list = window._chatPhotos || [];
+    const idx = list.findIndex(p => p.id === msg.id);
+    window.Sqwid.openPhotoViewer({
+      photosArr: list,
+      index: idx >= 0 ? idx : 0
+    });
   });
-});
 
   div.querySelectorAll(".reaction-chip").forEach(chip => {
     chip.addEventListener("click", async (e) => {
@@ -517,7 +573,6 @@ if (closeMsgMenuBtn) closeMsgMenuBtn.addEventListener("click", () => {
   longPressMsg = null;
   editingMsgId = null;
 });
-
 const deleteMsgBtn = document.getElementById("btnDeleteMsg");
 if (deleteMsgBtn) deleteMsgBtn.addEventListener("click", async () => {
   if (!longPressMsg) return;
@@ -529,7 +584,6 @@ if (deleteMsgBtn) deleteMsgBtn.addEventListener("click", async () => {
   document.getElementById("modal-msgMenu").classList.remove("active");
   longPressMsg = null;
 });
-
 const editMsgBtn = document.getElementById("btnEditMsg");
 if (editMsgBtn) editMsgBtn.addEventListener("click", () => {
   if (!longPressMsg) return;
@@ -542,13 +596,11 @@ if (editMsgBtn) editMsgBtn.addEventListener("click", () => {
   document.getElementById("modal-msgMenu").classList.remove("active");
   document.getElementById("msgInput").focus();
 });
-
 const reactMsgBtn = document.getElementById("btnReactMsg");
 if (reactMsgBtn) reactMsgBtn.addEventListener("click", () => {
   document.getElementById("modal-msgMenu").classList.remove("active");
   openReactPicker();
 });
-
 const reportMsgBtn = document.getElementById("btnReportMsg");
 if (reportMsgBtn) reportMsgBtn.addEventListener("click", () => {
   if (!longPressMsg) return;
@@ -603,6 +655,15 @@ async function sendMessage() {
   const text = input.value.trim();
   if (!currentChatId || !text) return;
 
+  if (window._currentUserData && window._currentUserData.muted === true) {
+    showToast("🔇 НА ВАС МУТ!!!", "error", 2000);
+    return;
+  }
+  if (window._currentUserData && window._currentUserData.banned === true) {
+    showToast("🚫 Аккаунт заблокирован", "error", 2000);
+    return;
+  }
+
   if (editingMsgId) {
     await update(ref(db, `messages/${currentChatId}/${editingMsgId}`), {
       text, editedAt: Date.now()
@@ -643,6 +704,11 @@ const btnAttach = document.getElementById("btnAttach");
 if (btnAttach) btnAttach.addEventListener("click", () => document.getElementById("fileInput").click());
 const fileInput = document.getElementById("fileInput");
 if (fileInput) fileInput.addEventListener("change", (e) => {
+  if (window._currentUserData && window._currentUserData.muted === true) {
+    showToast("🔇 НА ВАС МУТ!!!", "error", 2000);
+    e.target.value = "";
+    return;
+  }
   const file = e.target.files[0];
   if (!file) return;
   e.target.value = "";
@@ -663,6 +729,14 @@ if (btnCancelPhoto) btnCancelPhoto.addEventListener("click", () => {
 });
 const btnSendPhoto = document.getElementById("btnSendPhoto");
 if (btnSendPhoto) btnSendPhoto.addEventListener("click", async () => {
+  if (window._currentUserData && window._currentUserData.muted === true) {
+    showToast("🔇 НА ВАС МУТ!!!", "error", 2000);
+    return;
+  }
+  if (window._currentUserData && window._currentUserData.banned === true) {
+    showToast("🚫 Аккаунт заблокирован", "error", 2000);
+    return;
+  }
   const dataUrl = document.getElementById("photoPreviewImg").src;
   const caption = document.getElementById("photoCaption").value.trim();
   if (!currentChatId || !dataUrl) return;
@@ -747,6 +821,16 @@ if (btnDeleteChat) btnDeleteChat.addEventListener("click", async () => {
   if (!ok) return;
   await remove(ref(db, "chats/" + currentChatId + "/members/" + currentUser.uid));
   document.getElementById("modal-chatMenu").classList.remove("active");
+  currentChatId = null;
+  if (unsubMessages) { unsubMessages(); unsubMessages = null; }
+  showScreen("screen-chats");
+});
+const btnDeleteFromBanner = document.getElementById("btnDeleteChatFromBanner");
+if (btnDeleteFromBanner) btnDeleteFromBanner.addEventListener("click", async () => {
+  if (!currentChatId) return;
+  const ok = await showConfirm("Удалить чат?", "Удаление чата");
+  if (!ok) return;
+  await remove(ref(db, "chats/" + currentChatId + "/members/" + currentUser.uid));
   currentChatId = null;
   if (unsubMessages) { unsubMessages(); unsubMessages = null; }
   showScreen("screen-chats");
@@ -851,6 +935,8 @@ if (btnNextCG) btnNextCG.addEventListener("click", () => {
   if (!name) return showToast("Введите название группы", "error");
   createKind = "group";
   createSelected = {};
+  memberAddMode = false;
+  memberAddChatId = null;
   openChooseMembers();
 });
 
@@ -910,6 +996,8 @@ if (btnNextCH) btnNextCH.addEventListener("click", async () => {
   }
   createKind = "channel";
   createSelected = {};
+  memberAddMode = false;
+  memberAddChatId = null;
   openChooseMembers();
 });
 
@@ -988,17 +1076,39 @@ async function openOrCreatePrivate(otherUid, displayName) {
   openChat(newRef.key);
 }
 
+/* ============================================================
+   ВЫБОР УЧАСТНИКОВ
+   ============================================================ */
 function openChooseMembers() {
   const title = document.getElementById("cmTitle");
-  if (title) title.textContent = createKind === "channel" ? "Подписчики" : "Участники";
+  if (title) {
+    if (memberAddMode) title.textContent = "Добавить участников";
+    else title.textContent = createKind === "channel" ? "Подписчики" : "Участники";
+  }
   const search = document.getElementById("cmSearch");
   if (search) search.value = "";
   renderSelectedChips();
   renderMembersResults();
   showScreen("screen-choose-members");
 }
+
+function openAddMembersToChat(chatId) {
+  if (!chatId) return;
+  memberAddMode = true;
+  memberAddChatId = chatId;
+  createSelected = {};
+  openChooseMembers();
+}
+
 const btnBackCM = document.getElementById("btnBackChooseMembers");
 if (btnBackCM) btnBackCM.addEventListener("click", () => {
+  if (memberAddMode) {
+    memberAddMode = false;
+    memberAddChatId = null;
+    createSelected = {};
+    if (window.Sqwid.openChatInfo) window.Sqwid.openChatInfo(currentChatId);
+    return;
+  }
   if (createKind === "channel") showScreen("screen-create-channel");
   else showScreen("screen-create-group");
 });
@@ -1024,14 +1134,23 @@ function renderSelectedChips() {
   });
 }
 
-function renderMembersResults() {
+async function renderMembersResults() {
   const box = document.getElementById("cmResults");
   if (!box) return;
   box.innerHTML = "";
   const q = (document.getElementById("cmSearch")?.value || "").toLowerCase().trim();
+
+  let alreadyInChat = {};
+  if (memberAddMode && memberAddChatId) {
+    const chatSnap = await get(ref(db, "chats/" + memberAddChatId));
+    const chatData = chatSnap.val() || {};
+    alreadyInChat = chatData.members || {};
+  }
+
   const arr = [];
   for (const uid in userMap) {
     if (uid === currentUser.uid) continue;
+    if (alreadyInChat[uid]) continue;
     const u = userMap[uid];
     const name = (u.name || u.email || "").toLowerCase();
     const uname = (u.username || "").toLowerCase();
@@ -1068,6 +1187,10 @@ function renderMembersResults() {
 
 const btnSubmitCreate = document.getElementById("btnSubmitCreate");
 if (btnSubmitCreate) btnSubmitCreate.addEventListener("click", async () => {
+  if (memberAddMode) {
+    await submitAddMembers();
+    return;
+  }
   if (createKind === "group") await createGroup();
   else await createChannel();
 });
@@ -1106,6 +1229,53 @@ async function createChannel() {
   });
   showToast("Канал создан", "ok");
   openChat(newRef.key);
+}
+
+/* ============================================================
+   ДОБАВЛЕНИЕ УЧАСТНИКОВ
+   ============================================================ */
+async function submitAddMembers() {
+  if (!memberAddChatId) return;
+  const uids = Object.keys(createSelected);
+  if (uids.length === 0) {
+    showToast("Выбери хотя бы одного", "error");
+    return;
+  }
+
+  try {
+    const snap = await get(ref(db, "chats/" + memberAddChatId));
+    const chat = snap.val() || {};
+    const chatType = chat.type === "channel" ? "канал" : "группу";
+
+    const updates = {};
+    uids.forEach(uid => {
+      updates["chats/" + memberAddChatId + "/members/" + uid] = true;
+    });
+    updates["chats/" + memberAddChatId + "/lastMsgAt"] = Date.now();
+
+    await update(ref(db), updates);
+
+    for (const uid of uids) {
+      const botRef = push(ref(db, "botChat/" + uid));
+      await set(botRef, {
+        from: "Sqwid Moderator",
+        text: `👥 Вас добавили в ${chatType} «${chat.name || "?"}»`,
+        timestamp: Date.now(),
+        type: "system",
+        kind: "moderator"
+      });
+    }
+
+    showToast("Добавлено: " + uids.length, "ok");
+
+    memberAddMode = false;
+    memberAddChatId = null;
+    createSelected = {};
+    if (window.Sqwid.openChatInfo) window.Sqwid.openChatInfo(currentChatId);
+
+  } catch (e) {
+    showToast("Ошибка: " + e.message, "error");
+  }
 }
 
 console.log("✅ chat-main.js загружен");

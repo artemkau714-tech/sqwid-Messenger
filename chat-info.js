@@ -482,13 +482,11 @@ waitForSqwidChatInfo((S) => {
      ДОБАВЛЕНИЕ УЧАСТНИКОВ
      ============================================================ */
   function openAddMembers() {
-    if (!currentChat || !viewingChatId) return;
-    if (window.Sqwid && typeof window.Sqwid.openAddMembersToChat === "function") {
-      window.Sqwid.openAddMembersToChat(viewingChatId);
-    } else {
-      S.showAlert("Добавление участников скоро", "Инфо");
-    }
+  if (!currentChat || !viewingChatId) return;
+  if (window.Sqwid && typeof window.Sqwid.openAddMembersToChat === "function") {
+    window.Sqwid.openAddMembersToChat(viewingChatId);
   }
+}
 
   /* ============================================================
      ДЕЙСТВИЯ С УЧАСТНИКОМ
@@ -659,14 +657,20 @@ waitForSqwidChatInfo((S) => {
   });
 
   const btnActionSearch = document.getElementById("ciActionSearch");
-  if (btnActionSearch) btnActionSearch.addEventListener("click", () => {
-    S.showToast("Поиск по сообщениям скоро", "info");
-  });
+if (btnActionSearch) btnActionSearch.addEventListener("click", () => {
+  if (!viewingChatId) return;
+  if (window.Sqwid && window.Sqwid.openSearch) {
+    window.Sqwid.openSearch(viewingChatId);
+  }
+});
 
   const btnActionMedia = document.getElementById("ciActionMedia");
-  if (btnActionMedia) btnActionMedia.addEventListener("click", () => {
-    S.showToast("Медиа-галерея скоро", "info");
-  });
+if (btnActionMedia) btnActionMedia.addEventListener("click", () => {
+  if (!viewingChatId) return;
+  if (window.Sqwid && window.Sqwid.openGallery) {
+    window.Sqwid.openGallery(viewingChatId);
+  }
+});
 
   /* ============================================================
      ХЕЛПЕРЫ
