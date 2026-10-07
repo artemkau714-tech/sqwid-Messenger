@@ -1,5 +1,6 @@
 /* ============================================================
    chat-profile.js — свой профиль (юзы, номера, подарки, обмен, игры)
+   + Sqwid+ плюшки
    ============================================================ */
 
 console.log("🚀 chat-profile.js загружен, жду Sqwid...");
@@ -58,6 +59,11 @@ waitForSqwidProfile((S) => {
     if (tabsEl) tabsEl.classList.toggle("visible", y > 80);
   });
 
+  /* ---------- ХЕЛПЕР: активен ли Sqwid+ ---------- */
+  function isPlus() {
+    return myData.plusUntil && myData.plusUntil > Date.now();
+  }
+
   /* ---------- ТАБЫ ---------- */
   function applyTab() {
     if (tabGifts) tabGifts.classList.toggle("hidden", activeTab !== "gifts");
@@ -93,21 +99,43 @@ waitForSqwidProfile((S) => {
 
   function renderProfile() {
     const name = myData.name || currentUser.email.split("@")[0];
+    const plus = isPlus();
 
+    // Имя: градиент для Sqwid+ или обычный цвет
     let nameHTML = "";
-    if (myData.nickColor) nameHTML += `<span style="color:${myData.nickColor}">${escH(name)}</span>`;
-    else nameHTML += escH(name);
+    if (plus && myData.plusGradient !== false) {
+      // Градиентный ник для Sqwid+
+      nameHTML += `<span class="nick-plus">${escH(name)}</span>`;
+    } else if (myData.nickColor) {
+      nameHTML += `<span style="color:${myData.nickColor}">${escH(name)}</span>`;
+    } else {
+      nameHTML += escH(name);
+    }
     if (myData.nickEmoji) nameHTML += ` <span class="nick-emoji">${myData.nickEmoji}</span>`;
     if (nameEl) nameEl.innerHTML = nameHTML;
 
     if (unEl) unEl.textContent = myData.username ? "@" + myData.username : "";
-    if (bioEl) bioEl.textContent = myData.bio || "";
+
+    // Bio: до 300 для Sqwid+
+    if (bioEl) {
+      bioEl.textContent = myData.bio || "";
+      bioEl.classList.toggle("bio-long", plus);
+    }
+
     if (coinsEl) coinsEl.textContent = "🪙 " + (myData.coins || 0) + " SQ";
 
+    // Плашка Sqwid+
+    renderPlusBadge(plus);
+
+    // Кастомный фон профиля
+    renderProfileBg(plus);
+
+    // Рамка авы
     const wrap = document.querySelector("#screen-profile .profile-ava-wrap");
     if (wrap) {
-      wrap.classList.remove("frame-gold", "frame-fire", "frame-rainbow");
+      wrap.classList.remove("frame-gold", "frame-fire", "frame-rainbow", "frame-plus");
       if (myData.avatarFrame) wrap.classList.add("frame-" + myData.avatarFrame);
+      else if (plus) wrap.classList.add("frame-plus");
     }
 
     if (ava) {
@@ -118,13 +146,87 @@ waitForSqwidProfile((S) => {
       }
     }
 
+    renderSocial();
     renderOrbit();
     renderUsernames();
     renderPhones();
     loadStats();
   }
 
-  /* ---------- ОРБИТА ---------- */
+  /* ---------- ПЛАШКА SQWID+ ---------- */
+  function renderPlusBadge(plus) {
+    let badge = document.getElementById("profilePlusBadge");
+    if (!plus) {
+      if (badge) badge.remove();
+      return;
+    }
+    if (!badge) {
+      badge = document.createElement("div");
+      badge.id = "profilePlusBadge";
+      badge.className = "plus-badge";
+      const top = document.querySelector("#screen-profile .profile-top");
+      if (top && bioEl) top.insertBefore(badge, bioEl.nextSibling);
+    }
+    const until = new Date(myData.plusUntil);
+    const dateStr = `${String(until.getDate()).padStart(2, "0")}.${String(until.getMonth() + 1).padStart(2, "0")}.${until.getFullYear()}`;
+    badge.innerHTML = `⭐ Sqwid+ до ${dateStr}`;
+  }
+
+  /* ---------- ФОН ПРОФИЛЯ (только Sqwid+) ---------- */
+  function renderProfileBg(plus) {
+    if (!scroll) return;
+    if (plus && myData.profileBg) {
+      scroll.style.backgroundImage = `url(${myData.profileBg})`;
+      scroll.classList.add("has-bg");
+    } else {
+      scroll.style.backgroundImage = "";
+      scroll.classList.remove("has-bg");
+    }
+  }
+
+  /* ---------- СОЦИАЛЬНЫЕ ССЫЛКИ (только Sqwid+) ---------- */
+  function renderSocial() {
+  let box = document.getElementById("profileSocial");
+  const plus = isPlus();
+  if (!plus || !myData.socialLinks || Object.keys(myData.socialLinks).length === 0) {
+    if (box) box.remove();
+    return;
+  }
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "profileSocial";
+    box.className = "profile-social";
+    const top = document.querySelector("#screen-profile .profile-top");
+    const badge = document.getElementById("profilePlusBadge");
+    if (top) {
+      if (badge) top.insertBefore(box, badge.nextSibling);
+      else top.appendChild(box);
+    }
+  }
+  box.innerHTML = "";
+  const links = myData.socialLinks;
+  const icons = { telegram: "✈️", instagram: "📸", youtube: "▶️", tiktok: "🎵", vk: "🅥", github: "🐙", website: "🌐" };
+
+  Object.entries(links).forEach(([key, url]) => {
+    if (!url) return;
+
+    // Валидация: только http/https
+    const safe = sanitizeUrl(url);
+    if (!safe) return; // пропускаем мусор
+
+    const a = document.createElement("a");
+    a.href = safe;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.innerHTML = `${icons[key] || "🔗"} ${key}`;
+    box.appendChild(a);
+  });
+
+  // Если после валидации ничего не осталось — убираем блок
+  if (box.children.length === 0) box.remove();
+}
+
+  /* ---------- ОРБИТА ПОДАРКОВ ---------- */
   const giftCache = {};
   onValue(ref(db, "shop/gifts"), (snap) => {
     const all = snap.val() || {};
@@ -143,8 +245,11 @@ waitForSqwidProfile((S) => {
     const allGiftIds = Object.keys(inv).filter(k => k.startsWith("gift_"));
     if (allGiftIds.length === 0) return;
 
+    const plus = isPlus();
+    const limit = plus ? 6 : 3; // Sqwid+: 6 подарков на орбите
+
     const orbit = document.createElement("div");
-    orbit.className = "profile-gift-orbit";
+    orbit.className = "profile-gift-orbit" + (plus ? " orbit-plus" : "");
 
     const giftSrc = {
       gift_roketa: "roketa.png",
@@ -154,7 +259,7 @@ waitForSqwidProfile((S) => {
     };
 
     let placed = 0;
-    allGiftIds.slice(0, 6).forEach((id, i) => {
+    allGiftIds.slice(0, limit).forEach((id, i) => {
       const g = giftCache[id];
       let icon = null;
       if (g && g.icon) icon = g.icon;
@@ -165,7 +270,7 @@ waitForSqwidProfile((S) => {
       img.src = icon;
       img.style.setProperty("--radius", (75 + 8 * i) + "px");
       img.style.setProperty("--delay", (-i * 2) + "s");
-      img.style.setProperty("--glow", (g && g.glow) || "#f7b500");
+      img.style.setProperty("--glow", (g && g.glow) || "#f59e0b");
       orbit.appendChild(img);
       placed++;
     });
@@ -195,7 +300,6 @@ waitForSqwidProfile((S) => {
 
     names.forEach(uname => {
       const isMain = myData.username === uname;
-
       let itemId = null;
       for (const id in inv) {
         if (!inv[id]) continue;
@@ -237,7 +341,6 @@ waitForSqwidProfile((S) => {
 
     phones.forEach(ph => {
       const isMain = myData.phone === ph;
-
       let itemId = null;
       for (const id in inv) {
         if (!inv[id]) continue;
@@ -341,13 +444,16 @@ waitForSqwidProfile((S) => {
     exchangeGiftData = gift;
 
     const price = gift.price || 0;
-    const half = Math.floor(price / 2);
+    const plus = isPlus();
+    // Sqwid+: 60% вместо 50%
+    const percent = plus ? 0.6 : 0.5;
+    const back = Math.floor(price * percent);
 
     document.getElementById("exGiftImage").src = gift.icon || "sqwidstar.png";
     document.getElementById("exGiftName").textContent = gift.name || "Подарок";
     document.getElementById("exGiftPrice").textContent = price + " SQ";
-    document.getElementById("exGiftBack").textContent = "+" + half + " SQ";
-    document.getElementById("exGiftBurn").textContent = "-" + (price - half) + " SQ";
+    document.getElementById("exGiftBack").textContent = "+" + back + " SQ" + (plus ? " (60%)" : "");
+    document.getElementById("exGiftBurn").textContent = "-" + (price - back) + " SQ";
 
     document.getElementById("modal-exchange-gift").classList.add("active");
   }
@@ -365,20 +471,22 @@ waitForSqwidProfile((S) => {
 
     const gift = exchangeGiftData;
     const price = gift.price || 0;
-    const half = Math.floor(price / 2);
+    const plus = isPlus();
+    const percent = plus ? 0.6 : 0.5;
+    const back = Math.floor(price * percent);
 
     try {
       const meSnap = await get(ref(db, "users/" + currentUser.uid));
       const me = meSnap.val() || {};
-      const newCoins = (me.coins || 0) + half;
+      const newCoins = (me.coins || 0) + back;
 
       await update(ref(db, "users/" + currentUser.uid), { coins: newCoins });
 
       await update(ref(db, "users/" + currentUser.uid + "/gifts/" + exchangeGiftId), {
         exchanged: true,
         exchangedAt: Date.now(),
-        exchangeBack: half,
-        exchangeBurn: price - half
+        exchangeBack: back,
+        exchangeBurn: price - back
       });
 
       const gidToDelete = exchangeGiftId;
@@ -397,7 +505,7 @@ waitForSqwidProfile((S) => {
         });
       }
 
-      S.showToast("+" + half + " SQ зачислено", "ok");
+      S.showToast("+" + back + " SQ зачислено" + (plus ? " (Sqwid+ бонус)" : ""), "ok");
 
     } catch (e) {
       S.showToast("Ошибка: " + e.message, "error");
@@ -473,7 +581,7 @@ waitForSqwidProfile((S) => {
       avaEl.src = owner.photo;
     } else {
       const letter = (owner.name || owner.email || "?").trim().charAt(0).toUpperCase();
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#00a884"/><text x="50%" y="55%" font-size="36" fill="#fff" text-anchor="middle" font-family="Arial">${letter}</text></svg>`;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#6366f1"/><text x="50%" y="55%" font-size="36" fill="#fff" text-anchor="middle" font-family="Arial">${letter}</text></svg>`;
       avaEl.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
     }
 
@@ -569,12 +677,10 @@ waitForSqwidProfile((S) => {
   const btnGames = document.getElementById("btnOpenGames");
   if (btnGames) {
     btnGames.addEventListener("click", () => {
-      console.log("🎮 открываю игры");
       if (window.Sqwid && typeof window.Sqwid.openGames === "function") {
         window.Sqwid.openGames();
       } else {
         S.showToast("Игровой бот не загрузился", "error");
-        console.warn("openGames не найден");
       }
     });
   }
@@ -620,6 +726,47 @@ waitForSqwidProfile((S) => {
     });
   }
 
+  /* ---------- ЭКСПОРТ ЧАТОВ (Sqwid+) ---------- */
+  async function exportChats() {
+    if (!isPlus()) {
+      S.showToast("Экспорт доступен только с Sqwid+", "warn");
+      return;
+    }
+    try {
+      S.showToast("Готовим экспорт…", "info");
+      const chatsSnap = await get(ref(db, "chats"));
+      const chats = chatsSnap.val() || {};
+      const msgsSnap = await get(ref(db, "messages"));
+      const allMsgs = msgsSnap.val() || {};
+
+      const myChats = {};
+      for (const id in chats) {
+        const c = chats[id];
+        if (!c.members || !c.members[currentUser.uid]) continue;
+        myChats[id] = {
+          name: c.name,
+          type: c.type,
+          createdAt: c.createdAt,
+          members: c.members,
+          messages: allMsgs[id] || {}
+        };
+      }
+
+      const dataStr = JSON.stringify({ user: currentUser.uid, exportedAt: Date.now(), chats: myChats }, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "sqwid_export_" + Date.now() + ".json";
+      a.click();
+      URL.revokeObjectURL(url);
+      S.showToast("Экспорт готов", "ok");
+    } catch (e) {
+      S.showToast("Ошибка экспорта: " + e.message, "error");
+    }
+  }
+  window.Sqwid.exportChats = exportChats;
+
   /* ---------- ЗАКРЫТИЕ МОДАЛОК ---------- */
   const btnItemInfoClose = document.getElementById("btnItemInfoClose");
   if (btnItemInfoClose) {
@@ -640,6 +787,22 @@ waitForSqwidProfile((S) => {
     d.textContent = t == null ? "" : t;
     return d.innerHTML;
   }
-
+/* ============================================================
+   ВАЛИДАЦИЯ URL
+   ============================================================ */
+function sanitizeUrl(url) {
+  if (!url || typeof url !== "string") return "";
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  if (!/^https?:\/\//i.test(trimmed)) return "";
+  try {
+    const u = new URL(trimmed);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return "";
+    if (!u.hostname || !u.hostname.includes(".")) return "";
+    return u.href;
+  } catch (e) {
+    return "";
+  }
+}
   console.log("✅ chat-profile.js готов");
 });

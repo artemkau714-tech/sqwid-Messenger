@@ -1,5 +1,5 @@
 /* ============================================================
-   chat-settings.js — настройки (профиль, приватность, PIN, аккаунт)
+   chat-settings.js — настройки (профиль, приватность, PIN, аккаунт, тема, Sqwid+)
    ============================================================ */
 
 console.log("🚀 chat-settings.js загружен, жду Sqwid...");
@@ -28,14 +28,49 @@ waitForSqwidSettings((S) => {
   let avatarBase64 = null;
   let avatarChanged = false;
 
-  /* ---------- загрузка данных ---------- */
+  /* ============================================================
+     ХЕЛПЕР: активен ли Sqwid+
+     ============================================================ */
+  function isPlus() {
+    return myData.plusUntil && myData.plusUntil > Date.now();
+  }
+
+  /* ============================================================
+     ТЕМА
+     ============================================================ */
+  function applyTheme(theme) {
+    if (theme === "dark") {
+      document.body.setAttribute("data-theme", "dark");
+    } else {
+      document.body.removeAttribute("data-theme");
+    }
+    try { localStorage.setItem("sqwid_theme", theme); } catch (e) {}
+    const light = document.getElementById("themeLight");
+    const dark = document.getElementById("themeDark");
+    if (light && dark) {
+      light.classList.toggle("active", theme !== "dark");
+      dark.classList.toggle("active", theme === "dark");
+    }
+  }
+
+  (function initTheme() {
+    let saved = "light";
+    try { saved = localStorage.getItem("sqwid_theme") || "light"; } catch (e) {}
+    applyTheme(saved);
+  })();
+
+  /* ============================================================
+     ЗАГРУЗКА ДАННЫХ
+     ============================================================ */
   onValue(ref(db, "users/" + currentUser.uid), (snap) => {
     myData = snap.val() || {};
     const screen = document.getElementById("screen-settings");
     if (screen && screen.classList.contains("active")) renderSettings();
   });
 
-  /* ---------- открытие настроек ---------- */
+  /* ============================================================
+     ОТКРЫТИЕ НАСТРОЕК
+     ============================================================ */
   const navBtns = document.querySelectorAll('.nav-btn[data-screen="screen-settings"]');
   navBtns.forEach(btn => {
     btn.addEventListener("click", () => {
@@ -49,7 +84,9 @@ waitForSqwidSettings((S) => {
   const btnBack = document.getElementById("btnBackSettings");
   if (btnBack) btnBack.addEventListener("click", () => S.showScreen("screen-chats"));
 
-  /* ---------- рендер ---------- */
+  /* ============================================================
+     РЕНДЕР НАСТРОЕК
+     ============================================================ */
   function renderSettings() {
     const name = myData.name || currentUser.email.split("@")[0];
 
@@ -73,15 +110,38 @@ waitForSqwidSettings((S) => {
     if (pinStatus) {
       if (myData.pin) {
         pinStatus.textContent = "🔒 Установлен";
-        pinStatus.style.color = "#00a884";
+        pinStatus.style.color = "#10b981";
       } else {
         pinStatus.textContent = "🔓 Не установлен";
-        pinStatus.style.color = "#8696a0";
+        pinStatus.style.color = "#94a3b8";
       }
     }
 
     const balEl = document.getElementById("settingsBalance");
     if (balEl) balEl.textContent = "🪙 " + (myData.coins || 0) + " SQ";
+
+    // Обновить состояние кнопок темы
+    let cur = "light";
+    try { cur = localStorage.getItem("sqwid_theme") || "light"; } catch (e) {}
+    const light = document.getElementById("themeLight");
+    const dark = document.getElementById("themeDark");
+    if (light && dark) {
+      light.classList.toggle("active", cur !== "dark");
+      dark.classList.toggle("active", cur === "dark");
+    }
+
+    // Sqwid+ секция
+    const plusSection = document.getElementById("settingsPlusSection");
+    if (plusSection) {
+      const plus = isPlus();
+      plusSection.style.display = plus ? "block" : "none";
+      if (plus) {
+        const social = myData.socialLinks || {};
+        setVal("settingsSocialTelegram", social.telegram || "");
+        setVal("settingsSocialInstagram", social.instagram || "");
+        setVal("settingsSocialYoutube", social.youtube || "");
+      }
+    }
   }
 
   function setVal(id, v) {
@@ -93,7 +153,18 @@ waitForSqwidSettings((S) => {
     if (el) el.checked = !!v;
   }
 
-  /* ---------- аватар ---------- */
+  /* ============================================================
+     ТЕМА — обработчики
+     ============================================================ */
+  const btnThemeLight = document.getElementById("themeLight");
+  if (btnThemeLight) btnThemeLight.addEventListener("click", () => applyTheme("light"));
+
+  const btnThemeDark = document.getElementById("themeDark");
+  if (btnThemeDark) btnThemeDark.addEventListener("click", () => applyTheme("dark"));
+
+  /* ============================================================
+     АВАТАР
+     ============================================================ */
   const avaInput = document.getElementById("settingsAvatarInput");
   if (avaInput) {
     avaInput.addEventListener("change", (e) => {
@@ -111,7 +182,9 @@ waitForSqwidSettings((S) => {
     });
   }
 
-  /* ---------- сохранение профиля ---------- */
+  /* ============================================================
+     СОХРАНЕНИЕ ПРОФИЛЯ
+     ============================================================ */
   const btnSave = document.getElementById("settingsSaveProfile");
   if (btnSave) btnSave.addEventListener("click", async () => {
     const name = (document.getElementById("settingsName").value || "").trim();
@@ -120,7 +193,15 @@ waitForSqwidSettings((S) => {
 
     if (!name) return S.showAlert("Введите имя", "Ошибка");
     if (name.length > 30) return S.showAlert("Имя до 30 символов", "Ошибка");
-    if (bio.length > 120) return S.showAlert("Bio до 120 символов", "Ошибка");
+
+    // Bio: до 300 для Sqwid+, до 120 для остальных
+    const bioLimit = isPlus() ? 300 : 120;
+    if (bio.length > bioLimit) {
+      return S.showAlert(
+        `Bio до ${bioLimit} символов${isPlus() ? "" : " (Sqwid+ = 300)"}`,
+        "Ошибка"
+      );
+    }
 
     let username = null;
     if (usernameRaw) {
@@ -154,7 +235,71 @@ waitForSqwidSettings((S) => {
     }
   });
 
-  /* ---------- приватность ---------- */
+  /* ============================================================
+     SQWID+ — ФОН ПРОФИЛЯ + СОЦСЕТИ
+     ============================================================ */
+  const btnUploadProfileBg = document.getElementById("btnUploadProfileBg");
+  if (btnUploadProfileBg) {
+    btnUploadProfileBg.addEventListener("click", () => {
+      document.getElementById("settingsProfileBg").click();
+    });
+  }
+
+  const settingsProfileBg = document.getElementById("settingsProfileBg");
+  if (settingsProfileBg) {
+    settingsProfileBg.addEventListener("change", async (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      if (f.size > 1024 * 1024) return S.showAlert("Фон до 1 МБ", "Ошибка");
+      const r = new FileReader();
+      r.onload = async (ev) => {
+        try {
+          await update(ref(db, "users/" + currentUser.uid), { profileBg: ev.target.result });
+          S.showAlert("Фон обновлён", "Готово");
+        } catch (err) {
+          S.showAlert("Ошибка: " + err.message, "Ошибка");
+        }
+      };
+      r.readAsDataURL(f);
+    });
+  }
+
+  const btnSavePlus = document.getElementById("settingsSavePlus");
+if (btnSavePlus) {
+  btnSavePlus.addEventListener("click", async () => {
+    const rawTg = (document.getElementById("settingsSocialTelegram").value || "").trim();
+    const rawIg = (document.getElementById("settingsSocialInstagram").value || "").trim();
+    const rawYt = (document.getElementById("settingsSocialYoutube").value || "").trim();
+
+    // Валидация ссылок
+    const telegram = sanitizeUrl(rawTg);
+    const instagram = sanitizeUrl(rawIg);
+    const youtube = sanitizeUrl(rawYt);
+
+    if (rawTg && !telegram) {
+      return S.showAlert("Telegram: ссылка должна начинаться с http:// или https://", "Ошибка");
+    }
+    if (rawIg && !instagram) {
+      return S.showAlert("Instagram: ссылка должна начинаться с http:// или https://", "Ошибка");
+    }
+    if (rawYt && !youtube) {
+      return S.showAlert("YouTube: ссылка должна начинаться с http:// или https://", "Ошибка");
+    }
+
+    try {
+      await update(ref(db, "users/" + currentUser.uid), {
+        socialLinks: { telegram, instagram, youtube }
+      });
+      S.showAlert("Сохранено", "Готово");
+    } catch (e) {
+      S.showAlert("Ошибка: " + e.message, "Ошибка");
+    }
+  });
+}
+
+  /* ============================================================
+     ПРИВАТНОСТЬ
+     ============================================================ */
   bindToggle("settingsHideEmail", "hideEmail");
   bindToggle("settingsHideOnline", "hideOnline");
   bindToggle("settingsShowUsername", "showUsername");
@@ -167,7 +312,9 @@ waitForSqwidSettings((S) => {
     });
   }
 
-  /* ---------- PIN ---------- */
+  /* ============================================================
+     PIN
+     ============================================================ */
   const pinSet = document.getElementById("settingsPinSet");
   if (pinSet) pinSet.addEventListener("click", changePin);
   const pinRemove = document.getElementById("settingsPinRemove");
@@ -215,7 +362,9 @@ waitForSqwidSettings((S) => {
     S.showAlert("PIN отключён", "Готово");
   }
 
-  /* ---------- аккаунт ---------- */
+  /* ============================================================
+     АККАУНТ
+     ============================================================ */
   const btnEmail = document.getElementById("settingsChangeEmail");
   if (btnEmail) btnEmail.addEventListener("click", async () => {
     const newEmail = await askPrompt("Новый email", "Email");
@@ -262,10 +411,31 @@ waitForSqwidSettings((S) => {
     window.location.href = "index.html";
   });
 
-  /* ---------- prompt (модалка) ---------- */
+  /* ============================================================
+     ПРОМПТ
+     ============================================================ */
   function askPrompt(text, placeholder) {
     return S.showPrompt(text, placeholder, "");
   }
-
+/* ============================================================
+   ВАЛИДАЦИЯ URL
+   ============================================================ */
+function sanitizeUrl(url) {
+  if (!url || typeof url !== "string") return "";
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  // Разрешаем только http/https
+  if (!/^https?:\/\//i.test(trimmed)) return "";
+  try {
+    const u = new URL(trimmed);
+    // Только http и https
+    if (u.protocol !== "http:" && u.protocol !== "https:") return "";
+    // Должен быть хотя бы один символ после домена .XXX
+    if (!u.hostname || !u.hostname.includes(".")) return "";
+    return u.href;
+  } catch (e) {
+    return "";
+  }
+}
   console.log("✅ chat-settings.js готов");
 });

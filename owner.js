@@ -269,8 +269,8 @@ waitForSqwidOwner((S) => {
     const badge = document.getElementById("ownerRoleBadge");
     if (badge) {
       badge.textContent = isOwner ? "OWNER" : "MODERATOR";
-      badge.style.background = isOwner ? "rgba(247,181,0,0.15)" : "rgba(168,85,247,0.15)";
-      badge.style.color = isOwner ? "#f7b500" : "#c084fc";
+      badge.style.background = isOwner ? "rgba(245,158,11,0.15)" : "rgba(139,92,246,0.15)";
+      badge.style.color = isOwner ? "#f59e0b" : "#8b5cf6";
     }
     S.showScreen("screen-owner");
     renderOwnerAll();
@@ -371,9 +371,9 @@ Sqwid+: ${plusCount}
           row.innerHTML = `
             <div class="owner-log-time">${fmtDate(l.at)}</div>
             <div>
-              <span style="color:${l.fromRole === "owner" ? "#f7b500" : "#c084fc"};font-weight:700;">${escH(l.from)}</span>
+              <span style="color:${l.fromRole === "owner" ? "#f59e0b" : "#8b5cf6"};font-weight:700;">${escH(l.from)}</span>
               — ${escH(l.action)}
-              ${l.note ? `<br><span style="color:#8696a0;font-size:12px;">${escH(l.note)}</span>` : ""}
+              ${l.note ? `<br><span style="color:#94a3b8;font-size:12px;">${escH(l.note)}</span>` : ""}
             </div>
           `;
           logsList.appendChild(row);
@@ -549,16 +549,16 @@ Sqwid+: ${plusCount}
       const row = document.createElement("div");
       row.className = "owner-user-row";
       const badges = [];
-      if (u.verified) badges.push(`<span class="owner-user-badge" style="background:rgba(59,130,246,0.2);color:#60a5fa;">✓ VERIFIED</span>`);
-      if (u.role === "moderator") badges.push(`<span class="owner-user-badge" style="background:rgba(168,85,247,0.2);color:#c084fc;">MOD</span>`);
-      if (u.banned) badges.push(`<span class="owner-user-badge" style="background:rgba(239,68,68,0.2);color:#ff6b6b;">BAN</span>`);
-      if (u.muted) badges.push(`<span class="owner-user-badge" style="background:rgba(247,181,0,0.2);color:#f7b500;">MUTE</span>`);
-      if (u.frozen) badges.push(`<span class="owner-user-badge" style="background:rgba(59,130,246,0.2);color:#60a5fa;">FROZEN</span>`);
-      if (u.plusUntil && u.plusUntil > Date.now()) badges.push(`<span class="owner-user-badge" style="background:rgba(247,181,0,0.2);color:#f7b500;">+</span>`);
+      if (u.verified) badges.push(`<span class="owner-user-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;">✓ VERIFIED</span>`);
+      if (u.role === "moderator") badges.push(`<span class="owner-user-badge" style="background:rgba(139,92,246,0.15);color:#8b5cf6;">MOD</span>`);
+      if (u.banned) badges.push(`<span class="owner-user-badge" style="background:rgba(239,68,68,0.15);color:#ef4444;">BAN</span>`);
+      if (u.muted) badges.push(`<span class="owner-user-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;">MUTE</span>`);
+      if (u.frozen) badges.push(`<span class="owner-user-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;">FROZEN</span>`);
+      if (u.plusUntil && u.plusUntil > Date.now()) badges.push(`<span class="owner-user-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;">+</span>`);
       row.innerHTML = `
         ${makeAvaHTML(u)}
         <div class="owner-user-info">
-          <div class="owner-user-name">${escH(u.name || "Без имени")} ${u.username ? `<span style="color:#8696a0;font-weight:500;">@${escH(u.username)}</span>` : ""}</div>
+          <div class="owner-user-name">${escH(u.name || "Без имени")} ${u.username ? `<span style="color:#94a3b8;font-weight:500;">@${escH(u.username)}</span>` : ""}</div>
           <div class="owner-user-sub">${escH(u.email || "")}</div>
           ${badges.length ? `<div class="owner-user-badges">${badges.join("")}</div>` : ""}
         </div>
@@ -596,9 +596,9 @@ Sqwid+: ${plusCount}
       const row = document.createElement("div");
       row.className = "owner-user-row";
       const badges = [];
-      if (c.verified) badges.push(`<span class="owner-user-badge" style="background:rgba(59,130,246,0.2);color:#60a5fa;">✓ VERIFIED</span>`);
-      if (c.type === "channel") badges.push(`<span class="owner-user-badge" style="background:rgba(0,168,132,0.2);color:#00a884;">CHANNEL</span>`);
-      if (c.type === "group") badges.push(`<span class="owner-user-badge" style="background:rgba(59,130,246,0.2);color:#60a5fa;">GROUP</span>`);
+      if (c.verified) badges.push(`<span class="owner-user-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;">✓ VERIFIED</span>`);
+      if (c.type === "channel") badges.push(`<span class="owner-user-badge" style="background:rgba(16,185,129,0.15);color:#10b981;">CHANNEL</span>`);
+      if (c.type === "group") badges.push(`<span class="owner-user-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;">GROUP</span>`);
       row.innerHTML = `
         ${makeChatAvaHTML(c)}
         <div class="owner-user-info">
@@ -606,7 +606,7 @@ Sqwid+: ${plusCount}
           <div class="owner-user-sub">${Object.keys(c.members || {}).length} участников</div>
           ${badges.length ? `<div class="owner-user-badges">${badges.join("")}</div>` : ""}
         </div>
-        <button class="inventory-item-btn" data-verify-chat="${c.cid}" style="color:#60a5fa;">${c.verified ? "Снять ✓" : "✓ Вериф."}</button>
+        <button class="inventory-item-btn" data-verify-chat="${c.cid}" style="color:#3b82f6;">${c.verified ? "Снять ✓" : "✓ Вериф."}</button>
       `;
       row.addEventListener("click", (e) => {
         if (e.target.dataset.verifyChat) return;
@@ -647,24 +647,21 @@ Sqwid+: ${plusCount}
       if (u.photo && u.photo.startsWith("data:image")) avaEl.src = u.photo;
       else {
         const l = (u.name || u.email || "?").trim().charAt(0).toUpperCase();
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#3b82f6"/><text x="50%" y="55%" font-size="36" fill="#fff" text-anchor="middle" font-family="Arial">${l}</text></svg>`;
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#6366f1"/><text x="50%" y="55%" font-size="36" fill="#fff" text-anchor="middle" font-family="Arial">${l}</text></svg>`;
         avaEl.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
       }
     }
     setText("ouName", u.name || "Без имени");
     setText("ouUsername", u.username ? "@" + u.username : (u.email || ""));
 
-    // ЗАЩИТА ВЛАДЕЛЬЦА
     const targetIsOwner = isTargetOwner(ownerUserModalUid);
     if (targetIsOwner) {
-      // Скрываем все опасные кнопки
       show("btnOuBan", false);
       show("btnOuMute", false);
       show("btnOuFreeze", false);
       show("btnOuUnverify", false);
       show("btnOuMakeModerator", false);
       show("btnOuRemoveModerator", false);
-      // Показываем только «разблокировать», если вдруг владелец каким-то образом забанен
       show("btnOuUnban", !!u.banned);
       show("btnOuUnmute", !!u.muted);
       show("btnOuUnfreeze", !!u.frozen);
@@ -672,7 +669,6 @@ Sqwid+: ${plusCount}
       return;
     }
 
-    // Обычная логика
     show("btnOuBan", !u.banned);
     show("btnOuUnban", !!u.banned);
     show("btnOuMute", !u.muted);
@@ -830,7 +826,7 @@ Sqwid+: ${plusCount}
       const row = document.createElement("div");
       row.className = "owner-user-row";
       const fromUser = allUsers[r.fromUid] || {};
-      const statusColor = r.status === "new" ? "#ff6b6b" : r.status === "open" ? "#f7b500" : "#00a884";
+      const statusColor = r.status === "new" ? "#ef4444" : r.status === "open" ? "#f59e0b" : "#10b981";
       const statusText = r.status === "new" ? "NEW" : r.status === "open" ? "OPEN" : "RESOLVED";
       row.innerHTML = `
         <div class="owner-user-info" style="flex:1;">
@@ -839,7 +835,7 @@ Sqwid+: ${plusCount}
             <span class="owner-user-badge" style="background:${statusColor}22;color:${statusColor};">${statusText}</span>
           </div>
           <div class="owner-user-sub">${r.targetType === "message" ? "Сообщение" : r.targetType === "chat" ? "Чат/канал" : "Пользователь"} · ${escH(fromUser.name || fromUser.email || "?")}</div>
-          <div class="owner-user-sub" style="font-size:11px;color:#667781;">${fmtDate(r.createdAt)}</div>
+          <div class="owner-user-sub" style="font-size:11px;color:#94a3b8;">${fmtDate(r.createdAt)}</div>
         </div>
       `;
       row.addEventListener("click", () => openReportView(r.rid));
@@ -878,8 +874,8 @@ Sqwid+: ${plusCount}
     if (stEl) {
       const status = r.status === "new" ? "open" : r.status;
       stEl.textContent = status.toUpperCase();
-      stEl.style.background = status === "open" ? "rgba(247,181,0,0.15)" : "rgba(0,168,132,0.15)";
-      stEl.style.color = status === "open" ? "#f7b500" : "#00a884";
+      stEl.style.background = status === "open" ? "rgba(245,158,11,0.15)" : "rgba(16,185,129,0.15)";
+      stEl.style.color = status === "open" ? "#f59e0b" : "#10b981";
     }
 
     const msgSec = document.getElementById("rvMessagesSection");
@@ -999,9 +995,9 @@ Sqwid+: ${plusCount}
           row.innerHTML = `
             <div class="owner-log-time">${fmtDate(l.at)}</div>
             <div>
-              <span style="color:#c084fc;font-weight:700;">${escH(l.from)}</span>
+              <span style="color:#8b5cf6;font-weight:700;">${escH(l.from)}</span>
               — ${escH(l.action)}
-              ${l.note ? `<br><span style="color:#8696a0;font-size:12px;">${escH(l.note)}</span>` : ""}
+              ${l.note ? `<br><span style="color:#94a3b8;font-size:12px;">${escH(l.note)}</span>` : ""}
             </div>
           `;
           logsBox.appendChild(row);
@@ -1040,11 +1036,11 @@ Sqwid+: ${plusCount}
       const row = document.createElement("div");
       row.className = "owner-user-row";
       row.innerHTML = `
-        <div class="owner-user-ava" style="background:#000;font-size:20px;">${escH(it.icon || "🏷")}</div>
+        <div class="owner-user-ava" style="background:#f1f5f9;font-size:20px;">${escH(it.icon || "🏷")}</div>
         <div class="owner-user-info">
           <div class="owner-user-name">${escH(it.name || it.value || it.id)}</div>
           <div class="owner-user-sub">${escH(it.type || "")} · 🪙 ${it.price || 0} SQ</div>
-          <div class="owner-user-sub" style="font-size:11px;color:#667781;font-family:'JetBrains Mono',monospace;">${escH(it.id)}</div>
+          <div class="owner-user-sub" style="font-size:11px;color:#94a3b8;font-family:'JetBrains Mono',monospace;">${escH(it.id)}</div>
         </div>
         <button class="inventory-item-btn remove" data-delete="${it.id}">Удалить</button>
       `;
@@ -1166,9 +1162,6 @@ Sqwid+: ${plusCount}
     return "🏷";
   }
 
-  /* ============================================================
-     КНОПКА ОТКРЫТИЯ ПАНЕЛИ
-     ============================================================ */
   setInterval(() => {
     const btn = document.getElementById("btnOpenOwnerPanel");
     if (btn && !btn.dataset.bound) {
@@ -1177,9 +1170,6 @@ Sqwid+: ${plusCount}
     }
   }, 800);
 
-  /* ============================================================
-     ЖАЛОБА
-     ============================================================ */
   window.Sqwid.openReportModal = function ({ targetType, targetUid, chatId, messageIds, targetLabel }) {
     reportContext = { targetType, targetUid, chatId, messageIds, targetLabel };
     setText("reportTargetInfo", targetLabel || "—");

@@ -1,5 +1,6 @@
 /* ============================================================
    shop.js — магазин, маркет, инвентарь
+   + Sqwid+ скидка 10%
    ============================================================ */
 
 console.log("🚀 shop.js загружен, жду Sqwid...");
@@ -30,10 +31,10 @@ waitForSqwidShop((S) => {
 
   /* ---------- Базовые товары ---------- */
   const BASE_ITEMS = [
-    { id: "nickColor_gold",   name: "Золотой ник",     price: 100, type: "nickColor", value: "#f7b500", icon: "🎨", preview: "Цвет: золото" },
+    { id: "nickColor_gold",   name: "Золотой ник",     price: 100, type: "nickColor", value: "#f59e0b", icon: "🎨", preview: "Цвет: золото" },
     { id: "nickColor_red",    name: "Красный ник",     price: 100, type: "nickColor", value: "#ef4444", icon: "🎨", preview: "Цвет: красный" },
     { id: "nickColor_blue",   name: "Синий ник",       price: 100, type: "nickColor", value: "#3b82f6", icon: "🎨", preview: "Цвет: синий" },
-    { id: "nickColor_purple", name: "Фиолетовый ник",  price: 150, type: "nickColor", value: "#a855f7", icon: "🎨", preview: "Цвет: фиолетовый" },
+    { id: "nickColor_purple", name: "Фиолетовый ник",  price: 150, type: "nickColor", value: "#8b5cf6", icon: "🎨", preview: "Цвет: фиолетовый" },
     { id: "emoji_fire",       name: "Огненный значок", price: 150, type: "emoji", value: "🔥", icon: "🔥", preview: "Значок рядом с именем" },
     { id: "emoji_diamond",    name: "Алмаз",           price: 200, type: "emoji", value: "💎", icon: "💎", preview: "Значок рядом с именем" },
     { id: "emoji_crown",      name: "Корона",          price: 250, type: "emoji", value: "👑", icon: "👑", preview: "Значок рядом с именем" },
@@ -42,11 +43,21 @@ waitForSqwidShop((S) => {
     { id: "frame_rainbow",    name: "Радужная рамка",  price: 500, type: "frame", value: "rainbow", icon: "🖼", preview: "Радужное кольцо вокруг авы" }
   ];
 
-  /* ---------- Escape (выше, чем всё остальное) ---------- */
   function escapeHtml(text) {
     const div = document.createElement("div");
     div.textContent = text == null ? "" : text;
     return div.innerHTML;
+  }
+
+  /* ---------- ХЕЛПЕР: активен ли Sqwid+ ---------- */
+  function isPlus() {
+    return currentUserData.plusUntil && currentUserData.plusUntil > Date.now();
+  }
+
+  /* ---------- Цена с учётом Sqwid+ ---------- */
+  function getPrice(item) {
+    if (!item || typeof item.price !== "number") return 0;
+    return isPlus() ? Math.floor(item.price * 0.9) : item.price;
   }
 
   /* ---------- Подписка на профиль ---------- */
@@ -122,32 +133,33 @@ waitForSqwidShop((S) => {
       return `<span style="color:${item.value};font-weight:700;font-size:14px;">${escapeHtml(myName)}</span>`;
     }
     if (item.type === "emoji") {
-      return `<span style="font-size:13px;color:#e9edef;">${escapeHtml(myName)}</span> <span style="font-size:14px;">${item.value}</span>`;
+      return `<span style="font-size:13px;color:#0f172a;">${escapeHtml(myName)}</span> <span style="font-size:14px;">${item.value}</span>`;
     }
     if (item.type === "frame") {
       const frameClass = "frame-" + item.value;
       const inner = avaSrc
         ? `<img src="${avaSrc}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;display:block;">`
-        : `<span style="display:flex;width:26px;height:26px;border-radius:50%;background:#3b82f6;color:#fff;font-size:12px;font-weight:700;align-items:center;justify-content:center;">${escapeHtml(firstLetter)}</span>`;
+        : `<span style="display:flex;width:26px;height:26px;border-radius:50%;background:#6366f1;color:#fff;font-size:12px;font-weight:700;align-items:center;justify-content:center;">${escapeHtml(firstLetter)}</span>`;
       return `<span class="avatar-frame-wrap ${frameClass}" style="display:inline-flex;padding:2px;border-radius:50%;">
-        <span style="display:inline-flex;border-radius:50%;border:2px solid #000;overflow:hidden;">${inner}</span>
+        <span style="display:inline-flex;border-radius:50%;border:2px solid #fff;overflow:hidden;">${inner}</span>
       </span>`;
     }
     if (item.type === "username") {
-      return `<span style="color:#00a884;font-family:'JetBrains Mono',monospace;font-size:13px;">@${escapeHtml(item.value)}</span>`;
+      return `<span style="color:#10b981;font-family:'JetBrains Mono',monospace;font-size:13px;">@${escapeHtml(item.value)}</span>`;
     }
     if (item.type === "phone") {
-      return `<span style="color:#00a884;font-family:'JetBrains Mono',monospace;font-size:13px;">${escapeHtml(item.value)}</span>`;
+      return `<span style="color:#10b981;font-family:'JetBrains Mono',monospace;font-size:13px;">${escapeHtml(item.value)}</span>`;
     }
-    return `<span style="color:#8696a0;font-size:12px;">${escapeHtml(item.preview || "")}</span>`;
+    return `<span style="color:#475569;font-size:12px;">${escapeHtml(item.preview || "")}</span>`;
   }
 
-  /* ---------- Сетка ---------- */
+  /* ---------- Сетка товаров ---------- */
   async function renderShopGrid(containerId, items) {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = "";
     const inv = currentUserData.inventory || {};
+    const plus = isPlus();
 
     const allUsers = (await get(ref(db, "users"))).val() || {};
     const takenUsernames = {};
@@ -180,6 +192,12 @@ waitForSqwidShop((S) => {
       }
 
       const previewHTML = buildPreviewHTML(item);
+      const displayPrice = getPrice(item);
+      const oldPrice = item.price;
+      const discountTag = plus ? ` <span style="color:#f59e0b;font-size:11px;font-weight:800;">−10%</span>` : "";
+      const oldPriceHTML = plus && oldPrice !== displayPrice
+        ? `<span style="color:#94a3b8;font-size:11px;text-decoration:line-through;margin-left:6px;">${oldPrice} SQ</span>`
+        : "";
 
       el.innerHTML = `
         <div class="shop-item-icon" style="background:transparent;padding:0;">
@@ -188,39 +206,53 @@ waitForSqwidShop((S) => {
         <div class="shop-item-info">
           <div class="shop-item-name">${escapeHtml(item.name)}</div>
           <div class="shop-item-preview">${escapeHtml(item.preview)}</div>
-          <div class="shop-item-price">🪙 ${item.price} SQ</div>
+          <div class="shop-item-price">🪙 ${displayPrice} SQ${discountTag}${oldPriceHTML}</div>
         </div>
         ${!sold ? `<button class="shop-item-btn ${btnClass}">${btnHTML}</button>` : ""}`;
 
       const btn = el.querySelector(".shop-item-btn");
-if (btn) {
-  btn.onclick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!owned) buyItem(item);
-    else if (!isEquipped) equipItem(item);
-  };
-}
+      if (btn) {
+        btn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!owned) buyItem(item);
+          else if (!isEquipped) equipItem(item);
+        };
+      }
       container.appendChild(el);
     });
   }
 
-  /* ---------- Покупка ---------- */
+  /* ---------- Покупка (с Sqwid+ скидкой) ---------- */
   async function buyItem(item) {
+    const plus = isPlus();
+    const finalPrice = getPrice(item);
     const coins = currentUserData.coins || 0;
-    if (coins < item.price) return S.showAlert("Недостаточно SQ.\nНужно: " + item.price + "\nУ вас: " + coins, "Мало монет");
 
-    const ok = await S.showConfirm("Купить «" + item.name + "» за " + item.price + " SQ?", "Покупка");
+    if (coins < finalPrice) {
+      return S.showAlert(
+        "Недостаточно SQ.\nНужно: " + finalPrice +
+        (plus ? " (Sqwid+ −10%)" : "") +
+        "\nУ вас: " + coins,
+        "Мало монет"
+      );
+    }
+
+    const title = plus
+      ? `Купить «${item.name}» за ${finalPrice} SQ?\n\n⭐ Sqwid+ скидка −10% (обычная цена ${item.price} SQ)`
+      : `Купить «${item.name}» за ${finalPrice} SQ?`;
+
+    const ok = await S.showConfirm(title, "Покупка");
     if (!ok) return;
 
-    const updates = { coins: coins - item.price };
+    const updates = { coins: coins - finalPrice };
     updates["inventory/" + item.id] = true;
     if (item.type === "username") updates.username = item.value;
     else if (item.type === "phone") updates.phone = item.value;
 
     try {
       await update(ref(db, "users/" + currentUser.uid), updates);
-      S.showAlert("Куплено: " + item.name, "Готово");
+      S.showAlert("Куплено: " + item.name + (plus ? "\n\nСэкономлено " + (item.price - finalPrice) + " SQ ⭐" : ""), "Готово");
       renderShop();
     } catch (e) { S.showAlert("Ошибка: " + e.message, "Ошибка"); }
   }
@@ -242,12 +274,12 @@ if (btn) {
   /* ---------- Маркет ---------- */
   async function renderMarket() {
     const grid = document.getElementById("marketGrid");
-    grid.innerHTML = '<div style="padding:40px;text-align:center;color:#8696a0;">Загрузка...</div>';
+    grid.innerHTML = '<div style="padding:40px;text-align:center;color:#94a3b8;">Загрузка...</div>';
     const listings = (await get(ref(db, "market"))).val() || {};
     grid.innerHTML = "";
     const ids = Object.keys(listings);
     if (ids.length === 0) {
-      grid.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#8696a0;">Пока никто не продаёт юзернеймы</div>';
+      grid.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#94a3b8;">Пока никто не продаёт юзернеймы</div>';
       return;
     }
     ids.forEach(itemId => {
@@ -309,7 +341,7 @@ if (btn) {
     const inv = currentUserData.inventory || {};
     const myNames = shopItems.filter(i => i.type === "username" && inv[i.id] === true);
     if (myNames.length === 0) {
-      grid.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#8696a0;">У вас нет купленных юзернеймов</div>';
+      grid.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#94a3b8;">У вас нет купленных юзернеймов</div>';
       return;
     }
     const listings = (await get(ref(db, "market"))).val() || {};
@@ -373,7 +405,7 @@ if (btn) {
     const inv = currentUserData.inventory || {};
     const ids = Object.keys(inv);
     if (ids.length === 0) {
-      all.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#8696a0;">Пусто. Купи что-нибудь в магазине.</div>';
+      all.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#94a3b8;">Пусто. Купи что-нибудь в магазине.</div>';
       return;
     }
 
@@ -431,7 +463,7 @@ if (btn) {
     });
 
     if (active.children.length === 0) {
-      active.innerHTML = '<div style="padding:20px;text-align:center;color:#8696a0;">Ничего не надето</div>';
+      active.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">Ничего не надето</div>';
     }
   }
 
@@ -457,21 +489,6 @@ if (btn) {
   /* ---------- Кнопки открытия ---------- */
   const btnProfileShop = document.getElementById("btnProfileShop");
   if (btnProfileShop) btnProfileShop.addEventListener("click", openShop);
-
-  const btnOpenShop = document.getElementById("btnOpenShop");
-  if (btnOpenShop) btnOpenShop.addEventListener("click", openShop);
-
-  const btnOpenShopBurger = document.getElementById("btnOpenShopBurger");
-  if (btnOpenShopBurger) btnOpenShopBurger.addEventListener("click", () => {
-    document.getElementById("profileMenu").classList.remove("active");
-    openShop();
-  });
-
-  const btnOpenInv = document.getElementById("btnOpenInventory");
-  if (btnOpenInv) btnOpenInv.addEventListener("click", () => {
-    document.getElementById("profileMenu").classList.remove("active");
-    openInventory();
-  });
 
   console.log("✅ shop.js готов");
 });

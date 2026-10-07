@@ -27,22 +27,38 @@ const auth = getAuth(app);
 const db = getDatabase(app);
 
 /* ---------- Переключение экранов ---------- */
-const screenLogin = document.getElementById("screen-login");
-const screenRegister = document.getElementById("screen-register");
-
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   const el = document.getElementById(id);
   if (el) el.classList.add("active");
 }
 
-/* ---------- ЭЛЕМЕНТЫ ЭКРАНА ВХОДА ---------- */
+/* ---------- Toast ---------- */
+let toastTimer = null;
+function showToast(text, type = "info", duration = 3000) {
+  let el = document.getElementById("toastEl");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "toastEl";
+    el.className = "toast";
+    document.body.appendChild(el);
+  }
+  el.textContent = text;
+  el.className = "toast toast-" + type;
+  void el.offsetWidth;
+  el.classList.add("show");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), duration);
+}
+
+/* ---------- Элементы входа ---------- */
 const loginEmail = document.getElementById("loginEmail");
 const loginPassword = document.getElementById("loginPassword");
 const btnLogin = document.getElementById("btnLogin");
 const btnGoRegister = document.getElementById("btnGoRegister");
+const btnForgotPassword = document.getElementById("btnForgotPassword");
 
-/* ---------- ЭЛЕМЕНТЫ ЭКРАНА РЕГИСТРАЦИИ ---------- */
+/* ---------- Элементы регистрации ---------- */
 const regAvatarInput = document.getElementById("regAvatarInput");
 const regAvatarPreview = document.getElementById("regAvatarPreview");
 const regEmail = document.getElementById("regEmail");
@@ -51,54 +67,68 @@ const regName = document.getElementById("regName");
 const btnContinue = document.getElementById("btnContinue");
 const regStatus = document.getElementById("regStatus");
 const btnTogglePass = document.getElementById("btnTogglePass");
+const btnBackToLogin = document.getElementById("btnBackToLogin");
 
 let regAvatarBase64 = null;
 
-/* ---------- АВТОРИЗАЦИЯ (если уже вошёл — кидаем в чат) ---------- */
+/* ---------- Авторизация ---------- */
 onAuthStateChanged(auth, (user) => {
   if (user) window.location.href = "chat.html";
 });
 
-/* ---------- ПЕРЕХОД В РЕГИСТРАЦИЮ ---------- */
-btnGoRegister.addEventListener("click", () => {
-  // переносим email, если он уже введён на входе
-  if (loginEmail.value.trim()) {
-    regEmail.value = loginEmail.value.trim();
-  }
-  regStatus.textContent = "";
-  showScreen("screen-register");
-});
+/* ---------- Переход в регистрацию ---------- */
+if (btnGoRegister) {
+  btnGoRegister.addEventListener("click", () => {
+    if (loginEmail.value.trim()) {
+      regEmail.value = loginEmail.value.trim();
+    }
+    if (regStatus) regStatus.textContent = "";
+    showScreen("screen-register");
+  });
+}
 
-/* ---------- ЗАГРУЗКА АВАТАРА ---------- */
-regAvatarInput.addEventListener("change", () => {
-  const file = regAvatarInput.files[0];
-  if (!file) return;
-  if (file.size > 500 * 1024) {
-    regStatus.textContent = "Фото до 500 КБ";
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    regAvatarBase64 = e.target.result;
-    regAvatarPreview.style.backgroundImage = `url(${regAvatarBase64})`;
-    regAvatarPreview.classList.add("has-photo");
-  };
-  reader.readAsDataURL(file);
-});
+/* ---------- Назад на вход ---------- */
+if (btnBackToLogin) {
+  btnBackToLogin.addEventListener("click", () => {
+    if (regStatus) regStatus.textContent = "";
+    showScreen("screen-login");
+  });
+}
 
-/* ---------- ПОКАЗ / СКРЫТИЕ ПАРОЛЯ ---------- */
-btnTogglePass.addEventListener("click", () => {
-  const isPass = regPassword.type === "password";
-  regPassword.type = isPass ? "text" : "password";
-  btnTogglePass.classList.toggle("active", isPass);
-});
+/* ---------- Загрузка аватара ---------- */
+if (regAvatarInput) {
+  regAvatarInput.addEventListener("change", () => {
+    const file = regAvatarInput.files[0];
+    if (!file) return;
+    if (file.size > 500 * 1024) {
+      showToast("Фото до 500 КБ", "warn");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      regAvatarBase64 = e.target.result;
+      regAvatarPreview.style.backgroundImage = `url(${regAvatarBase64})`;
+      regAvatarPreview.classList.add("has-photo");
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ---------- Показать/скрыть пароль ---------- */
+if (btnTogglePass) {
+  btnTogglePass.addEventListener("click", () => {
+    const isPass = regPassword.type === "password";
+    regPassword.type = isPass ? "text" : "password";
+    btnTogglePass.classList.toggle("active", isPass);
+  });
+}
 
 /* ---------- ВХОД ---------- */
 async function login() {
   const email = loginEmail.value.trim();
   const password = loginPassword.value;
   if (!email || !password) {
-    alert("Заполните email и пароль");
+    showToast("Заполните email и пароль", "warn");
     return;
   }
   btnLogin.textContent = "...";
@@ -107,14 +137,37 @@ async function login() {
     await signInWithEmailAndPassword(auth, email, password);
     window.location.href = "chat.html";
   } catch (err) {
-    alert(translateError(err.code));
+    showToast(translateError(err.code), "error", 4000);
     btnLogin.textContent = "ВОЙТИ";
     btnLogin.disabled = false;
   }
 }
-btnLogin.addEventListener("click", login);
-loginEmail.addEventListener("keydown", (e) => { if (e.key === "Enter") loginPassword.focus(); });
-loginPassword.addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+if (btnLogin) btnLogin.addEventListener("click", login);
+if (loginEmail) loginEmail.addEventListener("keydown", (e) => { if (e.key === "Enter") loginPassword.focus(); });
+if (loginPassword) loginPassword.addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+
+/* ---------- ЗАБЫЛИ ПАРОЛЬ ---------- */
+if (btnForgotPassword) {
+  btnForgotPassword.addEventListener("click", async () => {
+    const email = (loginEmail.value || "").trim();
+    if (!email) {
+      showToast("Введите email, чтобы сбросить пароль", "warn");
+      loginEmail.focus();
+      return;
+    }
+    try {
+      btnForgotPassword.textContent = "Отправляем...";
+      btnForgotPassword.disabled = true;
+      await sendPasswordResetEmail(auth, email);
+      showToast("Письмо отправлено на " + email + ". Проверьте почту", "ok", 4500);
+    } catch (err) {
+      showToast(translateError(err.code), "error", 4000);
+    } finally {
+      btnForgotPassword.textContent = "Забыли пароль?";
+      btnForgotPassword.disabled = false;
+    }
+  });
+}
 
 /* ---------- РЕГИСТРАЦИЯ ---------- */
 async function register() {
@@ -142,18 +195,20 @@ async function register() {
     regStatus.textContent = "Готово! Заходим...";
     // onAuthStateChanged перекинет в chat.html
   } catch (err) {
-    regStatus.textContent = translateError(err.code);
+    const msg = translateError(err.code);
+    regStatus.textContent = msg;
+    showToast(msg, "error", 4000);
     btnContinue.textContent = "ПРОДОЛЖИТЬ";
     btnContinue.disabled = false;
   }
 }
-btnContinue.addEventListener("click", register);
+if (btnContinue) btnContinue.addEventListener("click", register);
 
-regEmail.addEventListener("keydown", (e) => { if (e.key === "Enter") regPassword.focus(); });
-regPassword.addEventListener("keydown", (e) => { if (e.key === "Enter") regName.focus(); });
-regName.addEventListener("keydown", (e) => { if (e.key === "Enter") register(); });
+if (regEmail) regEmail.addEventListener("keydown", (e) => { if (e.key === "Enter") regPassword.focus(); });
+if (regPassword) regPassword.addEventListener("keydown", (e) => { if (e.key === "Enter") regName.focus(); });
+if (regName) regName.addEventListener("keydown", (e) => { if (e.key === "Enter") register(); });
 
-/* ---------- ПЕРЕВОД ОШИБОК ---------- */
+/* ---------- Перевод ошибок ---------- */
 function translateError(code) {
   const map = {
     "auth/invalid-email": "Неверный формат email",
@@ -169,4 +224,4 @@ function translateError(code) {
   return map[code] || ("Ошибка: " + code);
 }
 
-console.log("index.js (новый дизайн) загружен");
+console.log("index.js загружен");
