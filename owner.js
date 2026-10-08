@@ -155,8 +155,20 @@ waitForSqwidOwner((S) => {
     if (el) el.style.display = on ? "block" : "none";
   }
 
+  /* Имя юзера для отображения — всегда что-то показываем */
+  function getUserDisplayName(u, uid) {
+    if (u.name) return u.name;
+    if (u.email) return u.email.split("@")[0];
+    return "Пользователь " + (uid || "").slice(0, 4);
+  }
+  function getUserSub(u, uid) {
+    if (u.username) return "@" + u.username;
+    if (u.email) return u.email;
+    return "uid: " + (uid || "").slice(0, 10) + "…";
+  }
+
   /* ============================================================
-     ЗАЩИТА: НЕЛЬЗЯ ТРОГАТЬ ВЛАДЕЛЬЦА
+     ЗАЩИТА ВЛАДЕЛЬЦА
      ============================================================ */
   function isSelf(uid) {
     return uid === currentUser.uid;
@@ -175,7 +187,7 @@ waitForSqwidOwner((S) => {
   }
 
   /* ============================================================
-     ДНЕВНОЙ ЛИМИТ НА ВЫДАЧУ SQ
+     ДНЕВНОЙ ЛИМИТ
      ============================================================ */
   function todayKey() {
     const d = new Date();
@@ -393,13 +405,13 @@ Sqwid+: ${plusCount}
       givePickedUid = uid;
       const u = allUsers[uid];
       document.getElementById("ownerGivePicked").style.display = "block";
-      document.getElementById("ownerGivePickedName").textContent = u.name || u.email || "—";
+      document.getElementById("ownerGivePickedName").textContent = getUserDisplayName(u, uid);
     });
     if (ps) ps.oninput = () => renderPickList("ownerPlusResults", ps.value, (uid) => {
       plusPickedUid = uid;
       const u = allUsers[uid];
       document.getElementById("ownerPlusPicked").style.display = "block";
-      document.getElementById("ownerPlusPickedName").textContent = u.name || u.email || "—";
+      document.getElementById("ownerPlusPickedName").textContent = getUserDisplayName(u, uid);
     });
     refreshDailyLimitUI();
   }
@@ -416,17 +428,18 @@ Sqwid+: ${plusCount}
       const name = (u.name || "").toLowerCase();
       const uname = (u.username || "").toLowerCase();
       const email = (u.email || "").toLowerCase();
-      if (q && !name.includes(q) && !uname.includes(q) && !email.includes(q)) continue;
+      const uidLow = uid.toLowerCase();
+      if (q && !name.includes(q) && !uname.includes(q) && !email.includes(q) && !uidLow.includes(q)) continue;
       arr.push({ uid, ...u });
     }
-    arr.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    arr.sort((a, b) => getUserDisplayName(a, a.uid).localeCompare(getUserDisplayName(b, b.uid)));
 
     if (arr.length === 0) {
       box.innerHTML = '<div class="create-empty">Никого не найдено</div>';
       return;
     }
 
-    arr.slice(0, 20).forEach(u => {
+    arr.slice(0, 30).forEach(u => {
       const row = document.createElement("div");
       row.className = "create-result";
       const ava = u.photo && u.photo.startsWith("data:image")
@@ -435,8 +448,8 @@ Sqwid+: ${plusCount}
       row.innerHTML = `
         <div class="create-result-ava">${ava}</div>
         <div class="create-result-info">
-          <div class="create-result-name">${escH(u.name || u.email || "Пользователь")}</div>
-          <div class="create-result-sub">${u.username ? "@" + escH(u.username) : escH(u.email || "")}</div>
+          <div class="create-result-name">${escH(getUserDisplayName(u, u.uid))}</div>
+          <div class="create-result-sub">${escH(getUserSub(u, u.uid))}</div>
         </div>
       `;
       row.addEventListener("click", () => onPick(u.uid));
@@ -468,7 +481,7 @@ Sqwid+: ${plusCount}
     const newBal = (u.coins || 0) + amt;
     await update(ref(db, "users/" + givePickedUid), { coins: newBal });
     await addToDailyLimit(amt);
-    await logAction("Выдал SQ", `${amt} SQ → ${u.name || u.email}`, givePickedUid, "user");
+    await logAction("Выдал SQ", `${amt} SQ → ${getUserDisplayName(u, givePickedUid)}`, givePickedUid, "user");
     S.showToast(`+${amt} SQ`, "ok");
     refreshDailyLimitUI();
   });
@@ -483,7 +496,7 @@ Sqwid+: ${plusCount}
     const u = allUsers[givePickedUid];
     const newBal = Math.max(0, (u.coins || 0) - amt);
     await update(ref(db, "users/" + givePickedUid), { coins: newBal });
-    await logAction("Забрал SQ", `${amt} SQ ← ${u.name || u.email}`, givePickedUid, "user");
+    await logAction("Забрал SQ", `${amt} SQ ← ${getUserDisplayName(u, givePickedUid)}`, givePickedUid, "user");
     S.showToast(`-${amt} SQ`, "ok");
   });
 
@@ -499,7 +512,7 @@ Sqwid+: ${plusCount}
     if (months === -1) until = 9999999999999;
     else until += months * 30 * 24 * 60 * 60 * 1000;
     await update(ref(db, "users/" + plusPickedUid), { plusUntil: until });
-    await logAction("Выдал Sqwid+", `${months === -1 ? "навсегда" : months + " мес"} → ${u.name || u.email}`, plusPickedUid, "user");
+    await logAction("Выдал Sqwid+", `${months === -1 ? "навсегда" : months + " мес"} → ${getUserDisplayName(u, plusPickedUid)}`, plusPickedUid, "user");
     const botRef = push(ref(db, "botChat/" + plusPickedUid));
     await set(botRef, {
       from: "Sqwid Owner",
@@ -516,7 +529,7 @@ Sqwid+: ${plusCount}
     if (!plusPickedUid) return S.showToast("Выбери пользователя", "error");
     const u = allUsers[plusPickedUid];
     await update(ref(db, "users/" + plusPickedUid), { plusUntil: null });
-    await logAction("Забрал Sqwid+", `${u.name || u.email}`, plusPickedUid, "user");
+    await logAction("Забрал Sqwid+", `${getUserDisplayName(u, plusPickedUid)}`, plusPickedUid, "user");
     S.showToast("Sqwid+ забран", "ok");
   });
 
@@ -535,17 +548,18 @@ Sqwid+: ${plusCount}
       const name = (u.name || "").toLowerCase();
       const uname = (u.username || "").toLowerCase();
       const email = (u.email || "").toLowerCase();
-      if (q && !name.includes(q) && !uname.includes(q) && !email.includes(q)) continue;
+      const uidLow = uid.toLowerCase();
+      if (q && !name.includes(q) && !uname.includes(q) && !email.includes(q) && !uidLow.includes(q)) continue;
       arr.push({ uid, ...u });
     }
-    arr.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    arr.sort((a, b) => getUserDisplayName(a, a.uid).localeCompare(getUserDisplayName(b, b.uid)));
 
     if (arr.length === 0) {
       box.innerHTML = '<div class="create-empty">Никого не найдено</div>';
       return;
     }
 
-    arr.slice(0, 80).forEach(u => {
+    arr.slice(0, 200).forEach(u => {
       const row = document.createElement("div");
       row.className = "owner-user-row";
       const badges = [];
@@ -555,11 +569,16 @@ Sqwid+: ${plusCount}
       if (u.muted) badges.push(`<span class="owner-user-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;">MUTE</span>`);
       if (u.frozen) badges.push(`<span class="owner-user-badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;">FROZEN</span>`);
       if (u.plusUntil && u.plusUntil > Date.now()) badges.push(`<span class="owner-user-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;">+</span>`);
+
+      const displayName = getUserDisplayName(u, u.uid);
+      const usernameHTML = u.username ? `<span style="color:#94a3b8;font-weight:500;">@${escH(u.username)}</span>` : "";
+      const subHTML = u.email ? escH(u.email) : `<span style="color:#94a3b8;font-family:'JetBrains Mono',monospace;font-size:11px;">uid: ${escH(u.uid.slice(0, 8))}…</span>`;
+
       row.innerHTML = `
         ${makeAvaHTML(u)}
         <div class="owner-user-info">
-          <div class="owner-user-name">${escH(u.name || "Без имени")} ${u.username ? `<span style="color:#94a3b8;font-weight:500;">@${escH(u.username)}</span>` : ""}</div>
-          <div class="owner-user-sub">${escH(u.email || "")}</div>
+          <div class="owner-user-name">${escH(displayName)} ${usernameHTML}</div>
+          <div class="owner-user-sub">${subHTML}</div>
           ${badges.length ? `<div class="owner-user-badges">${badges.join("")}</div>` : ""}
         </div>
       `;
@@ -651,8 +670,8 @@ Sqwid+: ${plusCount}
         avaEl.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
       }
     }
-    setText("ouName", u.name || "Без имени");
-    setText("ouUsername", u.username ? "@" + u.username : (u.email || ""));
+    setText("ouName", getUserDisplayName(u, ownerUserModalUid));
+    setText("ouUsername", getUserSub(u, ownerUserModalUid));
 
     const targetIsOwner = isTargetOwner(ownerUserModalUid);
     if (targetIsOwner) {
@@ -701,47 +720,47 @@ Sqwid+: ${plusCount}
   });
 
   /* ============================================================
-     ДЕЙСТВИЯ С ЮЗЕРОМ (с защитой владельца)
+     ДЕЙСТВИЯ С ЮЗЕРОМ
      ============================================================ */
   bindUserAction("btnOuBan", async () => {
     if (!guardOwner(ownerUserModalUid, "забанить")) return;
     if (isSelf(ownerUserModalUid)) return S.showToast("Нельзя забанить себя", "error");
     await update(ref(db, "users/" + ownerUserModalUid), { banned: true });
-    await logAction("Забанил", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
+    await logAction("Забанил", getUserDisplayName(allUsers[ownerUserModalUid], ownerUserModalUid), ownerUserModalUid, "user");
     S.showToast("Забанен", "ok");
   });
   bindUserAction("btnOuUnban", async () => {
     await update(ref(db, "users/" + ownerUserModalUid), { banned: null });
-    await logAction("Разбанил", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
+    await logAction("Разбанил", getUserDisplayName(allUsers[ownerUserModalUid], ownerUserModalUid), ownerUserModalUid, "user");
     S.showToast("Разбанен", "ok");
   });
   bindUserAction("btnOuMute", async () => {
     if (!guardOwner(ownerUserModalUid, "замутить")) return;
     if (isSelf(ownerUserModalUid)) return S.showToast("Нельзя замутить себя", "error");
     await update(ref(db, "users/" + ownerUserModalUid), { muted: true });
-    await logAction("Замутил", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
+    await logAction("Замутил", getUserDisplayName(allUsers[ownerUserModalUid], ownerUserModalUid), ownerUserModalUid, "user");
     S.showToast("Замучен", "ok");
   });
   bindUserAction("btnOuUnmute", async () => {
     await update(ref(db, "users/" + ownerUserModalUid), { muted: null });
-    await logAction("Размутил", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
+    await logAction("Размутил", getUserDisplayName(allUsers[ownerUserModalUid], ownerUserModalUid), ownerUserModalUid, "user");
     S.showToast("Размучен", "ok");
   });
   bindUserAction("btnOuFreeze", async () => {
     if (!guardOwner(ownerUserModalUid, "заморозить")) return;
     if (isSelf(ownerUserModalUid)) return S.showToast("Нельзя заморозить себя", "error");
     await update(ref(db, "users/" + ownerUserModalUid), { frozen: true });
-    await logAction("Заморозил", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
+    await logAction("Заморозил", getUserDisplayName(allUsers[ownerUserModalUid], ownerUserModalUid), ownerUserModalUid, "user");
     S.showToast("Заморожен", "ok");
   });
   bindUserAction("btnOuUnfreeze", async () => {
     await update(ref(db, "users/" + ownerUserModalUid), { frozen: null });
-    await logAction("Разморозил", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
+    await logAction("Разморозил", getUserDisplayName(allUsers[ownerUserModalUid], ownerUserModalUid), ownerUserModalUid, "user");
     S.showToast("Разморожен", "ok");
   });
   bindUserAction("btnOuVerify", async () => {
     await update(ref(db, "users/" + ownerUserModalUid), { verified: true });
-    await logAction("✓ Верифицировал", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
+    await logAction("✓ Верифицировал", getUserDisplayName(allUsers[ownerUserModalUid], ownerUserModalUid), ownerUserModalUid, "user");
     const botRef = push(ref(db, "botChat/" + ownerUserModalUid));
     await set(botRef, {
       from: "Sqwid Moderator",
@@ -753,14 +772,14 @@ Sqwid+: ${plusCount}
   bindUserAction("btnOuUnverify", async () => {
     if (!guardOwner(ownerUserModalUid, "снять верификацию")) return;
     await update(ref(db, "users/" + ownerUserModalUid), { verified: null });
-    await logAction("Снял верификацию", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
+    await logAction("Снял верификацию", getUserDisplayName(allUsers[ownerUserModalUid], ownerUserModalUid), ownerUserModalUid, "user");
     S.showToast("Снято", "ok");
   });
   bindUserAction("btnOuMakeModerator", async () => {
     if (!isOwner) return;
     if (!guardOwner(ownerUserModalUid, "назначить модератором")) return;
     await update(ref(db, "users/" + ownerUserModalUid), { role: "moderator" });
-    await logAction("Назначил модератором", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
+    await logAction("Назначил модератором", getUserDisplayName(allUsers[ownerUserModalUid], ownerUserModalUid), ownerUserModalUid, "user");
     const botRef = push(ref(db, "botChat/" + ownerUserModalUid));
     await set(botRef, {
       from: "Sqwid Owner",
@@ -773,7 +792,7 @@ Sqwid+: ${plusCount}
     if (!isOwner) return;
     if (!guardOwner(ownerUserModalUid, "снять модератора")) return;
     await update(ref(db, "users/" + ownerUserModalUid), { role: null });
-    await logAction("Снял модератора", allUsers[ownerUserModalUid].name || "—", ownerUserModalUid, "user");
+    await logAction("Снял модератора", getUserDisplayName(allUsers[ownerUserModalUid], ownerUserModalUid), ownerUserModalUid, "user");
     S.showToast("Снят", "ok");
   });
 
@@ -834,7 +853,7 @@ Sqwid+: ${plusCount}
             ${escH(r.reason || "Жалоба")}
             <span class="owner-user-badge" style="background:${statusColor}22;color:${statusColor};">${statusText}</span>
           </div>
-          <div class="owner-user-sub">${r.targetType === "message" ? "Сообщение" : r.targetType === "chat" ? "Чат/канал" : "Пользователь"} · ${escH(fromUser.name || fromUser.email || "?")}</div>
+          <div class="owner-user-sub">${r.targetType === "message" ? "Сообщение" : r.targetType === "chat" ? "Чат/канал" : "Пользователь"} · ${escH(getUserDisplayName(fromUser, r.fromUid))}</div>
           <div class="owner-user-sub" style="font-size:11px;color:#94a3b8;">${fmtDate(r.createdAt)}</div>
         </div>
       `;
@@ -866,8 +885,8 @@ Sqwid+: ${plusCount}
 
     setText("rvType", r.targetType === "message" ? "Сообщение" : r.targetType === "chat" ? "Чат / канал" : "Пользователь");
     setText("rvReason", r.reason || "—");
-    setText("rvFrom", (fromUser.name || fromUser.email || "?") + (fromUser.username ? " (@" + fromUser.username + ")" : ""));
-    setText("rvTarget", targetUser ? (targetUser.name || targetUser.email || "?") : "—");
+    setText("rvFrom", getUserDisplayName(fromUser, r.fromUid) + (fromUser.username ? " (@" + fromUser.username + ")" : ""));
+    setText("rvTarget", targetUser ? getUserDisplayName(targetUser, r.targetUid) : "—");
     setText("rvComment", r.comment || "—");
 
     const stEl = document.getElementById("reportViewStatus");
@@ -896,7 +915,7 @@ Sqwid+: ${plusCount}
           const card = document.createElement("div");
           card.className = "rv-message-card";
           card.innerHTML = `
-            <div class="rv-message-sender">${escH(sender.name || sender.email || "?")}</div>
+            <div class="rv-message-sender">${escH(getUserDisplayName(sender, m.sender))}</div>
             <div class="rv-message-text">
               ${m.type === "photo" && m.photo ? `<img src="${m.photo}">` : ""}
               ${escH(m.text || "")}
@@ -961,8 +980,8 @@ Sqwid+: ${plusCount}
           row.innerHTML = `
             ${makeAvaHTML(u)}
             <div class="owner-user-info">
-              <div class="owner-user-name">${escH(u.name || "—")}</div>
-              <div class="owner-user-sub">${u.username ? "@" + escH(u.username) : escH(u.email || "")}</div>
+              <div class="owner-user-name">${escH(getUserDisplayName(u, u.uid))}</div>
+              <div class="owner-user-sub">${escH(getUserSub(u, u.uid))}</div>
             </div>
             <button class="inventory-item-btn remove" data-mod-remove="${u.uid}">Снять</button>
           `;
@@ -971,7 +990,7 @@ Sqwid+: ${plusCount}
             const ok = await S.showConfirm("Снять с модераторов?", "Модерация");
             if (!ok) return;
             await update(ref(db, "users/" + u.uid), { role: null });
-            await logAction("Снял модератора", u.name || "—", u.uid, "user");
+            await logAction("Снял модератора", getUserDisplayName(u, u.uid), u.uid, "user");
             renderModerators();
           });
           list.appendChild(row);

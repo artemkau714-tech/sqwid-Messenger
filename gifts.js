@@ -1,5 +1,6 @@
 /* ============================================================
    gifts.js — подарки: базовые, магазин, от админов, Sqwid+
+   + Компактное хранение: имя файла вместо base64
    ============================================================ */
 
 console.log("🚀 gifts.js загружен, жду Sqwid...");
@@ -51,6 +52,19 @@ waitForSqwidGifts((S) => {
   let normalGifts = {};
 
   /* ============================================================
+     ХЕЛПЕР: получить "ссылку" на иконку (без base64)
+     ============================================================ */
+  function getIconPath(item) {
+    if (!item || !item.icon) return "sqwidstar.png";
+    // Если это уже base64 — оставляем как есть (обратная совместимость)
+    if (typeof item.icon === "string" && item.icon.startsWith("data:")) {
+      return item.icon;
+    }
+    // Если это уже имя файла — оставляем
+    return item.icon;
+  }
+
+  /* ============================================================
      КОНФЕТТИ
      ============================================================ */
   function fireConfetti() {
@@ -77,7 +91,7 @@ waitForSqwidGifts((S) => {
     }
 
     const emojis = ["✨", "⭐", "🎉", "💛", "🌟", "💫", "🎊"];
-    const colors = ["#f7b500", "#ffd966", "#ff6b6b", "#00a884", "#60a5fa", "#a855f7"];
+    const colors = ["#f59e0b", "#ffd966", "#ff6b6b", "#10b981", "#60a5fa", "#a855f7"];
     const pieces = [];
     for (let i = 0; i < 40; i++) {
       const el = document.createElement("span");
@@ -99,7 +113,7 @@ waitForSqwidGifts((S) => {
   }
 
   /* ============================================================
-     ПОДПИСКИ НА БАЗУ
+     ПОДПИСКИ
      ============================================================ */
   onValue(ref(db, "shop/gifts"), (snap) => {
     shopGifts = snap.val() || {};
@@ -134,7 +148,7 @@ waitForSqwidGifts((S) => {
         photoEl.src = u.photo;
       } else {
         const letter = (u.name || u.email || "?").trim().charAt(0).toUpperCase();
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="110" height="110"><rect width="100%" height="100%" fill="#00a884"/><text x="50%" y="55%" font-size="48" fill="#fff" text-anchor="middle" font-family="Arial">${letter}</text></svg>`;
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="110" height="110"><rect width="100%" height="100%" fill="#6366f1"/><text x="50%" y="55%" font-size="48" fill="#fff" text-anchor="middle" font-family="Arial">${letter}</text></svg>`;
         photoEl.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
       }
     }
@@ -152,7 +166,6 @@ waitForSqwidGifts((S) => {
 
   if (window.Sqwid) {
     window.Sqwid.openGiftScreen = openGiftScreen;
-    console.log("✅ openGiftScreen опубликован");
   }
 
   /* ============================================================
@@ -210,7 +223,7 @@ waitForSqwidGifts((S) => {
       block.innerHTML = `
         <h3 class="gift-section-title">🏪 Подарки из магазина</h3>
         <div class="gift-grid" id="giftShopGrid"></div>
-        <div id="giftShopEmpty" style="display:none;text-align:center;color:#8696a0;font-size:13px;padding:12px;">Пока нет подарков</div>
+        <div id="giftShopEmpty" style="display:none;text-align:center;color:#94a3b8;font-size:13px;padding:12px;">Пока нет подарков</div>
       `;
       const giftGrid = document.getElementById("giftGrid");
       if (giftGrid && giftGrid.parentElement) {
@@ -242,12 +255,12 @@ waitForSqwidGifts((S) => {
       card.style.opacity = outOfStock ? "0.4" : "1";
       card.style.pointerEvents = outOfStock ? "none" : "auto";
       card.innerHTML = `
-        <img src="${item.icon}" alt="" style="filter:drop-shadow(0 0 8px ${item.glow || "#f7b500"});">
+        <img src="${item.icon}" alt="" style="filter:drop-shadow(0 0 8px ${item.glow || "#f59e0b"});">
         <div class="gift-card-name">${escH(item.name || "Подарок")}</div>
         <div class="gift-card-price">🪙 ${item.price || 0}</div>
         ${outOfStock
-          ? `<div style="font-size:10px;color:#ff6b6b;font-weight:800;margin-top:4px;">РАСПРОДАНО</div>`
-          : (left <= 5 ? `<div style="font-size:10px;color:#f7b500;font-weight:800;margin-top:4px;">Осталось ${left}</div>` : "")}
+          ? `<div style="font-size:10px;color:#ef4444;font-weight:800;margin-top:4px;">РАСПРОДАНО</div>`
+          : (left <= 5 ? `<div style="font-size:10px;color:#f59e0b;font-weight:800;margin-top:4px;">Осталось ${left}</div>` : "")}
       `;
       card.onclick = () => openConfirm("gift", { ...item, source: "shop" });
       grid.appendChild(card);
@@ -265,7 +278,7 @@ waitForSqwidGifts((S) => {
       block.innerHTML = `
         <h3 class="gift-section-title">👑 Подарки от админов</h3>
         <div class="gift-grid" id="normalGiftGrid"></div>
-        <div id="normalGiftEmpty" style="display:none;text-align:center;color:#8696a0;font-size:13px;padding:12px;">Пока нет подарков</div>
+        <div id="normalGiftEmpty" style="display:none;text-align:center;color:#94a3b8;font-size:13px;padding:12px;">Пока нет подарков</div>
       `;
       const shopBlock = document.getElementById("giftShopBlock");
       if (shopBlock && shopBlock.parentElement) {
@@ -301,8 +314,8 @@ waitForSqwidGifts((S) => {
         <div class="gift-card-name">${escH(item.name || "Подарок")}</div>
         <div class="gift-card-price">🪙 ${item.price || 0}</div>
         ${outOfStock
-          ? `<div style="font-size:10px;color:#ff6b6b;font-weight:800;margin-top:4px;">РАСПРОДАНО</div>`
-          : (left <= 5 ? `<div style="font-size:10px;color:#f7b500;font-weight:800;margin-top:4px;">Осталось ${left}</div>` : "")}
+          ? `<div style="font-size:10px;color:#ef4444;font-weight:800;margin-top:4px;">РАСПРОДАНО</div>`
+          : (left <= 5 ? `<div style="font-size:10px;color:#f59e0b;font-weight:800;margin-top:4px;">Осталось ${left}</div>` : "")}
       `;
       card.onclick = () => openConfirm("gift", { ...item, source: "normal" });
       grid.appendChild(card);
@@ -349,7 +362,7 @@ waitForSqwidGifts((S) => {
   }
 
   /* ============================================================
-     ОТПРАВКА
+     ОТПРАВКА ПОДАРКА
      ============================================================ */
   async function sendGift() {
     if (!pending || !recipientUid) return;
@@ -366,6 +379,9 @@ waitForSqwidGifts((S) => {
 
     const msg = (document.getElementById("sendGiftMessage").value || "").trim();
     const hideName = document.getElementById("sendGiftHideName").checked;
+
+    // ВАЖНО: получаем ИМЯ ФАЙЛА, а не base64
+    const iconPath = getIconPath(item);
 
     try {
       await update(ref(db, "users/" + currentUser.uid), { coins: myCoins - price });
@@ -394,7 +410,7 @@ waitForSqwidGifts((S) => {
 
       if (kind === "gift") {
         giftName = item.name;
-        giftIcon = item.icon;
+        giftIcon = iconPath;
 
         if (item.source === "shop" || item.source === "normal") {
           const path = item.source === "shop" ? "shop/gifts/" : "shop/normal_gifts/";
@@ -408,11 +424,12 @@ waitForSqwidGifts((S) => {
           await update(ref(db, path + item.id), { sold: (fresh.sold || 0) + 1 });
         }
 
+        // ВАЖНО: сохраняем ТОЛЬКО имя файла в icon
         const giftRef = push(ref(db, "users/" + recipientUid + "/gifts"));
         await set(giftRef, {
           giftId: item.id,
           name: item.name,
-          icon: item.icon,
+          icon: iconPath,       // ← имя файла, не base64
           price: item.price,
           glow: item.glow || null,
           fromUid: currentUser.uid,
@@ -434,7 +451,7 @@ waitForSqwidGifts((S) => {
       await set(logRef, {
         kind: giftKind,
         name: giftName,
-        icon: giftIcon,
+        icon: giftIcon,   // ← имя файла
         price,
         months: plusMonths,
         fromUid: currentUser.uid,
@@ -509,12 +526,13 @@ waitForSqwidGifts((S) => {
       chatId = newRef.key;
     }
 
+    // ВАЖНО: в сообщении тоже только имя файла
     await push(ref(db, "messages/" + chatId), {
       sender: currentUser.uid,
       type: "gift",
       gift: {
         name: payload.name,
-        icon: payload.icon,
+        icon: payload.icon,   // ← имя файла
         price: payload.price,
         message: payload.message,
         hideName: payload.hideName,
@@ -538,7 +556,7 @@ waitForSqwidGifts((S) => {
       const botRef = ref(db, "botChat/" + uid);
       const newRef = push(botRef);
       await set(newRef, { ...notification, timestamp: Date.now() });
-    } catch (e) { console.warn("botNotify:", e); }
+    } catch (e) {}
   }
 
   /* ============================================================

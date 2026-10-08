@@ -1,6 +1,6 @@
 /* ============================================================
-   games.js — Sqwid Games (Угадай число + Рулетка подарков + квесты + Sqwid+)
-   Рулетка: колесо-казино, указатель сверху, синхронизировано с призом
+   games.js — Sqwid Games
+   Угадай число + Рулетка подарков + Слот-машина + Краш + квесты + Sqwid+
    ============================================================ */
 
 console.log("🚀 games.js загружен, жду Sqwid...");
@@ -202,6 +202,8 @@ waitForSqwidGames((S) => {
       const game = btn.dataset.game;
       if (game === "guess") startGuess();
       if (game === "roulette") openRoulette();
+      if (game === "slots") openSlots();
+      if (game === "crash") openCrash();
     });
   });
 
@@ -283,14 +285,13 @@ waitForSqwidGames((S) => {
   });
 
   /* ============================================================
-     РУЛЕТКА
+     РУЛЕТКА ПОДАРКОВ
      ============================================================ */
   let rouletteSelectedGiftId = null;
   let rouletteSelectedGift = null;
   let rouletteSpinning = false;
   let rouletteAngle = 0;
 
-  // 12 секторов
   const ROULETTE_SECTORS = [
     { mult: 0,  label: "Ничего", emoji: "💨", color: "#3f3f46" },
     { mult: 2,  label: "x2",     emoji: "🔥", color: "#10b981" },
@@ -306,7 +307,6 @@ waitForSqwidGames((S) => {
     { mult: 50, label: "x50",    emoji: "👑", color: "#ec4899" }
   ];
 
-  /* ---------- Рисуем колесо ---------- */
   function drawRouletteWheel() {
     const svg = document.getElementById("rouletteWheel");
     if (!svg) return;
@@ -317,7 +317,6 @@ waitForSqwidGames((S) => {
 
     for (let i = 0; i < N; i++) {
       const s = ROULETTE_SECTORS[i];
-      // Начинаем с -90° (верх) — сектор 0 под указателем
       const a1 = (i / N) * 2 * Math.PI - Math.PI / 2;
       const a2 = ((i + 1) / N) * 2 * Math.PI - Math.PI / 2;
       const x1 = cx + R * Math.cos(a1);
@@ -333,7 +332,6 @@ waitForSqwidGames((S) => {
       path.setAttribute("stroke-width", "0.6");
       svg.appendChild(path);
 
-      // Эмодзи в середине сектора
       const midA = (a1 + a2) / 2;
       const tx = cx + (R * 0.65) * Math.cos(midA);
       const ty = cy + (R * 0.65) * Math.sin(midA);
@@ -350,7 +348,6 @@ waitForSqwidGames((S) => {
     }
   }
 
-  /* ---------- Открытие ---------- */
   function openRoulette() {
     rouletteSelectedGiftId = null;
     rouletteSelectedGift = null;
@@ -375,7 +372,6 @@ waitForSqwidGames((S) => {
     document.getElementById("modal-roulette").classList.add("active");
   }
 
-  /* ---------- Выбор подарка ---------- */
   function renderRouletteGiftPick() {
     const box = document.getElementById("rouletteGiftPick");
     if (!box) return;
@@ -428,7 +424,6 @@ waitForSqwidGames((S) => {
     box.appendChild(grid);
   }
 
-  /* ---------- Крутить ---------- */
   const btnRouletteSpin = document.getElementById("btnRouletteSpin");
   if (btnRouletteSpin) btnRouletteSpin.addEventListener("click", async () => {
     if (rouletteSpinning) return;
@@ -442,23 +437,17 @@ waitForSqwidGames((S) => {
     const res = document.getElementById("rouletteResult");
     if (res) res.textContent = "";
 
-    // Выбираем приз ДО анимации
     const idx = Math.floor(Math.random() * ROULETTE_SECTORS.length);
     const prize = ROULETTE_SECTORS[idx];
 
     const N = ROULETTE_SECTORS.length;
     const sectorAngle = 360 / N;
-
-    // Сектор idx: от (idx*sectorAngle) до ((idx+1)*sectorAngle) — отсчёт от -90° (верх)
-    // Центр сектора в локальных координатах:
     const sectorCenterLocal = idx * sectorAngle + sectorAngle / 2;
 
-    // Обороты и jitter (в границах ±40% ширины сектора, чтобы не вылететь)
     const spins = 5 + Math.floor(Math.random() * 3);
     const maxJitter = sectorAngle * 0.4;
     const jitter = (Math.random() - 0.5) * 2 * maxJitter;
 
-    // Финальный угол
     const finalAngle = rouletteAngle + spins * 360 + (360 - sectorCenterLocal) + jitter;
 
     const wheel = document.getElementById("rouletteWheel");
@@ -475,7 +464,6 @@ waitForSqwidGames((S) => {
     }, 3600);
   });
 
-  /* ---------- Результат ---------- */
   async function showRouletteResult(prize) {
     const res = document.getElementById("rouletteResult");
     const center = document.getElementById("rouletteCenter");
@@ -542,7 +530,6 @@ waitForSqwidGames((S) => {
       S.showToast(`${prize.emoji} ${prize.label}!`, "ok", 3000);
     }
 
-    // Статистика
     const today = todayKey();
     const newStats = {
       date: today,
@@ -563,11 +550,418 @@ waitForSqwidGames((S) => {
     setTimeout(() => renderRouletteGiftPick(), 1200);
   }
 
-  /* ---------- Закрытие ---------- */
   const btnRouletteClose = document.getElementById("btnRouletteClose");
   if (btnRouletteClose) btnRouletteClose.addEventListener("click", () => {
     if (rouletteSpinning) return;
     document.getElementById("modal-roulette").classList.remove("active");
+  });
+
+  /* ============================================================
+     СЛОТ-МАШИНА
+     ============================================================ */
+  let slotsSpinning = false;
+
+  const SLOT_SYMBOLS = ["🍒", "🍋", "💎", "7️⃣", "👑", "🍀", "⭐"];
+  const SLOT_STAKE = 50;
+
+  const SLOT_WINS = {
+    "👑👑👑": { mult: 100, label: "ДЖЕКПОТ!" },
+    "7️⃣7️⃣7️⃣": { mult: 50,  label: "Три семёрки!" },
+    "💎💎💎": { mult: 20,  label: "Три алмаза!" },
+    "🍒🍒🍒": { mult: 10,  label: "Три вишни!" },
+    "🍋🍋🍋": { mult: 8,   label: "Три лимона!" },
+    "🍀🍀🍀": { mult: 15,  label: "Три клевера!" },
+    "⭐⭐⭐":  { mult: 12,  label: "Три звезды!" }
+  };
+
+  function openSlots() {
+    slotsSpinning = false;
+    for (let i = 0; i < 3; i++) {
+      const r = document.getElementById("slotReel" + i);
+      if (r) {
+        r.textContent = "❓";
+        r.style.transform = "scale(1)";
+      }
+    }
+    const res = document.getElementById("slotsResult");
+    if (res) res.textContent = "";
+    const btn = document.getElementById("btnSlotsSpin");
+    if (btn) btn.disabled = false;
+    document.getElementById("modal-slots").classList.add("active");
+  }
+
+  const btnSlotsSpin = document.getElementById("btnSlotsSpin");
+  if (btnSlotsSpin) btnSlotsSpin.addEventListener("click", async () => {
+    if (slotsSpinning) return;
+
+    const meSnap = await get(ref(db, "users/" + currentUser.uid));
+    const me = meSnap.val() || {};
+    const coins = me.coins || 0;
+    if (coins < SLOT_STAKE) {
+      S.showToast("Нужно минимум " + SLOT_STAKE + " SQ", "error");
+      return;
+    }
+
+    slotsSpinning = true;
+    btnSlotsSpin.disabled = true;
+    const res = document.getElementById("slotsResult");
+    if (res) res.textContent = "";
+
+    await update(ref(db, "users/" + currentUser.uid), { coins: coins - SLOT_STAKE });
+
+    const finalSymbols = [
+      SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)],
+      SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)],
+      SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)]
+    ];
+
+    const reelEls = [
+      document.getElementById("slotReel0"),
+      document.getElementById("slotReel1"),
+      document.getElementById("slotReel2")
+    ];
+
+    const spinIntervals = [];
+    for (let i = 0; i < 3; i++) {
+      spinIntervals.push(setInterval(() => {
+        const el = reelEls[i];
+        if (el) el.textContent = SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)];
+      }, 80 + i * 20));
+    }
+
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        clearInterval(spinIntervals[i]);
+        if (reelEls[i]) {
+          reelEls[i].textContent = finalSymbols[i];
+          reelEls[i].style.transform = "scale(1.15)";
+          setTimeout(() => { if (reelEls[i]) reelEls[i].style.transform = "scale(1)"; }, 150);
+        }
+      }, 1200 + i * 500);
+    }
+
+    setTimeout(async () => {
+      await resolveSlots(finalSymbols);
+    }, 2900);
+  });
+
+  async function resolveSlots(symbols) {
+    const res = document.getElementById("slotsResult");
+    const combo = symbols.join("");
+    const match = SLOT_WINS[combo];
+
+    let winMult = 0;
+    let winAmount = 0;
+    let label = "";
+
+    if (match) {
+      winMult = match.mult;
+      winAmount = SLOT_STAKE * winMult;
+      label = match.label;
+    } else if (symbols[0] === symbols[1] || symbols[1] === symbols[2] || symbols[0] === symbols[2]) {
+      winMult = 2;
+      winAmount = SLOT_STAKE * 2;
+      label = "Два одинаковых";
+    } else {
+      winMult = 0;
+      winAmount = 0;
+      label = "Не повезло";
+    }
+
+    if (winAmount > 0) {
+      const meSnap = await get(ref(db, "users/" + currentUser.uid));
+      const me = meSnap.val() || {};
+      const newCoins = (me.coins || 0) + winAmount;
+      await update(ref(db, "users/" + currentUser.uid), { coins: newCoins });
+
+      if (res) {
+        res.style.color = "#10b981";
+        res.textContent = `🎉 ${label}! +${winAmount} SQ`;
+      }
+
+      const botRef = push(ref(db, "botChat/" + currentUser.uid));
+      await set(botRef, {
+        from: "Sqwid Games",
+        text: `🎰 Слоты: ${combo}\n${label} — +${winAmount} SQ`,
+        timestamp: Date.now(),
+        type: "system",
+        kind: "games"
+      });
+
+      S.showToast("+" + winAmount + " SQ", "ok", 2500);
+
+      const today = todayKey();
+      const newStats = {
+        date: today,
+        games: (dailyStats.games || 0) + 1,
+        won: (dailyStats.won || 0) + 1,
+        lost: dailyStats.lost || 0,
+        winAmount: (dailyStats.winAmount || 0) + winAmount
+      };
+      await update(ref(db, "users/" + currentUser.uid + "/dailyGames"), newStats);
+      dailyStats = newStats;
+    } else {
+      if (res) {
+        res.style.color = "#ef4444";
+        res.textContent = `😢 ${label}. −${SLOT_STAKE} SQ`;
+      }
+
+      const botRef = push(ref(db, "botChat/" + currentUser.uid));
+      await set(botRef, {
+        from: "Sqwid Games",
+        text: `🎰 Слоты: ${combo}\nПроигрыш −${SLOT_STAKE} SQ`,
+        timestamp: Date.now(),
+        type: "system",
+        kind: "games"
+      });
+
+      const today = todayKey();
+      const newStats = {
+        date: today,
+        games: (dailyStats.games || 0) + 1,
+        won: dailyStats.won || 0,
+        lost: (dailyStats.lost || 0) + 1,
+        winAmount: dailyStats.winAmount || 0
+      };
+      await update(ref(db, "users/" + currentUser.uid + "/dailyGames"), newStats);
+      dailyStats = newStats;
+    }
+
+    slotsSpinning = false;
+    if (btnSlotsSpin) btnSlotsSpin.disabled = false;
+  }
+
+  const btnSlotsClose = document.getElementById("btnSlotsClose");
+  if (btnSlotsClose) btnSlotsClose.addEventListener("click", () => {
+    if (slotsSpinning) return;
+    document.getElementById("modal-slots").classList.remove("active");
+  });
+
+  /* ============================================================
+     КРАШ (макс. x100)
+     ============================================================ */
+  let crashBet = 0;
+  let crashRunning = false;
+  let crashInterval = null;
+  let crashMultiplier = 1.00;
+  let crashPoint = 1.00;
+  let crashStartTime = 0;
+  let crashCaughtOut = false;
+
+  const CRASH_MIN = 500;
+
+  // Генерация точки краха — максимум x100
+  function generateCrashPoint() {
+    const r = Math.random();
+    if (r < 0.40) return 1.00 + Math.random() * 0.50;      // x1.00–x1.50 (40%)
+    if (r < 0.70) return 1.50 + Math.random() * 1.50;      // x1.50–x3.00 (30%)
+    if (r < 0.90) return 3.00 + Math.random() * 7.00;      // x3.00–x10.00 (20%)
+    if (r < 0.98) return 10.00 + Math.random() * 40.00;    // x10.00–x50.00 (8%)
+    return 50.00 + Math.random() * 50.00;                  // x50.00–x100.00 (2%)
+  }
+
+  function openCrash() {
+    crashRunning = false;
+    crashCaughtOut = false;
+    if (crashInterval) clearInterval(crashInterval);
+
+    const coins = myData.coins || 0;
+    if (coins < CRASH_MIN) {
+      S.showAlert(`Для игры нужно минимум ${CRASH_MIN} SQ.\nУ вас: ${coins} SQ`, "Мало монет");
+      return;
+    }
+
+    document.getElementById("crashSetup").style.display = "block";
+    document.getElementById("crashGame").style.display = "none";
+    document.getElementById("crashResult").style.display = "none";
+    document.getElementById("crashBetInput").value = CRASH_MIN;
+    document.getElementById("crashBetInput").max = coins;
+
+    document.getElementById("modal-crash").classList.add("active");
+  }
+
+  document.querySelectorAll(".crash-quick").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const amount = btn.dataset.amount;
+      const input = document.getElementById("crashBetInput");
+      const coins = myData.coins || 0;
+      if (amount === "all") {
+        input.value = coins;
+      } else {
+        const val = Math.min(parseInt(amount), coins);
+        input.value = val;
+      }
+    });
+  });
+
+  const btnCrashStart = document.getElementById("btnCrashStart");
+  if (btnCrashStart) btnCrashStart.addEventListener("click", async () => {
+    const input = document.getElementById("crashBetInput");
+    const bet = parseInt(input.value) || 0;
+    const coins = myData.coins || 0;
+
+    if (bet < CRASH_MIN) {
+      S.showToast(`Минимум ${CRASH_MIN} SQ`, "error");
+      return;
+    }
+    if (bet > coins) {
+      S.showToast(`У вас только ${coins} SQ`, "error");
+      return;
+    }
+
+    try {
+      await update(ref(db, "users/" + currentUser.uid), { coins: coins - bet });
+    } catch (e) {
+      S.showToast("Ошибка: " + e.message, "error");
+      return;
+    }
+
+    crashBet = bet;
+    crashRunning = true;
+    crashCaughtOut = false;
+    crashMultiplier = 1.00;
+    crashPoint = generateCrashPoint();
+    crashStartTime = Date.now();
+
+    document.getElementById("crashSetup").style.display = "none";
+    document.getElementById("crashGame").style.display = "block";
+    document.getElementById("crashResult").style.display = "none";
+    document.getElementById("crashBetDisplay").textContent = bet;
+    document.getElementById("crashWinDisplay").textContent = bet;
+    document.getElementById("crashProgress").style.width = "0%";
+
+    const multEl = document.getElementById("crashMultiplier");
+    multEl.textContent = "x1.00";
+    multEl.style.color = "#10b981";
+
+    crashInterval = setInterval(() => {
+      if (!crashRunning) return;
+
+      const elapsed = (Date.now() - crashStartTime) / 1000;
+      crashMultiplier = 1 + (elapsed * 0.15) + (elapsed * elapsed * 0.05);
+
+      if (crashMultiplier >= crashPoint) {
+        crashMultiplier = crashPoint;
+        multEl.textContent = "x" + crashMultiplier.toFixed(2);
+        multEl.style.color = "#ef4444";
+        crashRunning = false;
+        clearInterval(crashInterval);
+        crashInterval = null;
+
+        setTimeout(() => handleCrashLoss(), 500);
+        return;
+      }
+
+      multEl.textContent = "x" + crashMultiplier.toFixed(2);
+      const p = Math.min(1, (crashMultiplier - 1) / 5);
+      if (p < 0.5) {
+        multEl.style.color = "#10b981";
+      } else if (p < 0.8) {
+        multEl.style.color = "#f59e0b";
+      } else {
+        multEl.style.color = "#ef4444";
+      }
+
+      const prog = Math.min(100, ((crashMultiplier - 1) / 9) * 100);
+      document.getElementById("crashProgress").style.width = prog + "%";
+
+      const potentialWin = Math.floor(crashBet * crashMultiplier);
+      document.getElementById("crashWinDisplay").textContent = potentialWin;
+
+    }, 100);
+  });
+
+  const btnCrashCashout = document.getElementById("btnCrashCashout");
+  if (btnCrashCashout) btnCrashCashout.addEventListener("click", async () => {
+    if (!crashRunning || crashCaughtOut) return;
+    crashCaughtOut = true;
+    crashRunning = false;
+    clearInterval(crashInterval);
+    crashInterval = null;
+
+    const winAmount = Math.floor(crashBet * crashMultiplier);
+
+    try {
+      const meSnap = await get(ref(db, "users/" + currentUser.uid));
+      const me = meSnap.val() || {};
+      const newCoins = (me.coins || 0) + winAmount;
+      await update(ref(db, "users/" + currentUser.uid), { coins: newCoins });
+    } catch (e) {}
+
+    document.getElementById("crashGame").style.display = "none";
+    document.getElementById("crashResult").style.display = "block";
+    document.getElementById("crashResultIcon").textContent = "🎉";
+    document.getElementById("crashResultText").textContent = "Забрал на x" + crashMultiplier.toFixed(2);
+    document.getElementById("crashResultText").style.color = "#10b981";
+    document.getElementById("crashResultAmount").textContent = "+" + winAmount + " SQ";
+    document.getElementById("crashResultAmount").style.color = "#10b981";
+
+    const botRef = push(ref(db, "botChat/" + currentUser.uid));
+    await set(botRef, {
+      from: "Sqwid Games",
+      text: `📈 Краш: забрал на x${crashMultiplier.toFixed(2)}\n+${winAmount} SQ (ставка ${crashBet})`,
+      timestamp: Date.now(),
+      type: "system",
+      kind: "games"
+    });
+
+    S.showToast("+" + winAmount + " SQ", "ok", 2500);
+
+    const today = todayKey();
+    const newStats = {
+      date: today,
+      games: (dailyStats.games || 0) + 1,
+      won: (dailyStats.won || 0) + 1,
+      lost: dailyStats.lost || 0,
+      winAmount: (dailyStats.winAmount || 0) + winAmount
+    };
+    await update(ref(db, "users/" + currentUser.uid + "/dailyGames"), newStats);
+    dailyStats = newStats;
+  });
+
+  async function handleCrashLoss() {
+    document.getElementById("crashGame").style.display = "none";
+    document.getElementById("crashResult").style.display = "block";
+    document.getElementById("crashResultIcon").textContent = "💥";
+    document.getElementById("crashResultText").textContent = "Крах на x" + crashMultiplier.toFixed(2);
+    document.getElementById("crashResultText").style.color = "#ef4444";
+    document.getElementById("crashResultAmount").textContent = "−" + crashBet + " SQ";
+    document.getElementById("crashResultAmount").style.color = "#ef4444";
+
+    const botRef = push(ref(db, "botChat/" + currentUser.uid));
+    await set(botRef, {
+      from: "Sqwid Games",
+      text: `💥 Краш: крах на x${crashMultiplier.toFixed(2)}\n−${crashBet} SQ`,
+      timestamp: Date.now(),
+      type: "system",
+      kind: "games"
+    });
+
+    const today = todayKey();
+    const newStats = {
+      date: today,
+      games: (dailyStats.games || 0) + 1,
+      won: dailyStats.won || 0,
+      lost: (dailyStats.lost || 0) + 1,
+      winAmount: dailyStats.winAmount || 0
+    };
+    await update(ref(db, "users/" + currentUser.uid + "/dailyGames"), newStats);
+    dailyStats = newStats;
+  }
+
+  const btnCrashAgain = document.getElementById("btnCrashAgain");
+  if (btnCrashAgain) btnCrashAgain.addEventListener("click", () => {
+    openCrash();
+  });
+
+  const btnCrashClose = document.getElementById("btnCrashClose");
+  if (btnCrashClose) btnCrashClose.addEventListener("click", () => {
+    if (crashRunning) {
+      S.showToast("Игра идёт! Забирай или жди краха", "warn");
+      return;
+    }
+    if (crashInterval) clearInterval(crashInterval);
+    document.getElementById("modal-crash").classList.remove("active");
   });
 
   /* ============================================================

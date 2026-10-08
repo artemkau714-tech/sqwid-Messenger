@@ -159,20 +159,24 @@
       </div>
 
       <div class="settings-section">
-        <div class="settings-section-title">Тема</div>
-        <div class="settings-card">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <button id="themeLight" class="theme-btn active" type="button">
-              <div style="font-size:24px;margin-bottom:4px;">☀️</div>
-              <div style="font-size:13px;font-weight:700;">Светлая</div>
-            </button>
-            <button id="themeDark" class="theme-btn" type="button">
-              <div style="font-size:24px;margin-bottom:4px;">🌙</div>
-              <div style="font-size:13px;font-weight:700;">Тёмная</div>
-            </button>
-          </div>
-        </div>
-      </div>
+  <div class="settings-section-title">Тема</div>
+  <div class="settings-card">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+      <button id="themeLight" class="theme-btn active" type="button">
+        <div style="font-size:22px;margin-bottom:4px;">☀️</div>
+        <div style="font-size:12px;font-weight:700;">Светлая</div>
+      </button>
+      <button id="themeDark" class="theme-btn" type="button">
+        <div style="font-size:22px;margin-bottom:4px;">🌙</div>
+        <div style="font-size:12px;font-weight:700;">Тёмная</div>
+      </button>
+      <button id="themeGirl" class="theme-btn" type="button">
+        <div style="font-size:22px;margin-bottom:4px;">🌸</div>
+        <div style="font-size:12px;font-weight:700;">Девчачья</div>
+      </button>
+    </div>
+  </div>
+</div>
 
       <div class="settings-section">
         <div class="settings-section-title">Приватность</div>
@@ -241,8 +245,9 @@
         <div class="mp-stat"><div class="mp-stat-value" id="profileStatPhotos">0</div><div class="mp-stat-label">Фото</div></div>
       </div>
       <div style="padding: 0 20px 20px; display:flex; flex-direction:column; gap:10px;">
-        <button class="btn-create" id="btnOpenGames" style="width:100%;background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;">🎮 Sqwid Games</button>
-        <button class="btn-create" id="btnEditProfile" style="width:100%;">✏️ Редактировать профиль</button>
+  <button class="btn-create" id="btnOpenGames" ...>🎮 Sqwid Games</button>
+  <button class="btn-create" id="btnEditProfile" ...>✏️ Редактировать профиль</button>
+  <button class="btn-create" id="btnOpenInventory" ...>🎒 Инвентарь</button>
       </div>
       <div class="up-section" id="profileUsernamesSection" style="display:none;">
         <h3 class="up-section-title">🏷 Мои юзернеймы</h3>
@@ -865,17 +870,27 @@
 
       <div class="games-section-title">Мини-игры</div>
       <div class="games-grid">
-        <button class="games-card" data-game="guess">
-          <div class="games-card-icon">🎯</div>
-          <div class="games-card-name">Угадай число</div>
-          <div class="games-card-desc">1–100 · 5 попыток</div>
-        </button>
-        <button class="games-card" data-game="roulette">
-          <div class="games-card-icon">🎰</div>
-          <div class="games-card-name">SqwidDrop</div>
-          <div class="games-card-desc">Апгрейд подарков</div>
-        </button>
-      </div>
+  <button class="games-card" data-game="guess">
+    <div class="games-card-icon">🎯</div>
+    <div class="games-card-name">Угадай число</div>
+    <div class="games-card-desc">1–100 · 5 попыток</div>
+  </button>
+  <button class="games-card" data-game="roulette">
+    <div class="games-card-icon">🎰</div>
+    <div class="games-card-name">Рулетка</div>
+    <div class="games-card-desc">Апгрейд подарков</div>
+  </button>
+  <button class="games-card" data-game="slots">
+    <div class="games-card-icon">🍒</div>
+    <div class="games-card-name">Слоты</div>
+    <div class="games-card-desc">3 барабана · 50 SQ</div>
+  </button>
+  <button class="games-card" data-game="crash">
+    <div class="games-card-icon">📈</div>
+    <div class="games-card-name">Краш</div>
+    <div class="games-card-desc">Ставка от 500 SQ</div>
+  </button>
+</div>
 
       <div class="games-section-title">Ежедневные квесты</div>
       <div id="gamesQuests" class="games-quests"></div>
@@ -903,7 +918,7 @@
   <!-- МОДАЛКА: РУЛЕТКА -->
   <div id="modal-roulette" class="modal">
     <div class="modal-content" style="text-align:center;padding:20px 16px 24px;">
-      <h2>🎰  SqwidDrop</h2>
+      <h2>🎰 Рулетка подарков</h2>
       <div style="font-size:13px;color:#475569;margin-bottom:14px;line-height:1.5;">
         Поставь подарок и крути. Колесо само остановится.
       </div>
@@ -935,7 +950,7 @@
         "></div>
 
         <!-- Само колесо -->
-        <svg id="rouletteWheel" viewBox="0 0 200 200" style="width:100%;height:100%;transform:rotate(0deg);transition:transform 0s;"></svg>
+        <svg id="rouletteWheel" viewBox="0 0 200 200" style="width:100%;height:100%;transform-origin:center center;transform:rotate(0deg);transition:transform 0s;"></svg>
 
         <!-- Центральная кнопка -->
         <div id="rouletteCenter" style="
@@ -967,7 +982,197 @@
       <button class="btn-cancel" id="btnRouletteClose" style="width:100%;margin-top:8px;">Закрыть</button>
     </div>
   </div>
+<!-- МОДАЛКА: СЛОТ-МАШИНА -->
+<div id="modal-slots" class="modal">
+  <div class="modal-content" style="text-align:center;padding:20px 16px 24px;">
+    <h2>🍒 Слот-машина</h2>
+    <div style="font-size:13px;color:#475569;margin-bottom:14px;line-height:1.5;">
+      Крути барабаны. Собери 3 одинаковых — получишь крупный выигрыш.
+    </div>
 
+    <!-- Барабаны -->
+    <div id="slotsStage" style="
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      background:linear-gradient(135deg,#1a1a2e,#16213e);
+      border:2px solid rgba(245,158,11,0.4);
+      border-radius:20px;
+      padding:24px 16px;
+      margin:16px 0;
+      box-shadow:inset 0 4px 20px rgba(0,0,0,0.5);
+    ">
+      <div class="slot-reel" id="slotReel0" style="
+        background:rgba(255,255,255,0.06);
+        border-radius:12px;
+        padding:20px 0;
+        font-size:52px;
+        line-height:1;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        min-height:90px;
+      ">❓</div>
+      <div class="slot-reel" id="slotReel1" style="
+        background:rgba(255,255,255,0.06);
+        border-radius:12px;
+        padding:20px 0;
+        font-size:52px;
+        line-height:1;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        min-height:90px;
+      ">❓</div>
+      <div class="slot-reel" id="slotReel2" style="
+        background:rgba(255,255,255,0.06);
+        border-radius:12px;
+        padding:20px 0;
+        font-size:52px;
+        line-height:1;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        min-height:90px;
+      ">❓</div>
+    </div>
+
+    <div id="slotsResult" style="font-size:16px;font-weight:800;min-height:24px;margin-bottom:14px;color:#f59e0b;"></div>
+
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:10px;">
+      Ставка: <b style="color:#f59e0b;">50 SQ</b> за спин
+    </div>
+
+    <button class="btn-create" id="btnSlotsSpin" style="width:100%;background:linear-gradient(135deg,#f59e0b,#ec4899);">
+      🍒 Крутить (50 SQ)
+    </button>
+    <button class="btn-cancel" id="btnSlotsClose" style="width:100%;margin-top:8px;">Закрыть</button>
+
+    <!-- Таблица выигрышей -->
+    <div style="margin-top:16px;padding:12px;background:rgba(15,23,42,0.03);border-radius:12px;font-size:12px;color:#475569;text-align:left;">
+      <div style="font-weight:800;margin-bottom:6px;">🏆 Выигрыши:</div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>👑👑👑</span><span style="color:#f59e0b;font-weight:700;">x100 (5000 SQ)</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>7️⃣7️⃣7️⃣</span><span style="color:#f59e0b;font-weight:700;">x50 (2500 SQ)</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>💎💎💎</span><span style="color:#f59e0b;font-weight:700;">x20 (1000 SQ)</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>🍒🍒🍒</span><span style="color:#f59e0b;font-weight:700;">x10 (500 SQ)</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>🍋🍋🍋</span><span style="color:#f59e0b;font-weight:700;">x8 (400 SQ)</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>два одинаковых</span><span style="color:#10b981;font-weight:700;">x2 (100 SQ)</span></div>
+    </div>
+  </div>
+</div>
+  <!-- МОДАЛКА: СЛОТ-МАШИНА -->
+<div id="modal-slots" class="modal">
+  <div class="modal-content" style="text-align:center;padding:20px 16px 24px;">
+    <h2>🍒 Слот-машина</h2>
+    <div style="font-size:13px;color:#475569;margin-bottom:14px;line-height:1.5;">
+      Крути барабаны. Собери 3 одинаковых — получишь крупный выигрыш.
+    </div>
+
+    <div id="slotsStage" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid rgba(245,158,11,0.4);border-radius:20px;padding:24px 16px;margin:16px 0;box-shadow:inset 0 4px 20px rgba(0,0,0,0.5);">
+      <div class="slot-reel" id="slotReel0" style="background:rgba(255,255,255,0.06);border-radius:12px;padding:20px 0;font-size:52px;line-height:1;display:flex;align-items:center;justify-content:center;min-height:90px;transition:transform 0.15s ease;">❓</div>
+      <div class="slot-reel" id="slotReel1" style="background:rgba(255,255,255,0.06);border-radius:12px;padding:20px 0;font-size:52px;line-height:1;display:flex;align-items:center;justify-content:center;min-height:90px;transition:transform 0.15s ease;">❓</div>
+      <div class="slot-reel" id="slotReel2" style="background:rgba(255,255,255,0.06);border-radius:12px;padding:20px 0;font-size:52px;line-height:1;display:flex;align-items:center;justify-content:center;min-height:90px;transition:transform 0.15s ease;">❓</div>
+    </div>
+
+    <div id="slotsResult" style="font-size:16px;font-weight:800;min-height:24px;margin-bottom:14px;color:#f59e0b;"></div>
+
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:10px;">
+      Ставка: <b style="color:#f59e0b;">50 SQ</b> за спин
+    </div>
+
+    <button class="btn-create" id="btnSlotsSpin" style="width:100%;background:linear-gradient(135deg,#f59e0b,#ec4899);">
+      🍒 Крутить (50 SQ)
+    </button>
+    <button class="btn-cancel" id="btnSlotsClose" style="width:100%;margin-top:8px;">Закрыть</button>
+
+    <div style="margin-top:16px;padding:12px;background:rgba(15,23,42,0.03);border-radius:12px;font-size:12px;color:#475569;text-align:left;">
+      <div style="font-weight:800;margin-bottom:6px;">🏆 Выигрыши:</div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>👑👑👑</span><span style="color:#f59e0b;font-weight:700;">x100 (5000 SQ)</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>7️⃣7️⃣7️⃣</span><span style="color:#f59e0b;font-weight:700;">x50 (2500 SQ)</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>💎💎💎</span><span style="color:#f59e0b;font-weight:700;">x20 (1000 SQ)</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>🍀🍀🍀</span><span style="color:#f59e0b;font-weight:700;">x15 (750 SQ)</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>⭐⭐⭐</span><span style="color:#f59e0b;font-weight:700;">x12 (600 SQ)</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>🍒🍒🍒</span><span style="color:#f59e0b;font-weight:700;">x10 (500 SQ)</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>🍋🍋🍋</span><span style="color:#f59e0b;font-weight:700;">x8 (400 SQ)</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>два одинаковых</span><span style="color:#10b981;font-weight:700;">x2 (100 SQ)</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛКА: КРАШ -->
+<div id="modal-crash" class="modal">
+  <div class="modal-content" style="text-align:center;padding:20px 16px 24px;">
+    <h2>📈 Краш</h2>
+
+    <div id="crashSetup">
+      <div style="font-size:13px;color:#475569;margin-bottom:14px;line-height:1.5;">
+        Введи сумму ставки. Кривая начнёт расти — жми «Забрать» до краха.
+      </div>
+
+      <div class="settings-field" style="margin-bottom:12px;">
+        <label>Сумма ставки (мин. 500 SQ)</label>
+        <input id="crashBetInput" type="number" min="500" value="500" placeholder="500">
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;">
+        <button class="btn-cancel crash-quick" data-amount="500" style="font-size:13px;padding:10px;">500</button>
+        <button class="btn-cancel crash-quick" data-amount="1000" style="font-size:13px;padding:10px;">1 000</button>
+        <button class="btn-cancel crash-quick" data-amount="5000" style="font-size:13px;padding:10px;">5 000</button>
+        <button class="btn-cancel crash-quick" data-amount="10000" style="font-size:13px;padding:10px;">10 000</button>
+        <button class="btn-cancel crash-quick" data-amount="50000" style="font-size:13px;padding:10px;">50 000</button>
+        <button class="btn-cancel crash-quick" data-amount="all" style="font-size:13px;padding:10px;">ВСЁ</button>
+      </div>
+
+      <button class="btn-create" id="btnCrashStart" style="width:100%;background:linear-gradient(135deg,#f59e0b,#ec4899);">
+        🚀 Старт
+      </button>
+    </div>
+
+    <div id="crashGame" style="display:none;">
+      <div id="crashMultiplier" style="font-size:64px;font-weight:900;color:#10b981;letter-spacing:-3px;margin:16px 0 8px;transition:color 0.3s ease;text-shadow:0 0 24px rgba(16,185,129,0.4);">x1.00</div>
+
+      <div style="font-size:13px;color:#475569;margin-bottom:8px;">
+        Ставка: <b id="crashBetDisplay" style="color:#f59e0b;">500</b> SQ
+      </div>
+
+      <div style="font-size:14px;color:#475569;margin-bottom:16px;">
+        Заберёшь: <b id="crashWinDisplay" style="color:#10b981;font-size:17px;">500</b> SQ
+      </div>
+
+      <div style="height:8px;background:rgba(15,23,42,0.06);border-radius:999px;overflow:hidden;margin-bottom:20px;">
+        <div id="crashProgress" style="height:100%;width:0%;background:linear-gradient(90deg,#10b981,#f59e0b,#ef4444);transition:width 0.1s linear;"></div>
+      </div>
+
+      <button class="btn-create" id="btnCrashCashout" style="width:100%;background:linear-gradient(135deg,#10b981,#06b6d4);">
+        💰 Забрать
+      </button>
+    </div>
+
+    <div id="crashResult" style="display:none;">
+      <div id="crashResultIcon" style="font-size:72px;margin:16px 0;">💥</div>
+      <div id="crashResultText" style="font-size:20px;font-weight:800;margin-bottom:16px;color:#ef4444;">Крах!</div>
+      <div id="crashResultAmount" style="font-size:24px;font-weight:800;margin-bottom:20px;color:#ef4444;">−500 SQ</div>
+      <button class="btn-create" id="btnCrashAgain" style="width:100%;background:linear-gradient(135deg,#f59e0b,#ec4899);">
+        🔄 Ещё раз
+      </button>
+    </div>
+
+    <button class="btn-cancel" id="btnCrashClose" style="width:100%;margin-top:8px;">Закрыть</button>
+  </div>
+</div>
+  <!-- ИНВЕНТАРЬ -->
+<div id="screen-inventory" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackInventory">←</button>
+    <div class="top-title" style="flex:1;">🎒 Инвентарь</div>
+  </header>
+  <div class="shop-body">
+    <div class="shop-section-title">Активные</div>
+    <div id="inventoryActive" class="inventory-list"></div>
+    <div class="shop-section-title">Все покупки</div>
+    <div id="inventoryAll" class="inventory-list"></div>
+  </div>
+</div>
   <!-- ЭКРАН: БАН -->
   <div id="screen-banned" class="screen">
     <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;">
@@ -1042,6 +1247,14 @@
     <button class="menu-row" id="btnMaViewProfile">👤 Профиль</button>
     <button class="menu-row" id="btnMaMakeAdmin" style="display:none;">⭐ Назначить админом</button>
     <button class="menu-row" id="btnMaRemoveAdmin" style="display:none;">↓ Снять админа</button>
+
+    <button class="menu-row" id="btnMaBan" style="display:none;color:#ef4444;">🚫 Забанить</button>
+    <button class="menu-row" id="btnMaUnban" style="display:none;color:#10b981;">✓ Разбанить</button>
+    <button class="menu-row" id="btnMaMute" style="display:none;color:#f59e0b;">🔇 Замутить</button>
+    <button class="menu-row" id="btnMaUnmute" style="display:none;color:#10b981;">🔊 Размутить</button>
+    <button class="menu-row" id="btnMaFreeze" style="display:none;color:#3b82f6;">❄ Заморозить</button>
+    <button class="menu-row" id="btnMaUnfreeze" style="display:none;color:#10b981;">🔥 Разморозить</button>
+
     <button class="menu-row danger" id="btnMaKick" style="display:none;">🚫 Удалить из чата</button>
     <button class="menu-row cancel" id="btnMaCancel">Отмена</button>
   </div></div>
@@ -1203,6 +1416,7 @@
   </div></div>
 
   <script type="module" src="shop.js"></script>
+  <script type="module" src="inventory.js"></script>
   <script type="module" src="chat-main.js"></script>
   <script type="module" src="moderation.js"></script>
   <script type="module" src="chat-settings.js"></script>

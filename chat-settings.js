@@ -1,5 +1,7 @@
 /* ============================================================
-   chat-settings.js — настройки (профиль, приватность, PIN, аккаунт, тема, Sqwid+)
+   chat-settings.js — настройки
+   Профиль, приватность, PIN, аккаунт, ТЕМА (светлая/тёмная/девчачья),
+   Sqwid+ (фон + соцсети), валидация URL
    ============================================================ */
 
 console.log("🚀 chat-settings.js загружен, жду Sqwid...");
@@ -36,21 +38,41 @@ waitForSqwidSettings((S) => {
   }
 
   /* ============================================================
-     ТЕМА
+     ВАЛИДАЦИЯ URL
+     ============================================================ */
+  function sanitizeUrl(url) {
+    if (!url || typeof url !== "string") return "";
+    const trimmed = url.trim();
+    if (!trimmed) return "";
+    if (!/^https?:\/\//i.test(trimmed)) return "";
+    try {
+      const u = new URL(trimmed);
+      if (u.protocol !== "http:" && u.protocol !== "https:") return "";
+      if (!u.hostname || !u.hostname.includes(".")) return "";
+      return u.href;
+    } catch (e) {
+      return "";
+    }
+  }
+
+  /* ============================================================
+     ТЕМА — applyTheme
      ============================================================ */
   function applyTheme(theme) {
     if (theme === "dark") {
       document.body.setAttribute("data-theme", "dark");
+    } else if (theme === "girl") {
+      document.body.setAttribute("data-theme", "girl");
     } else {
       document.body.removeAttribute("data-theme");
     }
     try { localStorage.setItem("sqwid_theme", theme); } catch (e) {}
     const light = document.getElementById("themeLight");
     const dark = document.getElementById("themeDark");
-    if (light && dark) {
-      light.classList.toggle("active", theme !== "dark");
-      dark.classList.toggle("active", theme === "dark");
-    }
+    const girl = document.getElementById("themeGirl");
+    if (light) light.classList.toggle("active", theme !== "dark" && theme !== "girl");
+    if (dark) dark.classList.toggle("active", theme === "dark");
+    if (girl) girl.classList.toggle("active", theme === "girl");
   }
 
   (function initTheme() {
@@ -94,6 +116,7 @@ waitForSqwidSettings((S) => {
     if (photoEl) {
       if (avatarBase64) photoEl.src = avatarBase64;
       else if (myData.photo && myData.photo.startsWith("data:image")) photoEl.src = myData.photo;
+      else if (myData.photo && !myData.photo.startsWith("data:")) photoEl.src = myData.photo;
       else photoEl.src = S.svgAvatar(name);
     }
 
@@ -125,10 +148,10 @@ waitForSqwidSettings((S) => {
     try { cur = localStorage.getItem("sqwid_theme") || "light"; } catch (e) {}
     const light = document.getElementById("themeLight");
     const dark = document.getElementById("themeDark");
-    if (light && dark) {
-      light.classList.toggle("active", cur !== "dark");
-      dark.classList.toggle("active", cur === "dark");
-    }
+    const girl = document.getElementById("themeGirl");
+    if (light) light.classList.toggle("active", cur !== "dark" && cur !== "girl");
+    if (dark) dark.classList.toggle("active", cur === "dark");
+    if (girl) girl.classList.toggle("active", cur === "girl");
 
     // Sqwid+ секция
     const plusSection = document.getElementById("settingsPlusSection");
@@ -154,13 +177,16 @@ waitForSqwidSettings((S) => {
   }
 
   /* ============================================================
-     ТЕМА — обработчики
+     ТЕМА — обработчики кнопок
      ============================================================ */
   const btnThemeLight = document.getElementById("themeLight");
   if (btnThemeLight) btnThemeLight.addEventListener("click", () => applyTheme("light"));
 
   const btnThemeDark = document.getElementById("themeDark");
   if (btnThemeDark) btnThemeDark.addEventListener("click", () => applyTheme("dark"));
+
+  const btnThemeGirl = document.getElementById("themeGirl");
+  if (btnThemeGirl) btnThemeGirl.addEventListener("click", () => applyTheme("girl"));
 
   /* ============================================================
      АВАТАР
@@ -194,7 +220,6 @@ waitForSqwidSettings((S) => {
     if (!name) return S.showAlert("Введите имя", "Ошибка");
     if (name.length > 30) return S.showAlert("Имя до 30 символов", "Ошибка");
 
-    // Bio: до 300 для Sqwid+, до 120 для остальных
     const bioLimit = isPlus() ? 300 : 120;
     if (bio.length > bioLimit) {
       return S.showAlert(
@@ -265,37 +290,37 @@ waitForSqwidSettings((S) => {
   }
 
   const btnSavePlus = document.getElementById("settingsSavePlus");
-if (btnSavePlus) {
-  btnSavePlus.addEventListener("click", async () => {
-    const rawTg = (document.getElementById("settingsSocialTelegram").value || "").trim();
-    const rawIg = (document.getElementById("settingsSocialInstagram").value || "").trim();
-    const rawYt = (document.getElementById("settingsSocialYoutube").value || "").trim();
+  if (btnSavePlus) {
+    btnSavePlus.addEventListener("click", async () => {
+      const rawTg = (document.getElementById("settingsSocialTelegram").value || "").trim();
+      const rawIg = (document.getElementById("settingsSocialInstagram").value || "").trim();
+      const rawYt = (document.getElementById("settingsSocialYoutube").value || "").trim();
 
-    // Валидация ссылок
-    const telegram = sanitizeUrl(rawTg);
-    const instagram = sanitizeUrl(rawIg);
-    const youtube = sanitizeUrl(rawYt);
+      // Валидация ссылок
+      const telegram = sanitizeUrl(rawTg);
+      const instagram = sanitizeUrl(rawIg);
+      const youtube = sanitizeUrl(rawYt);
 
-    if (rawTg && !telegram) {
-      return S.showAlert("Telegram: ссылка должна начинаться с http:// или https://", "Ошибка");
-    }
-    if (rawIg && !instagram) {
-      return S.showAlert("Instagram: ссылка должна начинаться с http:// или https://", "Ошибка");
-    }
-    if (rawYt && !youtube) {
-      return S.showAlert("YouTube: ссылка должна начинаться с http:// или https://", "Ошибка");
-    }
+      if (rawTg && !telegram) {
+        return S.showAlert("Telegram: ссылка должна начинаться с http:// или https://", "Ошибка");
+      }
+      if (rawIg && !instagram) {
+        return S.showAlert("Instagram: ссылка должна начинаться с http:// или https://", "Ошибка");
+      }
+      if (rawYt && !youtube) {
+        return S.showAlert("YouTube: ссылка должна начинаться с http:// или https://", "Ошибка");
+      }
 
-    try {
-      await update(ref(db, "users/" + currentUser.uid), {
-        socialLinks: { telegram, instagram, youtube }
-      });
-      S.showAlert("Сохранено", "Готово");
-    } catch (e) {
-      S.showAlert("Ошибка: " + e.message, "Ошибка");
-    }
-  });
-}
+      try {
+        await update(ref(db, "users/" + currentUser.uid), {
+          socialLinks: { telegram, instagram, youtube }
+        });
+        S.showAlert("Сохранено", "Готово");
+      } catch (e) {
+        S.showAlert("Ошибка: " + e.message, "Ошибка");
+      }
+    });
+  }
 
   /* ============================================================
      ПРИВАТНОСТЬ
@@ -417,25 +442,6 @@ if (btnSavePlus) {
   function askPrompt(text, placeholder) {
     return S.showPrompt(text, placeholder, "");
   }
-/* ============================================================
-   ВАЛИДАЦИЯ URL
-   ============================================================ */
-function sanitizeUrl(url) {
-  if (!url || typeof url !== "string") return "";
-  const trimmed = url.trim();
-  if (!trimmed) return "";
-  // Разрешаем только http/https
-  if (!/^https?:\/\//i.test(trimmed)) return "";
-  try {
-    const u = new URL(trimmed);
-    // Только http и https
-    if (u.protocol !== "http:" && u.protocol !== "https:") return "";
-    // Должен быть хотя бы один символ после домена .XXX
-    if (!u.hostname || !u.hostname.includes(".")) return "";
-    return u.href;
-  } catch (e) {
-    return "";
-  }
-}
+
   console.log("✅ chat-settings.js готов");
 });

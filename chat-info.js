@@ -1,5 +1,5 @@
 /* ============================================================
-   chat-info.js — информация о чате/группе/канале, участники, роли
+   chat-info.js — информация о чате/группе/канале, участники, роли, модерация
    ============================================================ */
 
 console.log("🚀 chat-info.js загружен, жду Sqwid...");
@@ -111,7 +111,7 @@ waitForSqwidChatInfo((S) => {
         nm = ou.name || ou.email || nm;
       }
       let html = escH(nm);
-      if (chat.verified) html += ` <img src="verify.png" style="width:16px;height:16px;vertical-align:middle;margin-left:4px;">`;
+      if (chat.verified) html += ` <img src="verify.PNG" style="width:16px;height:16px;vertical-align:middle;margin-left:4px;">`;
       nameEl.innerHTML = html;
     }
 
@@ -232,12 +232,18 @@ waitForSqwidChatInfo((S) => {
     else if (role === "admin") roleHTML = `<div class="chat-info-member-role admin">Админ</div>`;
 
     let nameHTML = escH(u.name || u.email || "Пользователь");
-    if (u.verified) nameHTML += ` <img src="verify.png" style="width:12px;height:12px;vertical-align:middle;margin-left:3px;">`;
+    if (u.verified) nameHTML += ` <img src="verify.PNG" style="width:12px;height:12px;vertical-align:middle;margin-left:3px;">`;
+
+    // Значки статуса (бан/мут/мороз)
+    let statusHTML = "";
+    if (u.banned) statusHTML += `<span style="font-size:10px;background:rgba(239,68,68,0.2);color:#ef4444;padding:1px 5px;border-radius:999px;font-weight:800;margin-left:4px;">BAN</span>`;
+    if (u.muted) statusHTML += `<span style="font-size:10px;background:rgba(245,158,11,0.2);color:#f59e0b;padding:1px 5px;border-radius:999px;font-weight:800;margin-left:4px;">MUTE</span>`;
+    if (u.frozen) statusHTML += `<span style="font-size:10px;background:rgba(59,130,246,0.2);color:#3b82f6;padding:1px 5px;border-radius:999px;font-weight:800;margin-left:4px;">FROZEN</span>`;
 
     row.innerHTML = `
       <div class="chat-info-member-ava">${ava}</div>
       <div class="chat-info-member-info">
-        <div class="chat-info-member-name">${nameHTML}</div>
+        <div class="chat-info-member-name">${nameHTML}${statusHTML}</div>
         ${roleHTML}
       </div>
     `;
@@ -482,17 +488,25 @@ waitForSqwidChatInfo((S) => {
      ДОБАВЛЕНИЕ УЧАСТНИКОВ
      ============================================================ */
   function openAddMembers() {
-  if (!currentChat || !viewingChatId) return;
-  if (window.Sqwid && typeof window.Sqwid.openAddMembersToChat === "function") {
-    window.Sqwid.openAddMembersToChat(viewingChatId);
+    if (!currentChat || !viewingChatId) return;
+    if (window.Sqwid && typeof window.Sqwid.openAddMembersToChat === "function") {
+      window.Sqwid.openAddMembersToChat(viewingChatId);
+    }
   }
-}
 
   /* ============================================================
-     ДЕЙСТВИЯ С УЧАСТНИКОМ
+     ДЕЙСТВИЯ С УЧАСТНИКОМ (с модерацией)
      ============================================================ */
-  function openMemberActions(uid) {
+  async function openMemberActions(uid) {
     if (!currentChat) return;
+
+    // Принудительно обновить данные пользователя из базы
+    try {
+      const freshSnap = await get(ref(db, "users/" + uid));
+      const fresh = freshSnap.val() || {};
+      usersCache[uid] = fresh;
+    } catch (e) {}
+
     const u = usersCache[uid] || {};
     memberActionsUid = uid;
 
@@ -501,7 +515,7 @@ waitForSqwidChatInfo((S) => {
       if (u.photo && u.photo.startsWith("data:image")) ava.src = u.photo;
       else {
         const letter = (u.name || u.email || "?").trim().charAt(0).toUpperCase();
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#3b82f6"/><text x="50%" y="55%" font-size="36" fill="#fff" text-anchor="middle" font-family="Arial">${letter}</text></svg>`;
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#6366f1"/><text x="50%" y="55%" font-size="36" fill="#fff" text-anchor="middle" font-family="Arial">${letter}</text></svg>`;
         ava.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
       }
     }
@@ -569,6 +583,82 @@ waitForSqwidChatInfo((S) => {
           closeMemberActions();
         };
       } else btnKick.style.display = "none";
+    }
+
+    /* === МОДЕРАЦИЯ: бан / мут / заморозка === */
+    const targetBanned = u.banned === true;
+    const targetMuted = u.muted === true;
+    const targetFrozen = u.frozen === true;
+
+    const btnBan = document.getElementById("btnMaBan");
+    const btnUnban = document.getElementById("btnMaUnban");
+    const btnMute = document.getElementById("btnMaMute");
+    const btnUnmute = document.getElementById("btnMaUnmute");
+    const btnFreeze = document.getElementById("btnMaFreeze");
+    const btnUnfreeze = document.getElementById("btnMaUnfreeze");
+
+    const targetIsMe = uid === currentUser.uid;
+    const canModerate = isMeAdmin && !targetIsOwner && !targetIsMe;
+
+    if (canModerate) {
+      if (btnBan) {
+        btnBan.style.display = targetBanned ? "none" : "block";
+        btnBan.onclick = async () => {
+          const ok = await S.showConfirm("Забанить " + (u.name || u.email || "пользователя") + "?", "Бан");
+          if (!ok) return;
+          await update(ref(db, "users/" + uid), { banned: true });
+          S.showToast("Забанен", "ok");
+          closeMemberActions();
+        };
+      }
+      if (btnUnban) {
+        btnUnban.style.display = targetBanned ? "block" : "none";
+        btnUnban.onclick = async () => {
+          await update(ref(db, "users/" + uid), { banned: null });
+          S.showToast("Разбанен", "ok");
+          closeMemberActions();
+        };
+      }
+      if (btnMute) {
+        btnMute.style.display = targetMuted ? "none" : "block";
+        btnMute.onclick = async () => {
+          const ok = await S.showConfirm("Замутить " + (u.name || u.email || "пользователя") + "?", "Мут");
+          if (!ok) return;
+          await update(ref(db, "users/" + uid), { muted: true });
+          S.showToast("Замучен", "ok");
+          closeMemberActions();
+        };
+      }
+      if (btnUnmute) {
+        btnUnmute.style.display = targetMuted ? "block" : "none";
+        btnUnmute.onclick = async () => {
+          await update(ref(db, "users/" + uid), { muted: null });
+          S.showToast("Размучен", "ok");
+          closeMemberActions();
+        };
+      }
+      if (btnFreeze) {
+        btnFreeze.style.display = targetFrozen ? "none" : "block";
+        btnFreeze.onclick = async () => {
+          const ok = await S.showConfirm("Заморозить " + (u.name || u.email || "пользователя") + "?", "Заморозка");
+          if (!ok) return;
+          await update(ref(db, "users/" + uid), { frozen: true });
+          S.showToast("Заморожен", "ok");
+          closeMemberActions();
+        };
+      }
+      if (btnUnfreeze) {
+        btnUnfreeze.style.display = targetFrozen ? "block" : "none";
+        btnUnfreeze.onclick = async () => {
+          await update(ref(db, "users/" + uid), { frozen: null });
+          S.showToast("Разморожен", "ok");
+          closeMemberActions();
+        };
+      }
+    } else {
+      [btnBan, btnUnban, btnMute, btnUnmute, btnFreeze, btnUnfreeze].forEach(b => {
+        if (b) b.style.display = "none";
+      });
     }
 
     document.getElementById("modal-member-actions").classList.add("active");
@@ -657,25 +747,27 @@ waitForSqwidChatInfo((S) => {
   });
 
   const btnActionSearch = document.getElementById("ciActionSearch");
-if (btnActionSearch) btnActionSearch.addEventListener("click", () => {
-  if (!viewingChatId) return;
-  if (window.Sqwid && window.Sqwid.openSearch) {
-    window.Sqwid.openSearch(viewingChatId);
-  }
-});
+  if (btnActionSearch) btnActionSearch.addEventListener("click", () => {
+    if (!viewingChatId) return;
+    if (window.Sqwid && window.Sqwid.openSearch) {
+      window.Sqwid.openSearch(viewingChatId);
+    }
+  });
 
   const btnActionMedia = document.getElementById("ciActionMedia");
-if (btnActionMedia) btnActionMedia.addEventListener("click", () => {
-  if (!viewingChatId) return;
-  if (window.Sqwid && window.Sqwid.openGallery) {
-    window.Sqwid.openGallery(viewingChatId);
-  }
-});
+  if (btnActionMedia) btnActionMedia.addEventListener("click", () => {
+    if (!viewingChatId) return;
+    if (window.Sqwid && window.Sqwid.openGallery) {
+      window.Sqwid.openGallery(viewingChatId);
+    }
+  });
 
   /* ============================================================
      ХЕЛПЕРЫ
      ============================================================ */
   function fmtAutoDelete(sec) {
+    if (sec === 3600) return "1 час";
+    if (sec === 43200) return "12 часов";
     if (sec === 86400) return "24 часа";
     if (sec === 604800) return "7 дней";
     if (sec === 2592000) return "30 дней";

@@ -1,6 +1,5 @@
 /* ============================================================
-   shop.js — магазин, маркет, инвентарь
-   + Sqwid+ скидка 10%
+   shop.js — магазин, маркет, инвентарь (подарки + юзернеймы + номера)
    ============================================================ */
 
 console.log("🚀 shop.js загружен, жду Sqwid...");
@@ -27,6 +26,7 @@ waitForSqwidShop((S) => {
 
   let shopItems = [];
   let currentUserData = {};
+  let currentUserGifts = {};
   let pendingSellItem = null;
 
   /* ---------- Базовые товары ---------- */
@@ -60,14 +60,15 @@ waitForSqwidShop((S) => {
     return isPlus() ? Math.floor(item.price * 0.9) : item.price;
   }
 
-  /* ---------- Подписка на профиль ---------- */
+  /* ---------- Подписки ---------- */
   onValue(ref(db, "users/" + currentUser.uid), (snap) => {
     currentUserData = snap.val() || {};
     const scr = document.getElementById("screen-shop");
+    const inv = document.getElementById("screen-inventory");
     if (scr && scr.classList.contains("active")) renderShop();
+    if (inv && inv.classList.contains("active")) renderInventory();
   });
 
-  /* ---------- Подписка на каталог ---------- */
   onValue(ref(db, "shop/items"), (snap) => {
     const all = snap.val() || {};
     shopItems = BASE_ITEMS.concat(Object.values(all));
@@ -75,7 +76,14 @@ waitForSqwidShop((S) => {
     if (scr && scr.classList.contains("active")) renderShop();
   });
 
-  /* ---------- Открытие магазина ---------- */
+  // ПОДАРКИ
+  onValue(ref(db, "users/" + currentUser.uid + "/gifts"), (snap) => {
+    currentUserGifts = snap.val() || {};
+    const inv = document.getElementById("screen-inventory");
+    if (inv && inv.classList.contains("active")) renderInventory();
+  });
+
+  /* ---------- Открытие магазина / инвентаря ---------- */
   function openShop() {
     renderShop();
     document.querySelectorAll(".shop-tab").forEach(t => t.classList.toggle("active", t.dataset.tab === "shop"));
@@ -85,15 +93,8 @@ waitForSqwidShop((S) => {
     S.showScreen("screen-shop");
   }
 
-  function openInventory() {
-    renderInventory();
-    S.showScreen("screen-inventory");
-  }
 
-  window.Sqwid.openShop = openShop;
-  window.Sqwid.openInventory = openInventory;
-
-  /* ---------- Вкладки ---------- */
+  /* ---------- Вкладки магазина ---------- */
   document.querySelectorAll(".shop-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       const target = tab.dataset.tab;
@@ -121,7 +122,6 @@ waitForSqwidShop((S) => {
     await renderShopGrid("shopGridPhones", shopItems.filter(i => i.type === "phone"));
   }
 
-  /* ---------- Превью (живой пример) ---------- */
   function buildPreviewHTML(item) {
     const myName = currentUserData.name || "Имя";
     const firstLetter = myName.charAt(0).toUpperCase();
@@ -153,7 +153,6 @@ waitForSqwidShop((S) => {
     return `<span style="color:#475569;font-size:12px;">${escapeHtml(item.preview || "")}</span>`;
   }
 
-  /* ---------- Сетка товаров ---------- */
   async function renderShopGrid(containerId, items) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -223,7 +222,7 @@ waitForSqwidShop((S) => {
     });
   }
 
-  /* ---------- Покупка (с Sqwid+ скидкой) ---------- */
+  /* ---------- Покупка ---------- */
   async function buyItem(item) {
     const plus = isPlus();
     const finalPrice = getPrice(item);
@@ -231,9 +230,7 @@ waitForSqwidShop((S) => {
 
     if (coins < finalPrice) {
       return S.showAlert(
-        "Недостаточно SQ.\nНужно: " + finalPrice +
-        (plus ? " (Sqwid+ −10%)" : "") +
-        "\nУ вас: " + coins,
+        "Недостаточно SQ.\nНужно: " + finalPrice + (plus ? " (Sqwid+ −10%)" : "") + "\nУ вас: " + coins,
         "Мало монет"
       );
     }
@@ -246,7 +243,7 @@ waitForSqwidShop((S) => {
     if (!ok) return;
 
     const updates = { coins: coins - finalPrice };
-    updates["inventory/" + item.id] = true;
+    updates["inventory/" + item.id] = { boughtAt: Date.now() };
     if (item.type === "username") updates.username = item.value;
     else if (item.type === "phone") updates.phone = item.value;
 
@@ -268,12 +265,218 @@ waitForSqwidShop((S) => {
     try {
       await update(ref(db, "users/" + currentUser.uid), updates);
       renderShop();
+      renderInventory();
     } catch (e) { S.showAlert("Ошибка: " + e.message, "Ошибка"); }
   }
+
+  /* ---------- Снять ---------- */
+  async function unequipItem(item) {
+    const updates = {};
+    if (item.type === "nickColor") updates.nickColor = null;
+    else if (item.type === "emoji") updates.nickEmoji = null;
+    else if (item.type === "frame") updates.avatarFrame = null;
+    else if (item.type === "username") updates.username = null;
+    else if (item.type === "phone") updates.phone = null;
+    try {
+      await update(ref(db, "users/" + currentUser.uid), updates);
+      renderInventory();
+    } catch (e) { S.showAlert("Ошибка: " + e.message, "Ошибка"); }
+  }
+
+  /* ============================================================
+     ИНВЕНТАРЬ — ГЛАВНОЕ
+     ============================================================ */
+  async function renderInventory() {
+    const activeBox = document.getElementById("inventoryActive");
+    const allBox = document.getElementById("inventoryAll");
+    if (!activeBox || !allBox) return;
+    activeBox.innerHTML = "";
+    allBox.innerHTML = "";
+
+    const inv = currentUserData.inventory || {};
+    const gifts = currentUserGifts || {};
+
+    // Считаем, есть ли что-то вообще
+    const invKeys = Object.keys(inv);
+    const giftKeys = Object.keys(gifts);
+
+    if (invKeys.length === 0 && giftKeys.length === 0) {
+      allBox.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#94a3b8;">Пусто. Купи что-нибудь в магазине или получи подарок.</div>';
+      activeBox.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">Ничего не надето</div>';
+      return;
+    }
+
+    const market = (await get(ref(db, "market"))).val() || {};
+
+    /* ---------- ПОДАРКИ ---------- */
+    giftKeys.forEach(gid => {
+      const g = gifts[gid];
+      if (!g) return;
+
+      const el = document.createElement("div");
+      el.className = "inventory-item";
+
+      const price = g.price || 0;
+      const multiplied = g.multiplied && g.multiplied > 1 ? ` <span style="color:#f59e0b;font-weight:800;">x${g.multiplied}</span>` : "";
+
+      el.innerHTML = `
+        <div class="inventory-item-icon" style="background:transparent;padding:0;">
+          <img src="${g.icon || 'sqwidstar.png'}" style="width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(245,158,11,0.4));">
+        </div>
+        <div class="inventory-item-info">
+          <div class="inventory-item-name">${escapeHtml(g.name || "Подарок")}${multiplied}</div>
+          <div class="inventory-item-status">🪙 ${price} SQ · подарок</div>
+        </div>
+        <div class="inventory-item-actions">
+          <button class="inventory-item-btn" data-action="gift-open">👁 Открыть</button>
+        </div>`;
+
+      el.querySelector('[data-action="gift-open"]').addEventListener("click", () => {
+        // Открыть модалку с инфо о подарке
+        const modal = document.getElementById("modal-gift-info");
+        if (modal) {
+          document.getElementById("giftInfoImage").src = g.icon || "sqwidstar.png";
+          document.getElementById("giftInfoName").textContent = g.name || "Подарок";
+          document.getElementById("giftInfoPrice").textContent = price ? "🪙 " + price + " SQ" : "—";
+          const dateEl = document.getElementById("giftInfoDate");
+          if (g.receivedAt) {
+            const d = new Date(g.receivedAt);
+            dateEl.textContent = `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${d.getFullYear()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+          } else dateEl.textContent = "—";
+          const fromEl = document.getElementById("giftInfoFrom");
+          if (g.hideName === true) {
+            fromEl.textContent = "Аноним";
+            fromEl.classList.remove("clickable");
+            fromEl.onclick = null;
+          } else {
+            const displayName = g.fromName || "Пользователь";
+            const uname = g.fromUsername ? " (@" + g.fromUsername + ")" : "";
+            fromEl.textContent = displayName + uname;
+            if (g.fromUid && window.Sqwid.openOtherProfile) {
+              fromEl.classList.add("clickable");
+              fromEl.onclick = () => {
+                modal.classList.remove("active");
+                window.Sqwid.openOtherProfile(g.fromUid);
+              };
+            }
+          }
+          modal.classList.add("active");
+        } else {
+          S.showAlert(`${g.name}\n🪙 ${price} SQ`, "Подарок");
+        }
+      });
+
+      allBox.appendChild(el);
+      // Подарки не «надеваются» — они всегда в профиле на орбите
+      // Так что в «Активные» их не добавляем
+    });
+
+    /* ---------- ЮЗЕРНЕЙМЫ И НОМЕРА (inventory) ---------- */
+    invKeys.forEach(id => {
+      const item = shopItems.find(i => i.id === id);
+      if (!item) return;
+
+      let isEquipped = false;
+      if (item.type === "nickColor") isEquipped = currentUserData.nickColor === item.value;
+      else if (item.type === "emoji") isEquipped = currentUserData.nickEmoji === item.value;
+      else if (item.type === "frame") isEquipped = currentUserData.avatarFrame === item.value;
+      else if (item.type === "username") isEquipped = currentUserData.username === item.value;
+      else if (item.type === "phone") isEquipped = currentUserData.phone === item.value;
+
+      const onSale = market[item.id] !== undefined;
+
+      const el = document.createElement("div");
+      el.className = "inventory-item" + (isEquipped ? " active" : "");
+      let statusText = item.preview;
+      if (isEquipped) statusText = "● Активно";
+
+      let actions = "";
+      if (item.type === "username" || item.type === "phone") {
+        if (isEquipped) {
+          actions = '<button class="inventory-item-btn" disabled>● Активен</button>';
+        } else {
+          actions = '<button class="inventory-item-btn" data-action="activate">Надеть</button>';
+        }
+        if (!onSale) {
+          actions += '<button class="inventory-item-btn sell" data-action="sell">Продать</button>';
+        } else {
+          actions += '<button class="inventory-item-btn sell" data-action="cancel-sale">Снять с продажи</button>';
+        }
+      } else {
+        if (isEquipped) {
+          actions = '<button class="inventory-item-btn remove" data-action="remove">Снять</button>';
+        } else {
+          actions = '<button class="inventory-item-btn" data-action="activate">Надеть</button>';
+        }
+      }
+
+      el.innerHTML = `
+        <div class="inventory-item-icon">${item.icon}</div>
+        <div class="inventory-item-info">
+          <div class="inventory-item-name">${escapeHtml(item.name)}</div>
+          <div class="inventory-item-status">${statusText}</div>
+        </div>
+        <div class="inventory-item-actions">${actions}</div>`;
+
+      el.querySelectorAll("[data-action]").forEach(btn => {
+        const action = btn.dataset.action;
+        btn.addEventListener("click", async () => {
+          if (action === "activate") await equipItem(item).then(renderInventory);
+          else if (action === "remove") await unequipItem(item).then(renderInventory);
+          else if (action === "sell") openSellModal(item);
+          else if (action === "cancel-sale") await cancelListing(item.id).then(renderInventory);
+        });
+      });
+
+      allBox.appendChild(el);
+      if (isEquipped) activeBox.appendChild(el.cloneNode(true));
+    });
+
+    // Пусто в "Активные"
+    if (activeBox.children.length === 0) {
+      activeBox.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">Ничего не надето</div>';
+    }
+  }
+
+  /* ---------- Продажа (модалка) ---------- */
+  function openSellModal(item) {
+    pendingSellItem = item;
+    document.getElementById("sellItemName").textContent = "@" + item.value;
+    document.getElementById("sellPrice").value = item.price || 1000;
+    document.getElementById("modal-sell").classList.add("active");
+  }
+
+  const btnSellCancel = document.getElementById("btnSellCancel");
+  if (btnSellCancel) btnSellCancel.addEventListener("click", () => {
+    document.getElementById("modal-sell").classList.remove("active");
+    pendingSellItem = null;
+  });
+
+  const btnSellConfirm = document.getElementById("btnSellConfirm");
+  if (btnSellConfirm) btnSellConfirm.addEventListener("click", async () => {
+    if (!pendingSellItem) return;
+    const price = parseInt(document.getElementById("sellPrice").value);
+    if (isNaN(price) || price <= 0) return S.showAlert("Введи цену больше 0", "Ошибка");
+    try {
+      await set(ref(db, "market/" + pendingSellItem.id), {
+        sellerUid: currentUser.uid,
+        sellerName: currentUserData.name || currentUser.email,
+        username: pendingSellItem.value,
+        price: price,
+        listedAt: Date.now()
+      });
+      document.getElementById("modal-sell").classList.remove("active");
+      S.showAlert("@" + pendingSellItem.value + " выставлен за " + price + " SQ", "Готово");
+      pendingSellItem = null;
+      renderInventory();
+      renderMyUsernames();
+    } catch (e) { S.showAlert("Ошибка: " + e.message, "Ошибка"); }
+  });
 
   /* ---------- Маркет ---------- */
   async function renderMarket() {
     const grid = document.getElementById("marketGrid");
+    if (!grid) return;
     grid.innerHTML = '<div style="padding:40px;text-align:center;color:#94a3b8;">Загрузка...</div>';
     const listings = (await get(ref(db, "market"))).val() || {};
     grid.innerHTML = "";
@@ -310,7 +513,7 @@ waitForSqwidShop((S) => {
     try {
       await update(ref(db, "users/" + currentUser.uid), {
         coins: coins - listing.price,
-        ["inventory/" + itemId]: true,
+        ["inventory/" + itemId]: { boughtAt: Date.now() },
         username: listing.username
       });
       const sellerCoins = (await get(ref(db, "users/" + listing.sellerUid + "/coins"))).val() || 0;
@@ -332,14 +535,16 @@ waitForSqwidShop((S) => {
     await remove(ref(db, "market/" + itemId));
     renderMarket();
     renderMyUsernames();
+    renderInventory();
   }
 
   /* ---------- Мои юзы ---------- */
   async function renderMyUsernames() {
     const grid = document.getElementById("myUsernamesGrid");
+    if (!grid) return;
     grid.innerHTML = "";
     const inv = currentUserData.inventory || {};
-    const myNames = shopItems.filter(i => i.type === "username" && inv[i.id] === true);
+    const myNames = shopItems.filter(i => i.type === "username" && inv[i.id]);
     if (myNames.length === 0) {
       grid.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#94a3b8;">У вас нет купленных юзернеймов</div>';
       return;
@@ -364,129 +569,13 @@ waitForSqwidShop((S) => {
     });
   }
 
-  function openSellModal(item) {
-    pendingSellItem = item;
-    document.getElementById("sellItemName").textContent = "@" + item.value;
-    document.getElementById("sellPrice").value = item.price || 1000;
-    document.getElementById("modal-sell").classList.add("active");
-  }
-
-  document.getElementById("btnSellCancel").addEventListener("click", () => {
-    document.getElementById("modal-sell").classList.remove("active");
-    pendingSellItem = null;
-  });
-
-  document.getElementById("btnSellConfirm").addEventListener("click", async () => {
-    if (!pendingSellItem) return;
-    const price = parseInt(document.getElementById("sellPrice").value);
-    if (isNaN(price) || price <= 0) return S.showAlert("Введи цену больше 0", "Ошибка");
-    try {
-      await set(ref(db, "market/" + pendingSellItem.id), {
-        sellerUid: currentUser.uid,
-        sellerName: currentUserData.name || currentUser.email,
-        username: pendingSellItem.value,
-        price: price,
-        listedAt: Date.now()
-      });
-      document.getElementById("modal-sell").classList.remove("active");
-      S.showAlert("@" + pendingSellItem.value + " выставлен за " + price + " SQ", "Готово");
-      pendingSellItem = null;
-      renderMyUsernames();
-    } catch (e) { S.showAlert("Ошибка: " + e.message, "Ошибка"); }
-  });
-
-  /* ---------- Инвентарь ---------- */
-  async function renderInventory() {
-    const all = document.getElementById("inventoryAll");
-    const active = document.getElementById("inventoryActive");
-    all.innerHTML = "";
-    active.innerHTML = "";
-
-    const inv = currentUserData.inventory || {};
-    const ids = Object.keys(inv);
-    if (ids.length === 0) {
-      all.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#94a3b8;">Пусто. Купи что-нибудь в магазине.</div>';
-      return;
-    }
-
-    const market = (await get(ref(db, "market"))).val() || {};
-
-    ids.forEach(id => {
-      const item = shopItems.find(i => i.id === id);
-      if (!item) return;
-
-      let isEquipped = false;
-      if (item.type === "nickColor") isEquipped = currentUserData.nickColor === item.value;
-      else if (item.type === "emoji") isEquipped = currentUserData.nickEmoji === item.value;
-      else if (item.type === "frame") isEquipped = currentUserData.avatarFrame === item.value;
-      else if (item.type === "username") isEquipped = currentUserData.username === item.value;
-      else if (item.type === "phone") isEquipped = currentUserData.phone === item.value;
-
-      const onSale = market[item.id] !== undefined;
-
-      const el = document.createElement("div");
-      el.className = "inventory-item" + (isEquipped ? " active" : "");
-      let statusText = item.preview;
-      if (isEquipped) statusText = "● Активно";
-
-      let actions = "";
-      if (item.type === "username" || item.type === "phone") {
-        if (isEquipped) actions = '<button class="inventory-item-btn" disabled>● Активен</button>';
-        else actions = '<button class="inventory-item-btn" data-action="activate">Сделать активным</button>';
-        if (!onSale) actions += '<button class="inventory-item-btn sell" data-action="sell">Продать</button>';
-        else actions += '<button class="inventory-item-btn sell" data-action="cancel-sale">Снять</button>';
-      } else {
-        if (isEquipped) actions = '<button class="inventory-item-btn remove" data-action="remove">Снять</button>';
-        else actions = '<button class="inventory-item-btn" data-action="activate">Надеть</button>';
-      }
-
-      el.innerHTML = `
-        <div class="inventory-item-icon">${item.icon}</div>
-        <div class="inventory-item-info">
-          <div class="inventory-item-name">${escapeHtml(item.name)}</div>
-          <div class="inventory-item-status">${statusText}</div>
-        </div>
-        <div class="inventory-item-actions">${actions}</div>`;
-
-      el.querySelectorAll("[data-action]").forEach(btn => {
-        const action = btn.dataset.action;
-        btn.addEventListener("click", async () => {
-          if (action === "activate") await equipItem(item).then(renderInventory);
-          else if (action === "remove") await unequipItem(item).then(renderInventory);
-          else if (action === "sell") openSellModal(item);
-          else if (action === "cancel-sale") await cancelListing(item.id).then(renderInventory);
-        });
-      });
-
-      all.appendChild(el);
-      if (isEquipped) active.appendChild(el.cloneNode(true));
-    });
-
-    if (active.children.length === 0) {
-      active.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">Ничего не надето</div>';
-    }
-  }
-
-  async function unequipItem(item) {
-    const updates = {};
-    if (item.type === "nickColor") updates.nickColor = null;
-    else if (item.type === "emoji") updates.nickEmoji = null;
-    else if (item.type === "frame") updates.avatarFrame = null;
-    else if (item.type === "username") updates.username = null;
-    else if (item.type === "phone") updates.phone = null;
-    try {
-      await update(ref(db, "users/" + currentUser.uid), updates);
-    } catch (e) { S.showAlert("Ошибка: " + e.message, "Ошибка"); }
-  }
-
-  /* ---------- Кнопки "назад" ---------- */
+  /* ---------- Кнопки ---------- */
   const btnBackShop = document.getElementById("btnBackShop");
   if (btnBackShop) btnBackShop.addEventListener("click", () => S.showScreen("screen-chats"));
 
   const btnBackInv = document.getElementById("btnBackInventory");
   if (btnBackInv) btnBackInv.addEventListener("click", () => S.showScreen("screen-chats"));
 
-  /* ---------- Кнопки открытия ---------- */
   const btnProfileShop = document.getElementById("btnProfileShop");
   if (btnProfileShop) btnProfileShop.addEventListener("click", openShop);
 
