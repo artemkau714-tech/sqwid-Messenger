@@ -3129,3 +3129,29 @@ body[data-theme="girl"] ::-webkit-scrollbar-thumb {
 body[data-theme="girl"] ::-webkit-scrollbar-thumb:hover {
   background: rgba(236, 72, 153, 0.4);
 }
+/* ============================================
+   СОЦСЕТИ В ЧУЖОМ ПРОФИЛЕ (Sqwid+)
+   ============================================ */
+#upSocialList a.up-chip {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 13px;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease;
+  text-decoration: none;
+}
+#upSocialList a.up-chip:active {
+  transform: scale(0.96);
+}
+
+body[data-theme="dark"] #upSocialList a.up-chip {
+  background: #1a1a1a;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+body[data-theme="girl"] #upSocialList a.up-chip {
+  background: #fff5fb;
+  border-color: rgba(236, 72, 153, 0.15);
+  color: #4c1d3d;
+}

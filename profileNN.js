@@ -1,5 +1,6 @@
 /* ============================================================
    profileNN.js — профиль собеседника
+   + соцсети (Sqwid+), юзернеймы, номера, подарки, валидация URL
    ============================================================ */
 
 console.log("🚀 profileNN.js загружен, жду Sqwid...");
@@ -30,6 +31,30 @@ waitForSqwidNN((S) => {
   let unsubUser = null;
   let shopItems = [];
 
+  /* ============================================================
+     ВАЛИДАЦИЯ URL
+     ============================================================ */
+  function sanitizeUrl(url) {
+    if (!url || typeof url !== "string") return "";
+    const trimmed = url.trim();
+    if (!trimmed) return "";
+    if (!/^https?:\/\//i.test(trimmed)) return "";
+    try {
+      const u = new URL(trimmed);
+      if (u.protocol !== "http:" && u.protocol !== "https:") return "";
+      if (!u.hostname || !u.hostname.includes(".")) return "";
+      return u.href;
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function escH(t) {
+    const d = document.createElement("div");
+    d.textContent = t == null ? "" : t;
+    return d.innerHTML;
+  }
+
   function currentOtherUid() {
     const S2 = window.Sqwid;
     if (!S2) return null;
@@ -46,6 +71,9 @@ waitForSqwidNN((S) => {
     shopItems = Object.values(all);
   });
 
+  /* ============================================================
+     ОТКРЫТИЕ ЧУЖОГО ПРОФИЛЯ
+     ============================================================ */
   async function openOtherProfile(uid) {
     if (!uid) return;
     if (uid === currentUser.uid) { showScreen("screen-profile"); return; }
@@ -122,6 +150,7 @@ waitForSqwidNN((S) => {
       };
     }
 
+    renderSocial(uid, u);
     renderGifts(uid);
     subscribeUser(uid);
     renderUsernames(uid, u);
@@ -130,6 +159,75 @@ waitForSqwidNN((S) => {
     showScreen("screen-user-profile");
   }
 
+  if (window.Sqwid) window.Sqwid.openOtherProfile = openOtherProfile;
+
+  /* ============================================================
+     СОЦСЕТИ (Sqwid+)
+     ============================================================ */
+  function renderSocial(uid, u) {
+    let box = document.getElementById("upSocial");
+
+    const isPlusUser = u.plusUntil && u.plusUntil > Date.now();
+    const links = u.socialLinks || {};
+
+    // Есть ли хоть одна валидная ссылка
+    const hasLinks = isPlusUser && Object.values(links).some(v => v && typeof v === "string" && v.trim());
+
+    if (!hasLinks) {
+      if (box) box.remove();
+      return;
+    }
+
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "upSocial";
+      box.className = "up-section";
+      box.innerHTML = `<h3 class="up-section-title">🔗 Соцсети</h3><div class="up-chips" id="upSocialList"></div>`;
+      const ref = document.getElementById("upUsernamesSection");
+      const parent = document.querySelector("#screen-user-profile .profile-scroll");
+      if (parent && ref) parent.insertBefore(box, ref);
+      else if (parent) parent.appendChild(box);
+    }
+
+    const list = document.getElementById("upSocialList");
+    if (!list) return;
+    list.innerHTML = "";
+
+    const icons = {
+      telegram: "✈️",
+      instagram: "📸",
+      youtube: "▶️",
+      tiktok: "🎵",
+      vk: "🅥",
+      github: "🐙",
+      website: "🌐"
+    };
+
+    Object.entries(links).forEach(([key, url]) => {
+      if (!url || typeof url !== "string") return;
+      const safe = sanitizeUrl(url);
+      if (!safe) return;
+
+      const a = document.createElement("a");
+      a.href = safe;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.className = "up-chip";
+      a.style.textDecoration = "none";
+      a.style.display = "inline-flex";
+      a.style.alignItems = "center";
+      a.style.gap = "6px";
+      a.style.cursor = "pointer";
+      a.innerHTML = `${icons[key] || "🔗"} ${key}`;
+      list.appendChild(a);
+    });
+
+    if (list.children.length === 0) box.remove();
+  }
+
+  /* ============================================================
+     СТАТУС (бан / заморозка)
+     ============================================================ */
   function applyProfileStatus(u) {
     const banned = u.banned === true;
     const frozen = u.frozen === true;
@@ -147,6 +245,9 @@ waitForSqwidNN((S) => {
       } else if (u.photo && u.photo.startsWith("data:image")) {
         avaEl.innerHTML = `<img src="${u.photo}" alt="">`;
         avaEl.classList.remove("frozen-ava", "banned-ava");
+      } else if (u.photo && !u.photo.startsWith("data:")) {
+        avaEl.innerHTML = `<img src="${u.photo}" alt="">`;
+        avaEl.classList.remove("frozen-ava", "banned-ava");
       } else {
         const letter = (u.name || u.email || "?").trim().charAt(0).toUpperCase();
         avaEl.innerHTML = `<span>${escH(letter)}</span>`;
@@ -161,7 +262,7 @@ waitForSqwidNN((S) => {
         nameHTML += ` <img src="verify.PNG" style="width:16px;height:16px;vertical-align:middle;margin-left:4px;">`;
       }
       if (banned) {
-        nameHTML += ` <span style="color:#ff6b6b;font-size:12px;font-weight:700;margin-left:6px;">ЗАБЛОКИРОВАН</span>`;
+        nameHTML += ` <span style="color:#ef4444;font-size:12px;font-weight:700;margin-left:6px;">ЗАБЛОКИРОВАН</span>`;
       }
       nameEl.innerHTML = nameHTML;
       nameEl.classList.remove("frozen-name");
@@ -198,8 +299,9 @@ waitForSqwidNN((S) => {
     }
   }
 
-  if (window.Sqwid) window.Sqwid.openOtherProfile = openOtherProfile;
-
+  /* ============================================================
+     ПОДПИСКА НА ЮЗЕРА
+     ============================================================ */
   function subscribeUser(uid) {
     if (unsubGifts) unsubGifts();
     if (unsubUser) unsubUser();
@@ -212,12 +314,16 @@ waitForSqwidNN((S) => {
       if (fresh && viewingUid === uid) {
         viewingUserName = fresh.name || fresh.email || "Пользователь";
         applyProfileStatus(fresh);
+        renderSocial(uid, fresh);
         renderUsernames(uid, fresh);
         renderPhones(uid, fresh);
       }
     });
   }
 
+  /* ============================================================
+     ПОДАРКИ
+     ============================================================ */
   async function renderGifts(uid) {
     const section = document.getElementById("upGiftsSection");
     const grid = document.getElementById("upGiftsGrid");
@@ -291,6 +397,9 @@ waitForSqwidNN((S) => {
     modal.classList.add("active");
   }
 
+  /* ============================================================
+     ЮЗЕРНЕЙМЫ
+     ============================================================ */
   function renderUsernames(uid, u) {
     const section = document.getElementById("upUsernamesSection");
     const list = document.getElementById("upUsernamesList");
@@ -324,6 +433,9 @@ waitForSqwidNN((S) => {
     });
   }
 
+  /* ============================================================
+     НОМЕРА
+     ============================================================ */
   function renderPhones(uid, u) {
     const section = document.getElementById("upPhonesSection");
     const list = document.getElementById("upPhonesList");
@@ -357,6 +469,9 @@ waitForSqwidNN((S) => {
     });
   }
 
+  /* ============================================================
+     ИНФО О ЮЗЕРНЕЙМЕ / НОМЕРЕ
+     ============================================================ */
   async function openItemInfo({ value, itemId, ownerUid }) {
     const modal = document.getElementById("modal-item-info");
     if (!modal) return;
@@ -379,7 +494,7 @@ waitForSqwidNN((S) => {
       avaEl.src = owner.photo;
     } else {
       const letter = (owner.name || owner.email || "?").trim().charAt(0).toUpperCase();
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#00a884"/><text x="50%" y="55%" font-size="36" fill="#fff" text-anchor="middle" font-family="Arial">${letter}</text></svg>`;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#6366f1"/><text x="50%" y="55%" font-size="36" fill="#fff" text-anchor="middle" font-family="Arial">${letter}</text></svg>`;
       avaEl.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
     }
 
@@ -399,6 +514,9 @@ waitForSqwidNN((S) => {
     modal.classList.add("active");
   }
 
+  /* ============================================================
+     ЛИЧНЫЙ ЧАТ
+     ============================================================ */
   async function openPrivateChatWith(uid, displayName) {
     if (!uid || uid === currentUser.uid) return;
     const snap = await get(ref(db, "chats"));
@@ -434,6 +552,9 @@ waitForSqwidNN((S) => {
     }
   }
 
+  /* ============================================================
+     КНОПКИ
+     ============================================================ */
   const btnBack = document.getElementById("btnBackUserProfile");
   if (btnBack) {
     btnBack.addEventListener("click", () => {
@@ -459,12 +580,6 @@ waitForSqwidNN((S) => {
     btnGiftInfoClose.addEventListener("click", () => {
       document.getElementById("modal-gift-info").classList.remove("active");
     });
-  }
-
-  function escH(t) {
-    const d = document.createElement("div");
-    d.textContent = t == null ? "" : t;
-    return d.innerHTML;
   }
 
   console.log("✅ profileNN.js готов");
