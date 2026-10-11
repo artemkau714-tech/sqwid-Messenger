@@ -296,8 +296,32 @@ onAuthStateChanged(auth, async (user) => {
     } catch (e) {}
   });
 });
-
+/* ============================================================
+   SKELETON-ЗАГРУЗКА ЧАТОВ
+   ============================================================ */
+function showChatSkeletons(list) {
+  if (!list) return;
+  list.innerHTML = "";
+  for (let i = 0; i < 7; i++) {
+    const sk = document.createElement("li");
+    sk.className = "chat-skeleton";
+    sk.innerHTML = `
+      <div class="chat-skeleton-ava"></div>
+      <div class="chat-skeleton-body">
+        <div class="chat-skeleton-line" style="width: ${40 + Math.random() * 40}%;"></div>
+        <div class="chat-skeleton-line short" style="width: ${50 + Math.random() * 30}%;"></div>
+      </div>
+    `;
+    sk.style.animationDelay = (i * 0.06) + "s";
+    list.appendChild(sk);
+  }
+}
 function loadChats() {
+  const list = document.getElementById("chatList");
+  if (list && list.children.length === 0) {
+    showChatSkeletons(list);
+  }
+
   if (unsubChats) unsubChats();
   unsubChats = onValue(ref(db, "chats"), (snap) => {
     try {
@@ -360,7 +384,7 @@ function loadChats() {
         const time = c.lastMsgAt ? fmtShortTime(c.lastMsgAt) : "";
         const last = c.lastMsg || "";
         const isChannel = c.type === "channel";
-        const badge = isChannel ? `<span style="font-size:11px;color:#10b981;margin-left:6px;">📢</span>` : "";
+        const badge = isChannel ? `<span style="display:inline-flex;align-items:center;margin-left:6px;color:#10b981;" title="Канал"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span>` : "";
         const frozenClass = isFrozen ? " frozen-name" : "";
         const frozenAvaClass = isFrozen ? " frozen-ava" : "";
 
@@ -516,10 +540,22 @@ async function openChat(chatId) {
           }));
 
         arr.forEach(m => {
-          try { renderMessage(m, chatId); } catch (e) {}
-        });
-        box.scrollTop = box.scrollHeight;
+  try { renderMessage(m, chatId); } catch (e) {}
+});
+box.scrollTop = box.scrollHeight;
 
+// Помечаем входящие как прочитанные
+const readUpdates = {};
+let hasReadUpdates = false;
+for (const m of arr) {
+  if (m.sender === currentUser.uid) continue;
+  if (m.readBy && m.readBy[currentUser.uid]) continue;
+  readUpdates[`messages/${chatId}/${m.id}/readBy/${currentUser.uid}`] = Date.now();
+  hasReadUpdates = true;
+}
+if (hasReadUpdates) {
+  try { await update(ref(db), readUpdates); } catch (e) {}
+}
         if (chat.type === "channel") {
           const today = new Date().toISOString().slice(0, 10);
           for (const m of arr) {
@@ -643,16 +679,48 @@ function renderMessage(msg, chatId) {
   }
 
   let viewsHTML = "";
-  if (currentChatData && currentChatData.type === "channel") {
-    viewsHTML = `<div class="msg-views">👁 ${msg.views || 0}</div>`;
-  }
+if (currentChatData && currentChatData.type === "channel") {
+  viewsHTML = `<div class="msg-views">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+    ${msg.views || 0}
+  </div>`;
+}
 
-  div.innerHTML = `
-    ${senderHTML}
-    ${contentHTML}
-    <div class="msg-time">${fmtTime(msg.timestamp || Date.now())}</div>
-    ${viewsHTML}
-  `;
+// Галочки для своих сообщений в личных чатах
+let checksHTML = "";
+if (isOwn && currentChatData && currentChatData.type === "private") {
+  const readBy = msg.readBy || {};
+  const partnerUid = Object.keys(currentChatData.members || {}).find(u => u !== currentUser.uid);
+  const isRead = partnerUid && readBy[partnerUid];
+
+  if (isRead) {
+    checksHTML = `<span class="msg-checks read" title="Прочитано">
+      <svg width="16" height="11" viewBox="0 0 18 12" fill="none">
+        <polyline points="1,6 5,10 11,2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="7,6 11,10 17,2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>`;
+  } else {
+    checksHTML = `<span class="msg-checks" title="Отправлено">
+      <svg width="12" height="11" viewBox="0 0 14 12" fill="none">
+        <polyline points="1,6 5,10 11,2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>`;
+  }
+}
+
+div.innerHTML = `
+  ${senderHTML}
+  ${contentHTML}
+  <div class="msg-time">
+    ${fmtTime(msg.timestamp || Date.now())}
+    ${checksHTML}
+  </div>
+  ${viewsHTML}
+`;
 
   if (!isOwn) {
     const reportBtn = document.createElement("button");

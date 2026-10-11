@@ -12,7 +12,6 @@
   <div class="aurora aurora-tl"></div>
   <div class="aurora aurora-br"></div>
 
-  <!-- SVG-СПРАЙТ ИКОНОК -->
   <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
     <symbol id="ico-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -126,777 +125,1089 @@
     <symbol id="ico-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
     </symbol>
+    <symbol id="ico-shop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+    </symbol>
+    <symbol id="ico-qr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/><path d="M18 18h3v3h-3z"/>
+    </symbol>
+    <symbol id="ico-reply" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
+    </symbol>
+    <symbol id="ico-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    </symbol>
+    <symbol id="ico-user-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+  <circle cx="8.5" cy="7" r="4"/>
+  <line x1="20" y1="8" x2="20" y2="14"/>
+  <line x1="23" y1="11" x2="17" y2="11"/>
+</symbol>
+<symbol id="ico-user-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+  <circle cx="8.5" cy="7" r="4"/>
+  <line x1="23" y1="11" x2="17" y2="11"/>
+</symbol>
   </svg>
-
-  <!-- СПИСОК ЧАТОВ -->
   <div id="screen-chats" class="screen active">
-    <header class="top-bar">
-      <button class="top-avatar-btn" id="btnBurger"><img id="myAvatar" src="" alt=""></button>
-      <div class="top-search">
-        <svg class="input-icon" width="18" height="18"><use href="#ico-search"/></svg>
-        <input id="searchInput" placeholder="Поиск..." data-i18n-placeholder="search.placeholder">
-      </div>
-      <button class="top-new-btn" id="btnNewChat" aria-label="Новый чат"><svg width="20" height="20"><use href="#ico-edit"/></svg></button>
-    </header>
-
-    <div class="chat-folders" id="chatFolders">
-      <button class="folder-chip active" data-folder="all" data-i18n="folders.all">Все</button>
-      <button class="folder-chip" data-folder="private" data-i18n="folders.private">Личные</button>
-      <button class="folder-chip" data-folder="group" data-i18n="folders.group">Группы</button>
-      <button class="folder-chip" data-folder="channel" data-i18n="folders.channel">Каналы</button>
-      <button class="folder-chip" data-folder="unread" data-i18n="folders.unread">Непрочитанные <span class="folder-chip-badge" id="folderUnreadBadge" style="display:none;">0</span></button>
+  <header class="top-bar">
+    <button class="top-avatar-btn" id="btnBurger"><img id="myAvatar" src="" alt=""></button>
+    <div class="top-search">
+      <svg class="input-icon" width="18" height="18"><use href="#ico-search"/></svg>
+      <input id="searchInput" placeholder="Поиск..." data-i18n-placeholder="search.placeholder">
     </div>
+    <button class="top-new-btn" id="btnNewChat" aria-label="Новый чат"><svg width="20" height="20"><use href="#ico-edit"/></svg></button>
+  </header>
 
-    <ul id="chatList" class="chat-list"></ul>
+  <div class="chat-folders" id="chatFolders">
+    <button class="folder-chip active" data-folder="all" data-i18n="folders.all">Все</button>
+    <button class="folder-chip" data-folder="private" data-i18n="folders.private">Личные</button>
+    <button class="folder-chip" data-folder="group" data-i18n="folders.group">Группы</button>
+    <button class="folder-chip" data-folder="channel" data-i18n="folders.channel">Каналы</button>
+    <button class="folder-chip" data-folder="unread" data-i18n="folders.unread">Непрочитанные <span class="folder-chip-badge" id="folderUnreadBadge" style="display:none;">0</span></button>
   </div>
 
-  <!-- ЧАТ -->
-  <div id="screen-messages" class="screen">
-    <header class="chat-bar">
-      <button class="chat-back" id="btnBack" aria-label="Назад"><svg width="22" height="22"><use href="#ico-back"/></svg></button>
-      <div class="chat-ava" id="chatBarAva" style="cursor:pointer;">
-        <img id="chatAva" src="" alt="" style="display:none;">
-      </div>
-      <div class="chat-name" id="chatName" style="cursor:pointer;">Чат</div>
+  <ul id="chatList" class="chat-list"></ul>
+</div>
 
-      <button class="chat-menu-btn" id="btnCallAudio" aria-label="Аудиозвонок" style="display:none;">
-        <svg width="22" height="22"><use href="#ico-phone"/></svg>
+<div id="screen-messages" class="screen">
+  <header class="chat-bar">
+    <button class="chat-back" id="btnBack" aria-label="Назад"><svg width="22" height="22"><use href="#ico-back"/></svg></button>
+    <div class="chat-ava" id="chatBarAva" style="cursor:pointer;">
+      <img id="chatAva" src="" alt="" style="display:none;">
+    </div>
+    <div class="chat-name" id="chatName" style="cursor:pointer;">Чат</div>
+
+    <button class="chat-menu-btn" id="btnCallAudio" aria-label="Аудиозвонок" style="display:none;">
+      <svg width="22" height="22"><use href="#ico-phone"/></svg>
+    </button>
+    <button class="chat-menu-btn" id="btnCallVideo" aria-label="Видеозвонок" style="display:none;">
+      <svg width="22" height="22"><use href="#ico-video"/></svg>
+    </button>
+
+    <button class="chat-menu-btn" id="btnChatMenu" aria-label="Меню"><svg width="22" height="22"><use href="#ico-menu"/></svg></button>
+  </header>
+
+  <div id="pinnedBar" class="pinned-bar" style="display:none;">
+    <div class="pinned-bar-icon"><svg width="16" height="16"><use href="#ico-star"/></svg></div>
+    <div class="pinned-bar-body">
+      <div class="pinned-bar-title">Закреплённое сообщение</div>
+      <div class="pinned-bar-text" id="pinnedText">—</div>
+    </div>
+    <button class="pinned-bar-close" id="btnUnpin" aria-label="Открепить"><svg width="16" height="16"><use href="#ico-close"/></svg></button>
+  </div>
+
+  <div id="replyBar" class="reply-bar" style="display:none;">
+    <div class="reply-bar-content">
+      <div class="reply-bar-name" id="replyBarName">—</div>
+      <div class="reply-bar-text" id="replyBarText">—</div>
+    </div>
+    <button class="reply-bar-close" id="btnCancelReply" aria-label="Отменить"><svg width="16" height="16"><use href="#ico-close"/></svg></button>
+  </div>
+
+  <div id="messages" class="messages" data-bg="diamonds"></div>
+
+  <div id="photoPreview" class="photo-preview">
+    <img id="photoPreviewImg" alt="">
+    <div class="photo-preview-input">
+      <input id="photoCaption" placeholder="Добавьте подпись...">
+      <button class="photo-send-btn" id="btnSendPhoto"><svg width="20" height="20"><use href="#ico-send"/></svg></button>
+    </div>
+    <button class="photo-cancel-btn" id="btnCancelPhoto"><svg width="20" height="20"><use href="#ico-close"/></svg></button>
+  </div>
+
+  <div class="chat-deleted-banner" id="chatDeletedBanner" style="display:none;">
+    <div class="chat-deleted-text" id="chatDeletedText">Пользователь заблокирован</div>
+    <button class="chat-deleted-btn" id="btnDeleteChatFromBanner">Удалить чат</button>
+  </div>
+
+  <div class="input-area" id="inputArea">
+    <button class="attach-btn" id="btnAttach" aria-label="Прикрепить"><svg width="22" height="22"><use href="#ico-clip"/></svg></button>
+    <input id="msgInput" placeholder="Сообщение..." data-i18n-placeholder="chat.input.placeholder">
+    <button class="msg-cancel-edit" id="btnCancelEdit" style="display:none;" aria-label="Отменить"><svg width="16" height="16"><use href="#ico-close"/></svg></button>
+    <button class="record-btn" id="btnRecord" aria-label="Голосовое"><svg width="22" height="22"><use href="#ico-mic"/></svg></button>
+    <button class="send-plane" id="btnSend" aria-label="Отправить"><svg width="20" height="20"><use href="#ico-send"/></svg></button>
+    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+  </div>
+</div>
+
+<div id="screen-user-profile" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackUserProfile"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;">Профиль</div>
+  </header>
+  <div class="profile-scroll">
+    <div class="profile-top">
+      <div class="profile-ava-wrap"><div class="profile-ava" id="upAva"><span>?</span></div></div>
+      <h2 class="profile-name" id="upName">Имя</h2>
+      <div class="profile-username" id="upUsername">@username</div>
+      <div class="profile-bio" id="upBio"></div>
+    </div>
+    <div style="padding: 0 1.25rem 1.25rem; display:flex; flex-direction:column; gap:0.6rem;">
+      <button class="btn-create" id="btnUpWrite" style="width:100%;">Написать</button>
+      <button class="btn-secondary" id="btnUpReport">Пожаловаться</button>
+    </div>
+  </div>
+</div>
+<div id="screen-settings" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackSettings"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;" data-i18n="settings.title">Настройки</div>
+  </header>
+  <div class="settings-body">
+    <div class="settings-section">
+      <div class="settings-section-title">Профиль</div>
+      <div class="settings-card">
+        <div class="settings-avatar-wrap">
+          <img id="settingsPhoto" class="settings-photo" alt="">
+          <label class="btn-change-avatar">
+            <input id="settingsAvatarInput" type="file" accept="image/*" style="display:none;">
+            Сменить аватар
+          </label>
+        </div>
+        <div class="settings-field"><label>Имя</label><input id="settingsName" maxlength="30" placeholder="Ваше имя"></div>
+        <div class="settings-field">
+          <label>Юзернейм (@username)</label>
+          <input id="settingsUsername" maxlength="20" placeholder="username">
+          <div class="settings-hint">Латиница, цифры и _ . От 3 до 20 символов.</div>
+        </div>
+        <div class="settings-field">
+          <label>Описание</label>
+          <textarea id="settingsBio" maxlength="300" rows="3" placeholder="О себе"></textarea>
+        </div>
+
+        <div class="settings-field" id="settingsNickCustom" style="display:none;">
+          <label>Цвет ника (Sqwid+)</label>
+          <div class="nick-color-row" id="nickColorRow">
+            <button class="nick-color-btn" data-color="" style="background:linear-gradient(135deg,#f97316,#fb923c);" title="По умолчанию"></button>
+            <button class="nick-color-btn" data-color="#ef4444" style="background:#ef4444;"></button>
+            <button class="nick-color-btn" data-color="#f59e0b" style="background:#f59e0b;"></button>
+            <button class="nick-color-btn" data-color="#10b981" style="background:#10b981;"></button>
+            <button class="nick-color-btn" data-color="#3b82f6" style="background:#3b82f6;"></button>
+            <button class="nick-color-btn" data-color="#8b5cf6" style="background:#8b5cf6;"></button>
+            <button class="nick-color-btn" data-color="#ec4899" style="background:#ec4899;"></button>
+          </div>
+        </div>
+
+        <div class="settings-field" id="settingsNickFont" style="display:none;">
+          <label>Шрифт ника (Sqwid+)</label>
+          <div class="nick-font-row" id="nickFontRow">
+            <button class="nick-font-btn" data-font="normal">Обычный</button>
+            <button class="nick-font-btn" data-font="bold" style="font-weight:900;">Жирный</button>
+            <button class="nick-font-btn" data-font="italic" style="font-style:italic;">Курсив</button>
+            <button class="nick-font-btn" data-font="mono" style="font-family:monospace;">Моно</button>
+            <button class="nick-font-btn" data-font="script" style="font-family:cursive;">Рукопись</button>
+          </div>
+        </div>
+
+        <div class="settings-field" id="settingsNickEmoji" style="display:none;">
+          <label>Значок возле ника (Sqwid+)</label>
+          <div class="nick-emoji-row" id="nickEmojiRow">
+            <button class="nick-emoji-btn" data-emoji="">—</button>
+            <button class="nick-emoji-btn" data-emoji="👑">👑</button>
+            <button class="nick-emoji-btn" data-emoji="🔥">🔥</button>
+            <button class="nick-emoji-btn" data-emoji="⭐">⭐</button>
+            <button class="nick-emoji-btn" data-emoji="💎">💎</button>
+            <button class="nick-emoji-btn" data-emoji="🌸">🌸</button>
+            <button class="nick-emoji-btn" data-emoji="⚡">⚡</button>
+          </div>
+        </div>
+
+        <button class="btn-create" id="settingsSaveProfile" style="width:100%;margin-top:0.5rem;">Сохранить профиль</button>
+      </div>
+    </div>
+
+    <div class="settings-section" id="settingsPlusSection" style="display:none;">
+      <div class="settings-section-title">Sqwid+</div>
+      <div class="settings-card">
+        <div class="settings-field">
+          <label>Фон профиля</label>
+          <input id="settingsProfileBg" type="file" accept="image/*" style="display:none;">
+          <button class="btn-create" id="btnUploadProfileBg" style="width:100%;">Загрузить фон</button>
+        </div>
+        <div class="settings-field">
+          <label>Ссылки на соцсети</label>
+          <input id="settingsSocialTelegram" placeholder="telegram URL">
+          <input id="settingsSocialInstagram" placeholder="instagram URL" style="margin-top:0.5rem;">
+          <input id="settingsSocialYoutube" placeholder="youtube URL" style="margin-top:0.5rem;">
+        </div>
+        <button class="btn-create" id="settingsSavePlus" style="width:100%;">Сохранить</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">Двухэтапная аутентификация</div>
+      <div class="settings-card">
+        <div class="settings-info-row" style="border-top:none;margin-top:0;">
+          <span>Статус</span>
+          <span id="settings2FAStatus" style="color:#94a3b8;">Не включена</span>
+        </div>
+        <button class="btn-create" id="btn2FASetup" style="width:100%;margin-top:0.6rem;">Настроить 2FA</button>
+        <button class="btn-secondary" id="btn2FADisable" style="width:100%;margin-top:0.5rem;color:#ef4444;display:none;">Отключить 2FA</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">Тема</div>
+      <div class="settings-card">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
+          <button id="themeLight" class="theme-btn active" type="button">
+            <div class="theme-btn-icon">☀️</div>
+            <div class="theme-btn-label">Светлая</div>
+          </button>
+          <button id="themeDark" class="theme-btn" type="button">
+            <div class="theme-btn-icon">🌙</div>
+            <div class="theme-btn-label">Тёмная</div>
+          </button>
+          <button id="themeGirl" class="theme-btn" type="button">
+            <div class="theme-btn-icon">🌸</div>
+            <div class="theme-btn-label">Девчачья</div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title" data-i18n="settings.language">Язык</div>
+      <div class="settings-card">
+        <div id="langPicker" style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;"></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">Приватность</div>
+      <div class="settings-card">
+        <label class="settings-toggle-row"><input type="checkbox" id="settingsHideEmail"><span>Скрывать email</span></label>
+        <label class="settings-toggle-row" style="margin-top:0.5rem;"><input type="checkbox" id="settingsHideOnline"><span>Скрывать статус «в сети»</span></label>
+        <label class="settings-toggle-row" style="margin-top:0.5rem;"><input type="checkbox" id="settingsShowUsername"><span>Показывать юзернейм другим</span></label>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">PIN-код</div>
+      <div class="settings-card">
+        <div class="settings-info-row" style="border-top:none;margin-top:0;">
+          <span>Статус</span>
+          <span id="settingsPinStatus" style="color:#94a3b8;">—</span>
+        </div>
+        <button class="btn-create" id="settingsPinSet" style="width:100%;margin-top:0.6rem;">Установить / изменить PIN</button>
+        <button class="btn-secondary" id="settingsPinRemove" style="width:100%;margin-top:0.5rem;color:#ef4444;">Отключить PIN</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">Аккаунт</div>
+      <div class="settings-card">
+        <div class="settings-info-row" style="border-top:none;margin-top:0;">
+          <span>Email</span>
+          <span id="settingsEmail" style="color:#94a3b8;">—</span>
+        </div>
+        <div class="settings-info-row">
+          <span>Баланс</span>
+          <span id="settingsBalance" style="color:#f59e0b;">0 SQ</span>
+        </div>
+        <button class="btn-secondary" id="settingsChangeEmail" style="width:100%;margin-top:0.6rem;">Сменить email</button>
+        <button class="btn-secondary" id="settingsChangePassword" style="width:100%;margin-top:0.5rem;">Сменить пароль</button>
+        <button class="btn-danger" id="settingsLogout" style="width:100%;margin-top:0.5rem;">Выйти</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">Безопасность</div>
+      <div class="settings-card">
+        <button class="btn-danger" id="settingsLogoutAll" style="width:100%;">Выйти и сбросить PIN-сессию</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="screen-profile" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBurgerFromProfile"><svg width="20" height="20"><use href="#ico-menu"/></svg></button>
+    <div class="top-title" style="flex:1;">Профиль</div>
+    <button class="top-new-btn" id="btnOpenOwnerPanel" style="display:none;"><svg width="20" height="20"><use href="#ico-crown"/></svg></button>
+    <button class="top-new-btn" id="btnShareProfile"><svg width="18" height="18"><use href="#ico-share"/></svg></button>
+  </header>
+  <div class="profile-scroll" id="profileScroll">
+    <div class="profile-top">
+      <div class="profile-ava-wrap"><div class="profile-ava" id="profileAva"><span id="profileAvaLetter">?</span></div></div>
+      <h2 class="profile-name" id="profileName">Имя</h2>
+      <div class="profile-username" id="profileUsername">@username</div>
+      <div class="profile-bio" id="profileBio"></div>
+      <div class="mp-coins" id="profileCoins">0 SQ</div>
+    </div>
+    <div class="mp-stats" style="padding: 0 1.25rem 1.25rem;">
+      <div class="mp-stat"><div class="mp-stat-value" id="profileStatChats">0</div><div class="mp-stat-label">Чатов</div></div>
+      <div class="mp-stat"><div class="mp-stat-value" id="profileStatMessages">0</div><div class="mp-stat-label">Сообщений</div></div>
+      <div class="mp-stat"><div class="mp-stat-value" id="profileStatPhotos">0</div><div class="mp-stat-label">Фото</div></div>
+    </div>
+    <div style="padding: 0 1.25rem 1.25rem; display:flex; flex-direction:column; gap:0.6rem;">
+      <button class="btn-create" id="btnOpenShop" style="width:100%;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        Магазин
       </button>
-      <button class="chat-menu-btn" id="btnCallVideo" aria-label="Видеозвонок" style="display:none;">
-        <svg width="22" height="22"><use href="#ico-video"/></svg>
+      <button class="btn-create" id="btnOpenQr" style="width:100%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/><path d="M18 18h3v3h-3z"/></svg>
+        Мой QR-код
       </button>
-
-      <button class="chat-menu-btn" id="btnChatMenu" aria-label="Меню"><svg width="22" height="22"><use href="#ico-menu"/></svg></button>
-    </header>
-
-    <div id="pinnedBar" class="pinned-bar" style="display:none;">
-      <div class="pinned-bar-icon"><svg width="16" height="16"><use href="#ico-star"/></svg></div>
-      <div class="pinned-bar-body">
-        <div class="pinned-bar-title">Закреплённое сообщение</div>
-        <div class="pinned-bar-text" id="pinnedText">—</div>
-      </div>
-      <button class="pinned-bar-close" id="btnUnpin" aria-label="Открепить"><svg width="16" height="16"><use href="#ico-close"/></svg></button>
-    </div>
-
-    <div id="messages" class="messages" data-bg="diamonds"></div>
-
-    <div id="photoPreview" class="photo-preview">
-      <img id="photoPreviewImg" alt="">
-      <div class="photo-preview-input">
-        <input id="photoCaption" placeholder="Добавьте подпись...">
-        <button class="photo-send-btn" id="btnSendPhoto"><svg width="20" height="20"><use href="#ico-send"/></svg></button>
-      </div>
-      <button class="photo-cancel-btn" id="btnCancelPhoto"><svg width="20" height="20"><use href="#ico-close"/></svg></button>
-    </div>
-
-    <div class="chat-deleted-banner" id="chatDeletedBanner" style="display:none;">
-      <div class="chat-deleted-text" id="chatDeletedText">Пользователь заблокирован</div>
-      <button class="chat-deleted-btn" id="btnDeleteChatFromBanner">Удалить чат</button>
-    </div>
-
-    <div class="input-area" id="inputArea">
-      <button class="attach-btn" id="btnAttach" aria-label="Прикрепить"><svg width="22" height="22"><use href="#ico-clip"/></svg></button>
-      <input id="msgInput" placeholder="Сообщение..." data-i18n-placeholder="chat.input.placeholder">
-      <button class="msg-cancel-edit" id="btnCancelEdit" style="display:none;" aria-label="Отменить"><svg width="16" height="16"><use href="#ico-close"/></svg></button>
-      <button class="record-btn" id="btnRecord" aria-label="Голосовое"><svg width="22" height="22"><use href="#ico-mic"/></svg></button>
-      <button class="send-plane" id="btnSend" aria-label="Отправить"><svg width="20" height="20"><use href="#ico-send"/></svg></button>
-      <input type="file" id="fileInput" accept="image/*" style="display:none;">
+      <button class="btn-create" id="btnOpenGames" style="width:100%;">Sqwid Games</button>
+      <button class="btn-create" id="btnEditProfile" style="width:100%;">Редактировать профиль</button>
     </div>
   </div>
+</div>
 
-  <!-- ПРОФИЛЬ СОБЕСЕДНИКА -->
-  <div id="screen-user-profile" class="screen">
-    <header class="top-bar">
-      <button class="top-new-btn" id="btnBackUserProfile"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-title" style="flex:1;">Профиль</div>
-    </header>
-    <div class="profile-scroll">
-      <div class="profile-top">
-        <div class="profile-ava-wrap"><div class="profile-ava" id="upAva"><span>?</span></div></div>
-        <h2 class="profile-name" id="upName">Имя</h2>
-        <div class="profile-username" id="upUsername">@username</div>
-        <div class="profile-bio" id="upBio"></div>
-      </div>
-      <div style="padding: 0 1.25rem 1.25rem; display:flex; flex-direction:column; gap:0.6rem;">
-        <button class="btn-create" id="btnUpWrite" style="width:100%;">Написать</button>
-        <button class="btn-secondary" id="btnUpReport">Пожаловаться</button>
-      </div>
-    </div>
+<div id="screen-shop" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackShop"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;">Магазин</div>
+    <div id="shopBalance" style="font-size:0.82rem;padding:0.4rem 0.75rem;border-radius:999px;background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:800;">0 SQ</div>
+  </header>
+  <div class="shop-tabs">
+    <button class="shop-tab active" data-shop-tab="frames">Рамки</button>
+    <button class="shop-tab" data-shop-tab="backgrounds">Фоны</button>
+    <button class="shop-tab" data-shop-tab="badges">Значки</button>
+    <button class="shop-tab" data-shop-tab="nicks">Ники</button>
   </div>
+  <div id="shopBody" class="shop-body">
+    <div id="shopGrid" class="shop-grid"></div>
+  </div>
+</div>
 
-  <!-- НАСТРОЙКИ -->
-  <div id="screen-settings" class="screen">
-    <header class="top-bar">
-      <button class="top-new-btn" id="btnBackSettings"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-title" style="flex:1;" data-i18n="settings.title">Настройки</div>
-    </header>
-    <div class="settings-body">
-      <div class="settings-section">
-        <div class="settings-section-title">Профиль</div>
-        <div class="settings-card">
-          <div class="settings-avatar-wrap">
-            <img id="settingsPhoto" class="settings-photo" alt="">
-            <label class="btn-change-avatar">
-              <input id="settingsAvatarInput" type="file" accept="image/*" style="display:none;">
-              Сменить аватар
-            </label>
-          </div>
-          <div class="settings-field"><label>Имя</label><input id="settingsName" maxlength="30" placeholder="Ваше имя"></div>
-          <div class="settings-field">
-            <label>Юзернейм (@username)</label>
-            <input id="settingsUsername" maxlength="20" placeholder="username">
-            <div class="settings-hint">Латиница, цифры и _ . От 3 до 20 символов.</div>
-          </div>
-          <div class="settings-field">
-            <label>Описание</label>
-            <textarea id="settingsBio" maxlength="300" rows="3" placeholder="О себе"></textarea>
-          </div>
+<div id="screen-qr" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackQr"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;">Мой QR-код</div>
+  </header>
+  <div class="qr-body">
+    <div class="qr-card">
+      <div class="qr-canvas" id="qrCanvas"></div>
+      <div class="qr-name" id="qrName">Имя</div>
+      <div class="qr-username" id="qrUsername">@username</div>
+    </div>
+    <div class="qr-hint">Покажи QR-код другу, чтобы он добавил тебя в Sqwid</div>
+    <button class="btn-create" id="btnCopyQrLink" style="width:100%;margin-top:1rem;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      Скопировать ссылку
+    </button>
+  </div>
+</div>
+<div id="screen-create-group" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackCreateGroup"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;">Создать группу</div>
+    <button class="top-new-btn" id="btnNextCreateGroup" style="color:var(--accent);"><svg width="22" height="22"><use href="#ico-check"/></svg></button>
+  </header>
+  <div class="settings-body" style="padding-bottom:2.5rem;">
+    <div class="create-head-card">
+      <label class="create-avatar-wrap">
+        <input id="cgAvatarInput" type="file" accept="image/*" style="display:none;">
+        <div class="create-avatar-round" id="cgAvatarPreview"><svg width="26" height="26" style="color:#fff"><use href="#ico-camera"/></svg></div>
+      </label>
+      <input id="cgName" class="create-name-input" maxlength="50" placeholder="Название группы">
+    </div>
+    <div class="create-row" id="cgAutoDeleteRow">
+      <div class="create-row-icon"><svg width="20" height="20"><use href="#ico-clock"/></svg></div>
+      <div class="create-row-text">Автоудаление сообщений</div>
+      <div class="create-row-value" id="cgAutoDeleteValue">Выкл.</div>
+    </div>
+    <div class="create-hint">Автоматически удалять сообщения в этой группе у всех участников спустя указанное время.</div>
+  </div>
+</div>
 
-          <div class="settings-field" id="settingsNickCustom" style="display:none;">
-            <label>Цвет ника (Sqwid+)</label>
-            <div class="nick-color-row" id="nickColorRow">
-              <button class="nick-color-btn" data-color="" style="background:linear-gradient(135deg,#f97316,#fb923c);" title="По умолчанию"></button>
-              <button class="nick-color-btn" data-color="#ef4444" style="background:#ef4444;"></button>
-              <button class="nick-color-btn" data-color="#f59e0b" style="background:#f59e0b;"></button>
-              <button class="nick-color-btn" data-color="#10b981" style="background:#10b981;"></button>
-              <button class="nick-color-btn" data-color="#3b82f6" style="background:#3b82f6;"></button>
-              <button class="nick-color-btn" data-color="#8b5cf6" style="background:#8b5cf6;"></button>
-              <button class="nick-color-btn" data-color="#ec4899" style="background:#ec4899;"></button>
-            </div>
-          </div>
-          <div class="settings-field" id="settingsNickEmoji" style="display:none;">
-            <label>Эмодзи возле ника (Sqwid+)</label>
-            <div class="nick-emoji-row" id="nickEmojiRow">
-              <button class="nick-emoji-btn" data-emoji="">—</button>
-              <button class="nick-emoji-btn" data-emoji="👑">👑</button>
-              <button class="nick-emoji-btn" data-emoji="🔥">🔥</button>
-              <button class="nick-emoji-btn" data-emoji="⭐">⭐</button>
-              <button class="nick-emoji-btn" data-emoji="💎">💎</button>
-              <button class="nick-emoji-btn" data-emoji="🌸">🌸</button>
-              <button class="nick-emoji-btn" data-emoji="⚡">⚡</button>
-            </div>
-          </div>
-
-          <button class="btn-create" id="settingsSaveProfile" style="width:100%;margin-top:0.5rem;">Сохранить профиль</button>
-        </div>
+<div id="screen-create-channel" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackCreateChannel"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;">Создать канал</div>
+    <button class="top-new-btn" id="btnNextCreateChannel" style="color:var(--accent);"><svg width="22" height="22"><use href="#ico-check"/></svg></button>
+  </header>
+  <div class="settings-body" style="padding-bottom:2.5rem;">
+    <div class="create-head-card">
+      <label class="create-avatar-wrap">
+        <input id="chAvatarInput" type="file" accept="image/*" style="display:none;">
+        <div class="create-avatar-round" id="chAvatarPreview"><svg width="26" height="26" style="color:#fff"><use href="#ico-camera"/></svg></div>
+      </label>
+      <input id="chName" class="create-name-input" maxlength="50" placeholder="Название канала">
+    </div>
+    <div class="settings-field" style="margin-top:1rem;">
+      <label>Описание</label>
+      <textarea id="chDesc" maxlength="200" rows="3" placeholder="Можете указать дополнительное описание канала."></textarea>
+    </div>
+    <div class="create-section-title">Тип канала</div>
+    <label class="create-radio">
+      <input type="radio" name="chType" value="public" checked>
+      <div class="create-radio-body">
+        <div class="create-radio-title">Публичный канал</div>
+        <div class="create-radio-desc">Публичные каналы можно найти через поиск, подписаться на них может любой пользователь.</div>
       </div>
-
-      <div class="settings-section" id="settingsPlusSection" style="display:none;">
-        <div class="settings-section-title">Sqwid+</div>
-        <div class="settings-card">
-          <div class="settings-field">
-            <label>Фон профиля</label>
-            <input id="settingsProfileBg" type="file" accept="image/*" style="display:none;">
-            <button class="btn-create" id="btnUploadProfileBg" style="width:100%;">Загрузить фон</button>
-          </div>
-          <div class="settings-field">
-            <label>Ссылки на соцсети</label>
-            <input id="settingsSocialTelegram" placeholder="telegram URL">
-            <input id="settingsSocialInstagram" placeholder="instagram URL" style="margin-top:0.5rem;">
-            <input id="settingsSocialYoutube" placeholder="youtube URL" style="margin-top:0.5rem;">
-          </div>
-          <button class="btn-create" id="settingsSavePlus" style="width:100%;">Сохранить</button>
-        </div>
+    </label>
+    <label class="create-radio">
+      <input type="radio" name="chType" value="private">
+      <div class="create-radio-body">
+        <div class="create-radio-title">Частный канал</div>
+        <div class="create-radio-desc">На частные каналы можно подписаться только по ссылке-приглашению.</div>
       </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">Двухэтапная аутентификация</div>
-        <div class="settings-card">
-          <div class="settings-info-row" style="border-top:none;margin-top:0;">
-            <span>Статус</span>
-            <span id="settings2FAStatus" style="color:#94a3b8;">Не включена</span>
-          </div>
-          <button class="btn-create" id="btn2FASetup" style="width:100%;margin-top:0.6rem;">Настроить 2FA</button>
-          <button class="btn-secondary" id="btn2FADisable" style="width:100%;margin-top:0.5rem;color:#ef4444;display:none;">Отключить 2FA</button>
-        </div>
+    </label>
+    <div id="chUsernameBlock">
+      <div class="create-section-title">Юзернейм канала</div>
+      <div class="create-username-row">
+        <span class="create-username-prefix">@</span>
+        <input id="chUsername" maxlength="20" placeholder="username">
       </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">Тема</div>
-        <div class="settings-card">
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
-            <button id="themeLight" class="theme-btn active" type="button">
-              <div class="theme-btn-icon">☀️</div>
-              <div class="theme-btn-label">Светлая</div>
-            </button>
-            <button id="themeDark" class="theme-btn" type="button">
-              <div class="theme-btn-icon">🌙</div>
-              <div class="theme-btn-label">Тёмная</div>
-            </button>
-            <button id="themeGirl" class="theme-btn" type="button">
-              <div class="theme-btn-icon">🌸</div>
-              <div class="theme-btn-label">Девчачья</div>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ЯЗЫК -->
-      <div class="settings-section">
-        <div class="settings-section-title" data-i18n="settings.language">Язык</div>
-        <div class="settings-card">
-          <div id="langPicker" style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;"></div>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">Приватность</div>
-        <div class="settings-card">
-          <label class="settings-toggle-row"><input type="checkbox" id="settingsHideEmail"><span>Скрывать email</span></label>
-          <label class="settings-toggle-row" style="margin-top:0.5rem;"><input type="checkbox" id="settingsHideOnline"><span>Скрывать статус «в сети»</span></label>
-          <label class="settings-toggle-row" style="margin-top:0.5rem;"><input type="checkbox" id="settingsShowUsername"><span>Показывать юзернейм другим</span></label>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">PIN-код</div>
-        <div class="settings-card">
-          <div class="settings-info-row" style="border-top:none;margin-top:0;">
-            <span>Статус</span>
-            <span id="settingsPinStatus" style="color:#94a3b8;">—</span>
-          </div>
-          <button class="btn-create" id="settingsPinSet" style="width:100%;margin-top:0.6rem;">Установить / изменить PIN</button>
-          <button class="btn-secondary" id="settingsPinRemove" style="width:100%;margin-top:0.5rem;color:#ef4444;">Отключить PIN</button>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">Аккаунт</div>
-        <div class="settings-card">
-          <div class="settings-info-row" style="border-top:none;margin-top:0;">
-            <span>Email</span>
-            <span id="settingsEmail" style="color:#94a3b8;">—</span>
-          </div>
-          <div class="settings-info-row">
-            <span>Баланс</span>
-            <span id="settingsBalance" style="color:#f59e0b;">0 SQ</span>
-          </div>
-          <button class="btn-secondary" id="settingsChangeEmail" style="width:100%;margin-top:0.6rem;">Сменить email</button>
-          <button class="btn-secondary" id="settingsChangePassword" style="width:100%;margin-top:0.5rem;">Сменить пароль</button>
-          <button class="btn-danger" id="settingsLogout" style="width:100%;margin-top:0.5rem;">Выйти</button>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">Безопасность</div>
-        <div class="settings-card">
-          <button class="btn-danger" id="settingsLogoutAll" style="width:100%;">Выйти и сбросить PIN-сессию</button>
-        </div>
+      <div class="create-hint">
+        Если у канала будет постоянный юзернейм, другие пользователи смогут найти его и подписаться.<br>
+        Можно использовать латиницу (a-z), цифры (0-9) и подчёркивание. Минимальная длина — 5 символов.
       </div>
     </div>
   </div>
+</div>
 
-  <!-- СВОЙ ПРОФИЛЬ -->
-  <div id="screen-profile" class="screen">
-    <header class="top-bar">
-      <button class="top-new-btn" id="btnBurgerFromProfile"><svg width="20" height="20"><use href="#ico-menu"/></svg></button>
-      <div class="top-title" style="flex:1;">Профиль</div>
-      <button class="top-new-btn" id="btnOpenOwnerPanel" style="display:none;"><svg width="20" height="20"><use href="#ico-crown"/></svg></button>
-      <button class="top-new-btn" id="btnShareProfile"><svg width="18" height="18"><use href="#ico-share"/></svg></button>
-    </header>
-    <div class="profile-scroll" id="profileScroll">
-      <div class="profile-top">
-        <div class="profile-ava-wrap"><div class="profile-ava" id="profileAva"><span id="profileAvaLetter">?</span></div></div>
-        <h2 class="profile-name" id="profileName">Имя</h2>
-        <div class="profile-username" id="profileUsername">@username</div>
-        <div class="profile-bio" id="profileBio"></div>
-        <div class="mp-coins" id="profileCoins">0 SQ</div>
-      </div>
-      <div class="mp-stats" style="padding: 0 1.25rem 1.25rem;">
-        <div class="mp-stat"><div class="mp-stat-value" id="profileStatChats">0</div><div class="mp-stat-label">Чатов</div></div>
-        <div class="mp-stat"><div class="mp-stat-value" id="profileStatMessages">0</div><div class="mp-stat-label">Сообщений</div></div>
-        <div class="mp-stat"><div class="mp-stat-value" id="profileStatPhotos">0</div><div class="mp-stat-label">Фото</div></div>
-      </div>
-      <div style="padding: 0 1.25rem 1.25rem; display:flex; flex-direction:column; gap:0.6rem;">
-        <button class="btn-create" id="btnOpenGames" style="width:100%;">Sqwid Games</button>
-        <button class="btn-create" id="btnOpenSqwidFire" style="width:100%;background:linear-gradient(135deg,#111,#333);color:#fff;">🔥 Sqwid Fire</button>
-        <button class="btn-create" id="btnEditProfile" style="width:100%;">Редактировать профиль</button>
+<div id="screen-choose-members" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackChooseMembers"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;" id="cmTitle">Добавить участников</div>
+    <button class="top-new-btn" id="btnSubmitCreate" style="color:var(--accent);"><svg width="22" height="22"><use href="#ico-check"/></svg></button>
+  </header>
+  <div style="padding: 0.75rem 1rem;">
+    <input id="cmSearch" class="cm-search-input" placeholder="Поиск по имени или @username">
+  </div>
+  <div id="cmSelected" class="create-selected" style="padding: 0 1rem;"></div>
+  <div id="cmResults" class="create-results" style="padding: 0 1rem 6rem;"></div>
+</div>
+
+<div id="screen-chat-info" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackChatInfo"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;" id="ciHeaderTitle">Информация</div>
+    <button class="top-new-btn" id="btnEditChat" style="display:none;"><svg width="20" height="20"><use href="#ico-edit"/></svg></button>
+  </header>
+  <div class="chat-info-scroll">
+    <div class="chat-info-hero">
+      <div class="chat-info-ava" id="ciAva"><span>?</span></div>
+      <h2 class="chat-info-name" id="ciName">Чат</h2>
+      <div class="chat-info-sub" id="ciSub">—</div>
+    </div>
+    <div class="chat-info-actions">
+      <button class="chat-info-action" id="ciActionMute">
+        <div class="chat-info-action-icon" id="ciMuteIcon"><svg width="22" height="22"><use href="#ico-bell"/></svg></div>
+        <div class="chat-info-action-label" id="ciMuteLabel">Уведомления</div>
+      </button>
+      <button class="chat-info-action" id="ciActionSearch">
+        <div class="chat-info-action-icon"><svg width="22" height="22"><use href="#ico-search"/></svg></div>
+        <div class="chat-info-action-label">Поиск</div>
+      </button>
+      <button class="chat-info-action" id="ciActionMedia">
+        <div class="chat-info-action-icon"><svg width="22" height="22"><use href="#ico-image"/></svg></div>
+        <div class="chat-info-action-label">Медиа</div>
+      </button>
+    </div>
+    <div class="chat-info-section" id="ciDescSection" style="display:none;">
+      <div class="chat-info-section-label">Описание</div>
+      <div class="chat-info-section-text" id="ciDesc">—</div>
+    </div>
+    <div class="chat-info-section" id="ciUsernameSection" style="display:none;">
+      <div class="chat-info-section-label">Юзернейм канала</div>
+      <div class="chat-info-section-value" id="ciUsername" style="color:var(--accent);font-family:'JetBrains Mono',monospace;">@—</div>
+    </div>
+    <div class="chat-info-section" id="ciAutoDeleteSection" style="display:none;">
+      <div class="chat-info-section-label">Автоудаление сообщений</div>
+      <div class="chat-info-section-value" id="ciAutoDelete">Выкл.</div>
+    </div>
+    <div class="chat-info-section" id="ciInviteSection" style="display:none;">
+      <div class="chat-info-section-label">Ссылка-приглашение</div>
+      <div class="chat-info-invite-row">
+        <span id="ciInviteLink" class="chat-info-invite-link">—</span>
+        <button class="chat-info-copy-btn" id="btnCopyInvite">Копировать</button>
       </div>
     </div>
-  </div>
-
-  <!-- СОЗДАНИЕ ГРУППЫ -->
-  <div id="screen-create-group" class="screen">
-    <header class="top-bar">
-      <button class="top-new-btn" id="btnBackCreateGroup"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-title" style="flex:1;">Создать группу</div>
-      <button class="top-new-btn" id="btnNextCreateGroup" style="color:var(--accent);"><svg width="22" height="22"><use href="#ico-check"/></svg></button>
-    </header>
-    <div class="settings-body" style="padding-bottom:2.5rem;">
-      <div class="create-head-card">
-        <label class="create-avatar-wrap">
-          <input id="cgAvatarInput" type="file" accept="image/*" style="display:none;">
-          <div class="create-avatar-round" id="cgAvatarPreview"><svg width="26" height="26" style="color:#fff"><use href="#ico-camera"/></svg></div>
-        </label>
-        <input id="cgName" class="create-name-input" maxlength="50" placeholder="Название группы">
+    <div class="chat-info-section">
+      <div class="chat-info-section-header">
+        <div class="chat-info-section-label" id="ciMembersLabel">Участники</div>
+        <button class="chat-info-link-btn" id="btnShowAllMembers" style="display:none;">Все →</button>
       </div>
-      <div class="create-row" id="cgAutoDeleteRow">
-        <div class="create-row-icon"><svg width="20" height="20"><use href="#ico-clock"/></svg></div>
-        <div class="create-row-text">Автоудаление сообщений</div>
-        <div class="create-row-value" id="cgAutoDeleteValue">Выкл.</div>
-      </div>
-      <div class="create-hint">Автоматически удалять сообщения в этой группе у всех участников спустя указанное время.</div>
+      <div class="chat-info-members-preview" id="ciMembersPreview"></div>
+      <button class="chat-info-add-btn" id="btnAddMembers" style="display:none;">Добавить участников</button>
+    </div>
+    <div class="chat-info-danger">
+      <button class="chat-info-danger-btn" id="btnReportChat" style="color:#f59e0b;">Пожаловаться</button>
+      <button class="chat-info-danger-btn" id="btnLeaveChat">Покинуть чат</button>
+      <button class="chat-info-danger-btn danger" id="btnDeleteChatFull" style="display:none;">Удалить чат</button>
     </div>
   </div>
+</div>
 
-  <!-- СОЗДАНИЕ КАНАЛА -->
-  <div id="screen-create-channel" class="screen">
-    <header class="top-bar">
-      <button class="top-new-btn" id="btnBackCreateChannel"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-title" style="flex:1;">Создать канал</div>
-      <button class="top-new-btn" id="btnNextCreateChannel" style="color:var(--accent);"><svg width="22" height="22"><use href="#ico-check"/></svg></button>
-    </header>
-    <div class="settings-body" style="padding-bottom:2.5rem;">
-      <div class="create-head-card">
-        <label class="create-avatar-wrap">
-          <input id="chAvatarInput" type="file" accept="image/*" style="display:none;">
-          <div class="create-avatar-round" id="chAvatarPreview"><svg width="26" height="26" style="color:#fff"><use href="#ico-camera"/></svg></div>
-        </label>
-        <input id="chName" class="create-name-input" maxlength="50" placeholder="Название канала">
-      </div>
-      <div class="settings-field" style="margin-top:1rem;">
-        <label>Описание</label>
-        <textarea id="chDesc" maxlength="200" rows="3" placeholder="Можете указать дополнительное описание канала."></textarea>
-      </div>
+<div id="screen-edit-chat" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackEditChat"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;" id="ecHeaderTitle">Редактировать</div>
+    <button class="top-new-btn" id="btnSaveEditChat" style="color:var(--accent);"><svg width="22" height="22"><use href="#ico-check"/></svg></button>
+  </header>
+  <div class="settings-body" style="padding-bottom:2.5rem;">
+    <div class="create-head-card">
+      <label class="create-avatar-wrap">
+        <input id="ecAvatarInput" type="file" accept="image/*" style="display:none;">
+        <div class="create-avatar-round" id="ecAvatarPreview"><svg width="26" height="26" style="color:#fff"><use href="#ico-camera"/></svg></div>
+      </label>
+      <input id="ecName" class="create-name-input" maxlength="50" placeholder="Название">
+    </div>
+    <div class="settings-field" style="margin-top:1rem;">
+      <label>Описание</label>
+      <textarea id="ecDesc" maxlength="200" rows="3" placeholder="Дополнительное описание..."></textarea>
+    </div>
+    <div id="ecChannelBlock" style="display:none;">
       <div class="create-section-title">Тип канала</div>
       <label class="create-radio">
-        <input type="radio" name="chType" value="public" checked>
+        <input type="radio" name="ecType" value="public">
         <div class="create-radio-body">
           <div class="create-radio-title">Публичный канал</div>
-          <div class="create-radio-desc">Публичные каналы можно найти через поиск, подписаться на них может любой пользователь.</div>
+          <div class="create-radio-desc">Публичные каналы можно найти через поиск.</div>
         </div>
       </label>
       <label class="create-radio">
-        <input type="radio" name="chType" value="private">
+        <input type="radio" name="ecType" value="private">
         <div class="create-radio-body">
           <div class="create-radio-title">Частный канал</div>
-          <div class="create-radio-desc">На частные каналы можно подписаться только по ссылке-приглашению.</div>
+          <div class="create-radio-desc">Доступ только по ссылке-приглашению.</div>
         </div>
       </label>
-      <div id="chUsernameBlock">
+      <div id="ecUsernameBlock">
         <div class="create-section-title">Юзернейм канала</div>
         <div class="create-username-row">
           <span class="create-username-prefix">@</span>
-          <input id="chUsername" maxlength="20" placeholder="username">
+          <input id="ecUsername" maxlength="20" placeholder="username">
         </div>
-        <div class="create-hint">
-          Если у канала будет постоянный юзернейм, другие пользователи смогут найти его и подписаться.<br>
-          Можно использовать латиницу (a-z), цифры (0-9) и подчёркивание. Минимальная длина — 5 символов.
-        </div>
+      </div>
+    </div>
+    <div id="ecGroupBlock" style="display:none;">
+      <div class="create-row" id="ecAutoDeleteRow">
+        <div class="create-row-icon"><svg width="20" height="20"><use href="#ico-clock"/></svg></div>
+        <div class="create-row-text">Автоудаление сообщений</div>
+        <div class="create-row-value" id="ecAutoDeleteValue">Выкл.</div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- ВЫБОР УЧАСТНИКОВ -->
-  <div id="screen-choose-members" class="screen">
-    <header class="top-bar">
-      <button class="top-new-btn" id="btnBackChooseMembers"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-title" style="flex:1;" id="cmTitle">Добавить участников</div>
-      <button class="top-new-btn" id="btnSubmitCreate" style="color:var(--accent);"><svg width="22" height="22"><use href="#ico-check"/></svg></button>
-    </header>
-    <div style="padding: 0.75rem 1rem;">
-      <input id="cmSearch" class="cm-search-input" placeholder="Поиск по имени или @username">
-    </div>
-    <div id="cmSelected" class="create-selected" style="padding: 0 1rem;"></div>
-    <div id="cmResults" class="create-results" style="padding: 0 1rem 6rem;"></div>
+<div id="screen-chat-members" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackMembers"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;" id="cmHeaderTitle">Участники</div>
+    <button class="top-new-btn" id="btnAddMembersTop" style="color:var(--accent);"><svg width="22" height="22"><use href="#ico-plus"/></svg></button>
+  </header>
+  <div style="padding: 0.75rem 1rem;">
+    <input id="cmSearchMembers" class="cm-search-input" placeholder="Поиск участников">
   </div>
+  <div id="cmMembersList" class="chat-info-members-full" style="padding: 0 1rem 6rem;"></div>
+</div>
 
-  <!-- ИНФО О ЧАТЕ -->
-  <div id="screen-chat-info" class="screen">
-    <header class="top-bar">
-      <button class="top-new-btn" id="btnBackChatInfo"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-title" style="flex:1;" id="ciHeaderTitle">Информация</div>
-      <button class="top-new-btn" id="btnEditChat" style="display:none;"><svg width="20" height="20"><use href="#ico-edit"/></svg></button>
-    </header>
-    <div class="chat-info-scroll">
-      <div class="chat-info-hero">
-        <div class="chat-info-ava" id="ciAva"><span>?</span></div>
-        <h2 class="chat-info-name" id="ciName">Чат</h2>
-        <div class="chat-info-sub" id="ciSub">—</div>
-      </div>
-      <div class="chat-info-actions">
-        <button class="chat-info-action" id="ciActionMute">
-          <div class="chat-info-action-icon" id="ciMuteIcon"><svg width="22" height="22"><use href="#ico-bell"/></svg></div>
-          <div class="chat-info-action-label" id="ciMuteLabel">Уведомления</div>
-        </button>
-        <button class="chat-info-action" id="ciActionSearch">
-          <div class="chat-info-action-icon"><svg width="22" height="22"><use href="#ico-search"/></svg></div>
-          <div class="chat-info-action-label">Поиск</div>
-        </button>
-        <button class="chat-info-action" id="ciActionMedia">
-          <div class="chat-info-action-icon"><svg width="22" height="22"><use href="#ico-image"/></svg></div>
-          <div class="chat-info-action-label">Медиа</div>
-        </button>
-      </div>
-      <div class="chat-info-section" id="ciDescSection" style="display:none;">
-        <div class="chat-info-section-label">Описание</div>
-        <div class="chat-info-section-text" id="ciDesc">—</div>
-      </div>
-      <div class="chat-info-section" id="ciUsernameSection" style="display:none;">
-        <div class="chat-info-section-label">Юзернейм канала</div>
-        <div class="chat-info-section-value" id="ciUsername" style="color:var(--accent);font-family:'JetBrains Mono',monospace;">@—</div>
-      </div>
-      <div class="chat-info-section" id="ciAutoDeleteSection" style="display:none;">
-        <div class="chat-info-section-label">Автоудаление сообщений</div>
-        <div class="chat-info-section-value" id="ciAutoDelete">Выкл.</div>
-      </div>
-      <div class="chat-info-section" id="ciInviteSection" style="display:none;">
-        <div class="chat-info-section-label">Ссылка-приглашение</div>
-        <div class="chat-info-invite-row">
-          <span id="ciInviteLink" class="chat-info-invite-link">—</span>
-          <button class="chat-info-copy-btn" id="btnCopyInvite">Копировать</button>
-        </div>
-      </div>
-      <div class="chat-info-section">
-        <div class="chat-info-section-header">
-          <div class="chat-info-section-label" id="ciMembersLabel">Участники</div>
-          <button class="chat-info-link-btn" id="btnShowAllMembers" style="display:none;">Все →</button>
-        </div>
-        <div class="chat-info-members-preview" id="ciMembersPreview"></div>
-        <button class="chat-info-add-btn" id="btnAddMembers" style="display:none;">Добавить участников</button>
-      </div>
-      <div class="chat-info-danger">
-        <button class="chat-info-danger-btn" id="btnReportChat" style="color:#f59e0b;">Пожаловаться</button>
-        <button class="chat-info-danger-btn" id="btnLeaveChat">Покинуть чат</button>
-        <button class="chat-info-danger-btn danger" id="btnDeleteChatFull" style="display:none;">Удалить чат</button>
-      </div>
-    </div>
+<div id="screen-owner" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackOwner"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;">Owner Panel</div>
+    <div id="ownerRoleBadge" style="font-size:0.75rem;padding:0.25rem 0.6rem;border-radius:999px;background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:800;">OWNER</div>
+  </header>
+  <div class="owner-tabs">
+    <button class="owner-tab active" data-tab="overview">Обзор</button>
+    <button class="owner-tab" data-tab="stats">Статистика</button>
+    <button class="owner-tab" data-tab="economy">Экономика</button>
+    <button class="owner-tab" data-tab="users">Юзеры</button>
+    <button class="owner-tab" data-tab="chats">Чаты</button>
+    <button class="owner-tab" data-tab="reports">Жалобы <span id="ownerReportsBadge" class="owner-badge" style="display:none;">0</span></button>
+    <button class="owner-tab" data-tab="moderators" data-owner-only="1">Модераторы</button>
+    <button class="owner-tab" data-tab="broadcast" data-owner-only="1">Рассылка</button>
   </div>
-
-  <!-- РЕДАКТИРОВАНИЕ ЧАТА -->
-  <div id="screen-edit-chat" class="screen">
-    <header class="top-bar">
-      <button class="top-new-btn" id="btnBackEditChat"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-title" style="flex:1;" id="ecHeaderTitle">Редактировать</div>
-      <button class="top-new-btn" id="btnSaveEditChat" style="color:var(--accent);"><svg width="22" height="22"><use href="#ico-check"/></svg></button>
-    </header>
-    <div class="settings-body" style="padding-bottom:2.5rem;">
-      <div class="create-head-card">
-        <label class="create-avatar-wrap">
-          <input id="ecAvatarInput" type="file" accept="image/*" style="display:none;">
-          <div class="create-avatar-round" id="ecAvatarPreview"><svg width="26" height="26" style="color:#fff"><use href="#ico-camera"/></svg></div>
-        </label>
-        <input id="ecName" class="create-name-input" maxlength="50" placeholder="Название">
+  <div class="owner-body">
+    <div class="owner-pane active" data-pane="overview">
+      <div class="owner-stats-grid">
+        <div class="owner-stat-card"><div class="owner-stat-value" id="osUsers">0</div><div class="owner-stat-label">Пользователей</div></div>
+        <div class="owner-stat-card"><div class="owner-stat-value" id="osChats">0</div><div class="owner-stat-label">Чатов</div></div>
+        <div class="owner-stat-card"><div class="owner-stat-value" id="osReports" style="color:#ef4444;">0</div><div class="owner-stat-label">Жалоб</div></div>
+        <div class="owner-stat-card"><div class="owner-stat-value" id="osBans" style="color:#ef4444;">0</div><div class="owner-stat-label">Банов</div></div>
+        <div class="owner-stat-card"><div class="owner-stat-value" id="osPlus" style="color:#f59e0b;">0</div><div class="owner-stat-label">Sqwid+</div></div>
+        <div class="owner-stat-card"><div class="owner-stat-value" id="osVerified" style="color:#3b82f6;">0</div><div class="owner-stat-label">Верифицировано</div></div>
       </div>
-      <div class="settings-field" style="margin-top:1rem;">
-        <label>Описание</label>
-        <textarea id="ecDesc" maxlength="200" rows="3" placeholder="Дополнительное описание..."></textarea>
+      <div class="owner-section-title">Сводка</div>
+      <div class="owner-card">
+        <pre id="osSummary" style="margin:0;color:var(--text);font-size:0.82rem;line-height:1.6;white-space:pre-wrap;font-family:inherit;">—</pre>
       </div>
-      <div id="ecChannelBlock" style="display:none;">
-        <div class="create-section-title">Тип канала</div>
-        <label class="create-radio">
-          <input type="radio" name="ecType" value="public">
-          <div class="create-radio-body">
-            <div class="create-radio-title">Публичный канал</div>
-            <div class="create-radio-desc">Публичные каналы можно найти через поиск.</div>
-          </div>
-        </label>
-        <label class="create-radio">
-          <input type="radio" name="ecType" value="private">
-          <div class="create-radio-body">
-            <div class="create-radio-title">Частный канал</div>
-            <div class="create-radio-desc">Доступ только по ссылке-приглашению.</div>
-          </div>
-        </label>
-        <div id="ecUsernameBlock">
-          <div class="create-section-title">Юзернейм канала</div>
-          <div class="create-username-row">
-            <span class="create-username-prefix">@</span>
-            <input id="ecUsername" maxlength="20" placeholder="username">
-          </div>
+      <div class="owner-section-title">Последние действия</div>
+      <div id="ownerLogsList" class="owner-logs-list"></div>
+    </div>
+    <div class="owner-pane" data-pane="stats">
+      <div class="owner-section-title">Активность за 7 дней</div>
+      <div class="owner-card">
+        <div class="owner-chart" id="ownerChart7"></div>
+        <div class="owner-chart-labels" id="ownerChart7Labels"></div>
+      </div>
+      <div class="owner-section-title">Активность за 30 дней</div>
+      <div class="owner-card">
+        <div class="owner-chart" id="ownerChart30"></div>
+        <div class="owner-chart-labels" id="ownerChart30Labels"></div>
+      </div>
+      <div class="owner-section-title">Топ-10 пользователей по сообщениям</div>
+      <div id="ownerTopUsers"></div>
+      <div class="owner-section-title">Топ-10 чатов по участникам</div>
+      <div id="ownerTopChats"></div>
+    </div>
+    <div class="owner-pane" data-pane="economy">
+      <div class="owner-section-title">Выдать / забрать SQ</div>
+      <div class="owner-card">
+        <input id="ownerGiveSearch" class="cm-search-input" placeholder="Поиск юзера">
+        <div id="ownerGiveResults" class="create-results" style="max-height:11rem;"></div>
+        <div id="ownerGivePicked" style="display:none;margin-top:0.6rem;padding:0.6rem;background:rgba(249,115,22,0.1);border-radius:0.6rem;">
+          <div style="font-size:0.82rem;color:var(--text-2);margin-bottom:0.4rem;">Выбран:</div>
+          <div id="ownerGivePickedName" style="font-weight:700;color:var(--text);">—</div>
         </div>
-      </div>
-      <div id="ecGroupBlock" style="display:none;">
-        <div class="create-row" id="ecAutoDeleteRow">
-          <div class="create-row-icon"><svg width="20" height="20"><use href="#ico-clock"/></svg></div>
-          <div class="create-row-text">Автоудаление сообщений</div>
-          <div class="create-row-value" id="ecAutoDeleteValue">Выкл.</div>
+        <div class="settings-field" style="margin-top:0.6rem;">
+          <label>Сумма SQ</label>
+          <input id="ownerGiveAmount" type="number" min="1" value="1000">
         </div>
+        <div id="ownerDailyLimit" style="display:none;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:0.75rem;padding:0.6rem 0.9rem;margin-bottom:0.75rem;font-size:0.82rem;color:#f59e0b;font-weight:700;">
+          Сегодня: <span id="ownerDailyUsed">0</span> / 500 000 SQ
+        </div>
+        <button class="btn-create" id="btnOwnerGiveSQ" style="width:100%;">Выдать</button>
+        <button class="btn-secondary" id="btnOwnerTakeSQ" style="width:100%;margin-top:0.5rem;color:#ef4444;">Забрать</button>
+      </div>
+      <div class="owner-section-title" style="margin-top:1.25rem;">Sqwid+</div>
+      <div class="owner-card">
+        <input id="ownerPlusSearch" class="cm-search-input" placeholder="Поиск юзера">
+        <div id="ownerPlusResults" class="create-results" style="max-height:11rem;"></div>
+        <div id="ownerPlusPicked" style="display:none;margin-top:0.6rem;padding:0.6rem;background:rgba(245,158,11,0.1);border-radius:0.6rem;">
+          <div style="font-size:0.82rem;color:var(--text-2);margin-bottom:0.4rem;">Выбран:</div>
+          <div id="ownerPlusPickedName" style="font-weight:700;color:#f59e0b;">—</div>
+        </div>
+        <div class="settings-field" style="margin-top:0.6rem;">
+          <label>Срок</label>
+          <select id="ownerPlusMonths" class="settings-select">
+            <option value="1">1 месяц</option>
+            <option value="3">3 месяца</option>
+            <option value="6">6 месяцев</option>
+            <option value="12">12 месяцев</option>
+            <option value="-1">Навсегда</option>
+          </select>
+        </div>
+        <button class="btn-create" id="btnOwnerGivePlus" style="width:100%;">Выдать Plus</button>
+        <button class="btn-secondary" id="btnOwnerTakePlus" style="width:100%;margin-top:0.5rem;color:#ef4444;">Забрать Plus</button>
       </div>
     </div>
-  </div>
-
-  <!-- УЧАСТНИКИ -->
-  <div id="screen-chat-members" class="screen">
-    <header class="top-bar">
-      <button class="top-new-btn" id="btnBackMembers"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-title" style="flex:1;" id="cmHeaderTitle">Участники</div>
-      <button class="top-new-btn" id="btnAddMembersTop" style="color:var(--accent);"><svg width="22" height="22"><use href="#ico-plus"/></svg></button>
-    </header>
-    <div style="padding: 0.75rem 1rem;">
-      <input id="cmSearchMembers" class="cm-search-input" placeholder="Поиск участников">
+    <div class="owner-pane" data-pane="users">
+      <input id="ownerUsersSearch" class="cm-search-input" placeholder="Поиск: имя, @username, email">
+      <div id="ownerUsersList" class="owner-users-list" style="margin-top:0.75rem;"></div>
     </div>
-    <div id="cmMembersList" class="chat-info-members-full" style="padding: 0 1rem 6rem;"></div>
-  </div>
-
-  <!-- OWNER PANEL -->
-  <div id="screen-owner" class="screen">
-    <header class="top-bar">
-      <button class="top-new-btn" id="btnBackOwner"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-title" style="flex:1;">Owner Panel</div>
-      <div id="ownerRoleBadge" style="font-size:0.75rem;padding:0.25rem 0.6rem;border-radius:999px;background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:800;">OWNER</div>
-    </header>
-    <div class="owner-tabs">
-      <button class="owner-tab active" data-tab="overview">Обзор</button>
-      <button class="owner-tab" data-tab="stats">Статистика</button>
-      <button class="owner-tab" data-tab="economy">Экономика</button>
-      <button class="owner-tab" data-tab="users">Юзеры</button>
-      <button class="owner-tab" data-tab="chats">Чаты</button>
-      <button class="owner-tab" data-tab="reports">Жалобы <span id="ownerReportsBadge" class="owner-badge" style="display:none;">0</span></button>
-      <button class="owner-tab" data-tab="moderators" data-owner-only="1">Модераторы</button>
-      <button class="owner-tab" data-tab="broadcast" data-owner-only="1">Рассылка</button>
+    <div class="owner-pane" data-pane="chats">
+      <input id="ownerChatsSearch" class="cm-search-input" placeholder="Поиск чата/канала">
+      <div id="ownerChatsList" class="owner-users-list" style="margin-top:0.75rem;"></div>
     </div>
-    <div class="owner-body">
-      <div class="owner-pane active" data-pane="overview">
-        <div class="owner-stats-grid">
-          <div class="owner-stat-card"><div class="owner-stat-value" id="osUsers">0</div><div class="owner-stat-label">Пользователей</div></div>
-          <div class="owner-stat-card"><div class="owner-stat-value" id="osChats">0</div><div class="owner-stat-label">Чатов</div></div>
-          <div class="owner-stat-card"><div class="owner-stat-value" id="osReports" style="color:#ef4444;">0</div><div class="owner-stat-label">Жалоб</div></div>
-          <div class="owner-stat-card"><div class="owner-stat-value" id="osBans" style="color:#ef4444;">0</div><div class="owner-stat-label">Банов</div></div>
-          <div class="owner-stat-card"><div class="owner-stat-value" id="osPlus" style="color:#f59e0b;">0</div><div class="owner-stat-label">Sqwid+</div></div>
-          <div class="owner-stat-card"><div class="owner-stat-value" id="osVerified" style="color:#3b82f6;">0</div><div class="owner-stat-label">Верифицировано</div></div>
-        </div>
-        <div class="owner-section-title">Сводка</div>
-        <div class="owner-card">
-          <pre id="osSummary" style="margin:0;color:var(--text);font-size:0.82rem;line-height:1.6;white-space:pre-wrap;font-family:inherit;">—</pre>
-        </div>
-        <div class="owner-section-title">Последние действия</div>
-        <div id="ownerLogsList" class="owner-logs-list"></div>
+    <div class="owner-pane" data-pane="reports">
+      <div class="owner-filter-row">
+        <button class="owner-filter active" data-filter="new">Новые</button>
+        <button class="owner-filter" data-filter="open">В работе</button>
+        <button class="owner-filter" data-filter="resolved">Закрытые</button>
+        <button class="owner-filter" data-filter="all">Все</button>
       </div>
-
-      <div class="owner-pane" data-pane="stats">
-        <div class="owner-section-title">Активность за 7 дней</div>
-        <div class="owner-card">
-          <div class="owner-chart" id="ownerChart7"></div>
-          <div class="owner-chart-labels" id="ownerChart7Labels"></div>
+      <div id="ownerReportsList" class="owner-users-list" style="margin-top:0.75rem;"></div>
+    </div>
+    <div class="owner-pane" data-pane="moderators" data-owner-only="1">
+      <div class="owner-section-title">Активные модераторы</div>
+      <div id="ownerModsList" class="owner-users-list"></div>
+      <div class="owner-section-title" style="margin-top:1.25rem;">Журнал действий модераторов</div>
+      <div id="ownerModLogs" class="owner-logs-list"></div>
+    </div>
+    <div class="owner-pane" data-pane="broadcast" data-owner-only="1">
+      <div class="owner-section-title">Рассылка</div>
+      <div class="owner-card">
+        <div class="settings-field">
+          <label>Кому</label>
+          <select id="ownerBroadcastTarget" class="settings-select">
+            <option value="all">Всем</option>
+            <option value="plus">Только Sqwid+</option>
+            <option value="moderators">Модераторам</option>
+          </select>
         </div>
-        <div class="owner-section-title">Активность за 30 дней</div>
-        <div class="owner-card">
-          <div class="owner-chart" id="ownerChart30"></div>
-          <div class="owner-chart-labels" id="ownerChart30Labels"></div>
+        <div class="settings-field">
+          <label>Текст</label>
+          <textarea id="ownerBroadcastText" maxlength="500" rows="4" placeholder="Текст рассылки..."></textarea>
         </div>
-        <div class="owner-section-title">Топ-10 пользователей по сообщениям</div>
-        <div id="ownerTopUsers"></div>
-        <div class="owner-section-title">Топ-10 чатов по участникам</div>
-        <div id="ownerTopChats"></div>
-      </div>
-
-      <div class="owner-pane" data-pane="economy">
-        <div class="owner-section-title">Выдать / забрать SQ</div>
-        <div class="owner-card">
-          <input id="ownerGiveSearch" class="cm-search-input" placeholder="Поиск юзера">
-          <div id="ownerGiveResults" class="create-results" style="max-height:11rem;"></div>
-          <div id="ownerGivePicked" style="display:none;margin-top:0.6rem;padding:0.6rem;background:rgba(249,115,22,0.1);border-radius:0.6rem;">
-            <div style="font-size:0.82rem;color:var(--text-2);margin-bottom:0.4rem;">Выбран:</div>
-            <div id="ownerGivePickedName" style="font-weight:700;color:var(--text);">—</div>
-          </div>
-          <div class="settings-field" style="margin-top:0.6rem;">
-            <label>Сумма SQ</label>
-            <input id="ownerGiveAmount" type="number" min="1" value="1000">
-          </div>
-          <div id="ownerDailyLimit" style="display:none;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:0.75rem;padding:0.6rem 0.9rem;margin-bottom:0.75rem;font-size:0.82rem;color:#f59e0b;font-weight:700;">
-            Сегодня: <span id="ownerDailyUsed">0</span> / 500 000 SQ
-          </div>
-          <button class="btn-create" id="btnOwnerGiveSQ" style="width:100%;">Выдать</button>
-          <button class="btn-secondary" id="btnOwnerTakeSQ" style="width:100%;margin-top:0.5rem;color:#ef4444;">Забрать</button>
-        </div>
-        <div class="owner-section-title" style="margin-top:1.25rem;">Sqwid+</div>
-        <div class="owner-card">
-          <input id="ownerPlusSearch" class="cm-search-input" placeholder="Поиск юзера">
-          <div id="ownerPlusResults" class="create-results" style="max-height:11rem;"></div>
-          <div id="ownerPlusPicked" style="display:none;margin-top:0.6rem;padding:0.6rem;background:rgba(245,158,11,0.1);border-radius:0.6rem;">
-            <div style="font-size:0.82rem;color:var(--text-2);margin-bottom:0.4rem;">Выбран:</div>
-            <div id="ownerPlusPickedName" style="font-weight:700;color:#f59e0b;">—</div>
-          </div>
-          <div class="settings-field" style="margin-top:0.6rem;">
-            <label>Срок</label>
-            <select id="ownerPlusMonths" class="settings-select">
-              <option value="1">1 месяц</option>
-              <option value="3">3 месяца</option>
-              <option value="6">6 месяцев</option>
-              <option value="12">12 месяцев</option>
-              <option value="-1">Навсегда</option>
-            </select>
-          </div>
-          <button class="btn-create" id="btnOwnerGivePlus" style="width:100%;">Выдать Plus</button>
-          <button class="btn-secondary" id="btnOwnerTakePlus" style="width:100%;margin-top:0.5rem;color:#ef4444;">Забрать Plus</button>
-        </div>
-      </div>
-
-      <div class="owner-pane" data-pane="users">
-        <input id="ownerUsersSearch" class="cm-search-input" placeholder="Поиск: имя, @username, email">
-        <div id="ownerUsersList" class="owner-users-list" style="margin-top:0.75rem;"></div>
-      </div>
-
-      <div class="owner-pane" data-pane="chats">
-        <input id="ownerChatsSearch" class="cm-search-input" placeholder="Поиск чата/канала">
-        <div id="ownerChatsList" class="owner-users-list" style="margin-top:0.75rem;"></div>
-      </div>
-
-      <div class="owner-pane" data-pane="reports">
-        <div class="owner-filter-row">
-          <button class="owner-filter active" data-filter="new">Новые</button>
-          <button class="owner-filter" data-filter="open">В работе</button>
-          <button class="owner-filter" data-filter="resolved">Закрытые</button>
-          <button class="owner-filter" data-filter="all">Все</button>
-        </div>
-        <div id="ownerReportsList" class="owner-users-list" style="margin-top:0.75rem;"></div>
-      </div>
-
-      <div class="owner-pane" data-pane="moderators" data-owner-only="1">
-        <div class="owner-section-title">Активные модераторы</div>
-        <div id="ownerModsList" class="owner-users-list"></div>
-        <div class="owner-section-title" style="margin-top:1.25rem;">Журнал действий модераторов</div>
-        <div id="ownerModLogs" class="owner-logs-list"></div>
-      </div>
-
-      <div class="owner-pane" data-pane="broadcast" data-owner-only="1">
-        <div class="owner-section-title">Рассылка</div>
-        <div class="owner-card">
-          <div class="settings-field">
-            <label>Кому</label>
-            <select id="ownerBroadcastTarget" class="settings-select">
-              <option value="all">Всем</option>
-              <option value="plus">Только Sqwid+</option>
-              <option value="moderators">Модераторам</option>
-            </select>
-          </div>
-          <div class="settings-field">
-            <label>Текст</label>
-            <textarea id="ownerBroadcastText" maxlength="500" rows="4" placeholder="Текст рассылки..."></textarea>
-          </div>
-          <button class="btn-create" id="btnOwnerBroadcast" style="width:100%;">Отправить</button>
-        </div>
+        <button class="btn-create" id="btnOwnerBroadcast" style="width:100%;">Отправить</button>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- ПРОСМОТР ЖАЛОБЫ -->
-  <div id="screen-report-view" class="screen">
-    <header class="top-bar">
-      <button class="top-new-btn" id="btnBackReportView"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-title" style="flex:1;">Жалоба</div>
-      <div id="reportViewStatus" style="font-size:0.75rem;padding:0.25rem 0.6rem;border-radius:999px;background:rgba(239,68,68,0.15);color:#ef4444;font-weight:800;">NEW</div>
-    </header>
-    <div class="chat-info-scroll">
-      <div class="chat-info-section"><div class="chat-info-section-label">Тип</div><div class="chat-info-section-value" id="rvType">—</div></div>
-      <div class="chat-info-section"><div class="chat-info-section-label">Причина</div><div class="chat-info-section-value" id="rvReason">—</div></div>
-      <div class="chat-info-section"><div class="chat-info-section-label">Кто пожаловался</div><div class="chat-info-section-value" id="rvFrom">—</div></div>
-      <div class="chat-info-section"><div class="chat-info-section-label">На кого</div><div class="chat-info-section-value" id="rvTarget">—</div></div>
-      <div class="chat-info-section"><div class="chat-info-section-label">Комментарий</div><div class="chat-info-section-text" id="rvComment">—</div></div>
-      <div class="chat-info-section" id="rvMessagesSection" style="display:none;">
-        <div class="chat-info-section-label">Сообщения с нарушениями</div>
-        <div id="rvMessagesList" class="rv-messages-list"></div>
-      </div>
-      <div class="chat-info-section" id="rvChatSection" style="display:none;">
-        <div class="chat-info-section-label">Чат / канал</div>
-        <div id="rvChatInfo" class="chat-info-section-text">—</div>
-        <button class="btn-create" id="btnRvOpenChat" style="width:100%;margin-top:0.6rem;">Открыть чат</button>
-      </div>
-      <div class="chat-info-section">
-        <div class="chat-info-section-label">Действия</div>
-        <div class="rv-actions">
-          <button class="chat-info-danger-btn" id="btnRvResolve" style="color:#10b981;">Закрыть</button>
-          <button class="chat-info-danger-btn" id="btnRvReject" style="color:#94a3b8;">Отклонить</button>
-        </div>
+<div id="screen-report-view" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackReportView"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;">Жалоба</div>
+    <div id="reportViewStatus" style="font-size:0.75rem;padding:0.25rem 0.6rem;border-radius:999px;background:rgba(239,68,68,0.15);color:#ef4444;font-weight:800;">NEW</div>
+  </header>
+  <div class="chat-info-scroll">
+    <div class="chat-info-section"><div class="chat-info-section-label">Тип</div><div class="chat-info-section-value" id="rvType">—</div></div>
+    <div class="chat-info-section"><div class="chat-info-section-label">Причина</div><div class="chat-info-section-value" id="rvReason">—</div></div>
+    <div class="chat-info-section"><div class="chat-info-section-label">Кто пожаловался</div><div class="chat-info-section-value" id="rvFrom">—</div></div>
+    <div class="chat-info-section"><div class="chat-info-section-label">На кого</div><div class="chat-info-section-value" id="rvTarget">—</div></div>
+    <div class="chat-info-section"><div class="chat-info-section-label">Комментарий</div><div class="chat-info-section-text" id="rvComment">—</div></div>
+    <div class="chat-info-section" id="rvMessagesSection" style="display:none;">
+      <div class="chat-info-section-label">Сообщения с нарушениями</div>
+      <div id="rvMessagesList" class="rv-messages-list"></div>
+    </div>
+    <div class="chat-info-section" id="rvChatSection" style="display:none;">
+      <div class="chat-info-section-label">Чат / канал</div>
+      <div id="rvChatInfo" class="chat-info-section-text">—</div>
+      <button class="btn-create" id="btnRvOpenChat" style="width:100%;margin-top:0.6rem;">Открыть чат</button>
+    </div>
+    <div class="chat-info-section">
+      <div class="chat-info-section-label">Действия</div>
+      <div class="rv-actions">
+        <button class="chat-info-danger-btn" id="btnRvResolve" style="color:#10b981;">Закрыть</button>
+        <button class="chat-info-danger-btn" id="btnRvReject" style="color:#94a3b8;">Отклонить</button>
       </div>
     </div>
   </div>
+</div>
+<div id="screen-search-messages" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackSearchMsg"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-search" style="flex:1;">
+      <svg class="input-icon" width="18" height="18"><use href="#ico-search"/></svg>
+      <input id="msgSearchInput" placeholder="Поиск по сообщениям...">
+    </div>
+  </header>
+  <div id="msgSearchResults" class="msg-search-results"></div>
+  <div id="msgSearchEmpty" class="gallery-empty" style="display:none;">
+    <div style="font-size:3rem;margin-bottom:0.75rem;">🔍</div>
+    <div>Ничего не найдено</div>
+  </div>
+</div>
 
-  <!-- ПОИСК ПО СООБЩЕНИЯМ -->
-  <div id="screen-search-messages" class="screen">
-    <header class="top-bar">
-      <button class="top-new-btn" id="btnBackSearchMsg"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-search" style="flex:1;">
-        <svg class="input-icon" width="18" height="18"><use href="#ico-search"/></svg>
-        <input id="msgSearchInput" placeholder="Поиск по сообщениям...">
-      </div>
-    </header>
-    <div id="msgSearchResults" class="msg-search-results"></div>
-    <div id="msgSearchEmpty" class="gallery-empty" style="display:none;">
-      <div style="font-size:3rem;margin-bottom:0.75rem;">🔍</div>
-      <div>Ничего не найдено</div>
+<div id="screen-gallery" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackGallery"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;" id="galleryTitle">Медиа</div>
+    <div id="galleryCount" style="font-size:0.82rem;color:var(--text-2);font-weight:700;">0</div>
+  </header>
+  <div class="gallery-body">
+    <div id="galleryGrid" class="gallery-grid"></div>
+    <div id="galleryEmpty" class="gallery-empty" style="display:none;">
+      <div style="font-size:3rem;margin-bottom:0.75rem;">🖼</div>
+      <div>Пока нет фото</div>
     </div>
   </div>
+</div>
 
-  <!-- МЕДИА-ГАЛЕРЕЯ -->
-  <div id="screen-gallery" class="screen">
-    <header class="top-bar">
-      <button class="top-new-btn" id="btnBackGallery"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-title" style="flex:1;" id="galleryTitle">Медиа</div>
-      <div id="galleryCount" style="font-size:0.82rem;color:var(--text-2);font-weight:700;">0</div>
-    </header>
-    <div class="gallery-body">
-      <div id="galleryGrid" class="gallery-grid"></div>
-      <div id="galleryEmpty" class="gallery-empty" style="display:none;">
-        <div style="font-size:3rem;margin-bottom:0.75rem;">🖼</div>
-        <div>Пока нет фото</div>
+<div id="screen-viewer" class="screen">
+  <header class="top-bar" style="background:rgba(0,0,0,0.9);">
+    <button class="top-new-btn" id="btnBackViewer" style="background:rgba(255,255,255,0.1);color:#fff;"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;color:#fff;" id="viewerTitle">Фото</div>
+    <button class="top-new-btn" id="btnDownloadPhoto" style="background:rgba(255,255,255,0.1);color:#fff;"><svg width="18" height="18"><use href="#ico-download"/></svg></button>
+  </header>
+  <div class="viewer-body">
+    <button class="viewer-nav viewer-prev" id="btnViewerPrev">‹</button>
+    <img id="viewerImage" class="viewer-image" alt="">
+    <button class="viewer-nav viewer-next" id="btnViewerNext">›</button>
+  </div>
+  <div class="viewer-info">
+    <div id="viewerSender" class="viewer-sender">—</div>
+    <div id="viewerTime" class="viewer-time">—</div>
+    <div id="viewerCaption" class="viewer-caption"></div>
+  </div>
+</div>
+
+<div id="screen-games" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackGames"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;">Sqwid Games</div>
+    <div id="gamesBalance" style="font-size:0.82rem;padding:0.4rem 0.75rem;border-radius:999px;background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:800;">0 SQ</div>
+  </header>
+  <div class="games-body">
+    <div class="games-hero">
+      <div style="font-size:3.5rem;">🎮</div>
+      <div style="font-size:0.94rem;color:var(--text-2);margin-top:0.5rem;">Играй и зарабатывай SQ за навык и активность</div>
+    </div>
+    <div id="gamesDailyBonus" style="display:none;"></div>
+    <div class="games-section-title">Мини-игры</div>
+    <div class="games-grid">
+      <button class="games-card" data-game="guess">
+        <div class="games-card-icon">🎯</div>
+        <div class="games-card-name">Угадай число</div>
+        <div class="games-card-desc">1–100 · 5 попыток</div>
+      </button>
+      <button class="games-card" data-game="slots">
+        <div class="games-card-icon">🍒</div>
+        <div class="games-card-name">Слоты</div>
+        <div class="games-card-desc">3 барабана · 50 SQ</div>
+      </button>
+      <button class="games-card" data-game="crash">
+        <div class="games-card-icon">📈</div>
+        <div class="games-card-name">Краш</div>
+        <div class="games-card-desc">Ставка от 500 SQ</div>
+      </button>
+    </div>
+    <div class="games-section-title">Ежедневные квесты</div>
+    <div id="gamesQuests" class="games-quests"></div>
+    <div class="games-hint">Все награды — за навык и активность. Лимит выигрыша: 100 000 SQ в день (Sqwid+ без лимита).</div>
+  </div>
+</div>
+
+<div id="screen-call" class="screen">
+  <header class="top-bar" style="background:rgba(0,0,0,0.9);color:#fff;position:relative;">
+    <button id="btnCallMinimize" style="width:36px;height:36px;border-radius:50%;border:none;background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-right:8px;flex-shrink:0;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+    </button>
+    <div style="flex:1;min-width:0;">
+      <div style="color:#fff;font-size:1rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="callPeerName">Звонок...</div>
+      <div id="callStatus" style="color:#a1a1aa;font-size:0.78rem;font-weight:600;margin-top:2px;">Соединение...</div>
+    </div>
+    <div id="callTimer" style="font-size:0.85rem;font-weight:800;color:#10b981;font-variant-numeric:tabular-nums;">00:00</div>
+  </header>
+  <div id="callVideoContainer" style="flex:1;position:relative;background:#000;overflow:hidden;">
+    <video id="remoteVideo" autoplay playsinline style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:2;"></video>
+    <video id="localVideo" autoplay playsinline muted style="position:absolute;bottom:1rem;right:1rem;width:100px;height:140px;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,0.3);background:#1a1a1a;z-index:5;display:none;"></video>
+    <div id="callAvatar" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%, #1a1a1a, #000);z-index:1;">
+      <div id="callAvatarCircle" style="width:140px;height:140px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--grad-1);box-shadow:0 0 80px rgba(255,255,255,0.3);position:relative;">
+        <span id="callAvatarLetter" style="font-size:3.5rem;font-weight:900;color:#fff;">?</span>
+      </div>
+      <div id="groupCallGrid" style="display:none;flex:1;position:relative;background:#000;overflow:hidden;padding:0.5rem;">
+  <!-- Плитки участников рендерятся динамически -->
+</div>
+      <div style="margin-top:24px;font-size:1.5rem;font-weight:900;color:#fff;" id="callAvatarName">—</div>
+      <div style="margin-top:8px;font-size:0.9rem;color:#a1a1aa;" id="callAvatarStatus">Вызов...</div>
+      <div id="callRingingDots" style="display:flex;gap:8px;margin-top:24px;">
+        <div style="width:10px;height:10px;border-radius:50%;background:#fff;animation:callDot 1.4s ease-in-out infinite;"></div>
+        <div style="width:10px;height:10px;border-radius:50%;background:#fff;animation:callDot 1.4s ease-in-out 0.2s infinite;"></div>
+        <div style="width:10px;height:10px;border-radius:50%;background:#fff;animation:callDot 1.4s ease-in-out 0.4s infinite;"></div>
       </div>
     </div>
   </div>
-
-  <!-- ПРОСМОТР ФОТО -->
-  <div id="screen-viewer" class="screen">
-    <header class="top-bar" style="background:rgba(0,0,0,0.9);">
-      <button class="top-new-btn" id="btnBackViewer" style="background:rgba(255,255,255,0.1);color:#fff;"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-title" style="flex:1;color:#fff;" id="viewerTitle">Фото</div>
-      <button class="top-new-btn" id="btnDownloadPhoto" style="background:rgba(255,255,255,0.1);color:#fff;"><svg width="18" height="18"><use href="#ico-download"/></svg></button>
-    </header>
-    <div class="viewer-body">
-      <button class="viewer-nav viewer-prev" id="btnViewerPrev">‹</button>
-      <img id="viewerImage" class="viewer-image" alt="">
-      <button class="viewer-nav viewer-next" id="btnViewerNext">›</button>
-    </div>
-    <div class="viewer-info">
-      <div id="viewerSender" class="viewer-sender">—</div>
-      <div id="viewerTime" class="viewer-time">—</div>
-      <div id="viewerCaption" class="viewer-caption"></div>
-    </div>
+  <div style="padding:1.5rem 1rem 2rem;background:rgba(0,0,0,0.95);display:flex;justify-content:center;gap:1.2rem;align-items:center;">
+    <button id="btnCallMute" style="width:3.5rem;height:3.5rem;border-radius:50%;border:none;background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </button>
+    <button id="btnCallEnd" style="width:4.5rem;height:4.5rem;border-radius:50%;border:none;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(239,68,68,0.4);">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <button id="btnCallCam" style="width:3.5rem;height:3.5rem;border-radius:50%;border:none;background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;display:none;align-items:center;justify-content:center;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    </button>
+    <button id="btnCallInvite" style="width:3.5rem;height:3.5rem;border-radius:50%;border:none;background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;display:none;align-items:center;justify-content:center;">
+  <svg width="24" height="24"><use href="#ico-user-plus"/></svg>
+    </button>
   </div>
+</div>
 
-  <!-- ИГРОВОЙ БОТ -->
-  <div id="screen-games" class="screen">
-    <header class="top-bar">
-      <button class="top-new-btn" id="btnBackGames"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-title" style="flex:1;">Sqwid Games</div>
-      <div id="gamesBalance" style="font-size:0.82rem;padding:0.4rem 0.75rem;border-radius:999px;background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:800;">0 SQ</div>
-    </header>
-
-    <div class="games-body">
-      <div class="games-hero">
-        <div style="font-size:3.5rem;">🎮</div>
-        <div style="font-size:0.94rem;color:var(--text-2);margin-top:0.5rem;">Играй и зарабатывай SQ за навык и активность</div>
-      </div>
-
-      <div id="gamesDailyBonus" style="display:none;"></div>
-
-      <div class="games-section-title">Мини-игры</div>
-      <div class="games-grid">
-        <button class="games-card" data-game="guess">
-          <div class="games-card-icon">🎯</div>
-          <div class="games-card-name">Угадай число</div>
-          <div class="games-card-desc">1–100 · 5 попыток</div>
-        </button>
-        <button class="games-card" data-game="slots">
-          <div class="games-card-icon">🍒</div>
-          <div class="games-card-name">Слоты</div>
-          <div class="games-card-desc">3 барабана · 50 SQ</div>
-        </button>
-        <button class="games-card" data-game="crash">
-          <div class="games-card-icon">📈</div>
-          <div class="games-card-name">Краш</div>
-          <div class="games-card-desc">Ставка от 500 SQ</div>
-        </button>
-      </div>
-
-      <div class="games-section-title">Ежедневные квесты</div>
-      <div id="gamesQuests" class="games-quests"></div>
-
-      <div class="games-hint">Все награды — за навык и активность. Лимит выигрыша: 100 000 SQ в день (Sqwid+ без лимита).</div>
+<div id="screen-banned" class="screen">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;">
+    <div style="font-size:5rem;margin-bottom:1.25rem;">🚫</div>
+    <h2 style="font-size:1.5rem;font-weight:800;color:#ef4444;margin:0 0 0.75rem;">Аккаунт заблокирован</h2>
+    <div style="font-size:0.94rem;color:var(--text-2);line-height:1.5;max-width:18rem;">
+      Ваш аккаунт был заблокирован администрацией Sqwid.
     </div>
+    <button class="btn-secondary" id="btnBannedLogout" style="margin-top:2rem;color:#ef4444;width:100%;max-width:18rem;">
+      Выйти из аккаунта
+    </button>
   </div>
+</div>
 
-  <!-- МОДАЛКА: УГАДАЙ ЧИСЛО -->
+<div id="incomingCallBanner">
+  <button id="btnIncomingAccept" class="icb-btn icb-accept" aria-label="Принять">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+    </svg>
+  </button>
+  <div class="icb-info">
+    <div class="icb-name" id="incomingCallName">Пользователь</div>
+    <div class="icb-type" id="incomingCallType">Аудиозвонок</div>
+  </div>
+  <button id="btnIncomingDecline" class="icb-btn icb-decline" aria-label="Отклонить">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </button>
+</div>
+
+<nav class="bottom-nav" id="bottomNav">
+  <button class="nav-btn active" data-screen="screen-chats">
+    <svg class="nav-icon" width="22" height="22"><use href="#ico-users"/></svg>
+    <span class="nav-label" data-i18n="nav.chats">Чаты</span>
+  </button>
+  <button class="nav-btn" data-screen="screen-settings">
+    <svg class="nav-icon" width="22" height="22"><use href="#ico-cog"/></svg>
+    <span class="nav-label" data-i18n="nav.settings">Настройки</span>
+  </button>
+  <button class="nav-btn" data-screen="screen-profile">
+    <svg class="nav-icon" width="22" height="22"><use href="#ico-user"/></svg>
+    <span class="nav-label" data-i18n="nav.profile">Профиль</span>
+  </button>
+</nav>
+
+<div id="modal-create" class="modal"><div class="modal-content">
+  <button class="menu-row" id="btnCreatePrivate">Создать личный чат</button>
+  <button class="menu-row" id="btnCreateGroup">Создать группу</button>
+  <button class="menu-row" id="btnCreateChannel">Создать канал</button>
+  <button class="menu-row cancel" id="btnCloseCreate">Отмена</button>
+</div></div>
+
+<div id="modal-private" class="modal"><div class="modal-content">
+  <h2>Новый личный чат</h2>
+  <div class="settings-field"><input id="privateSearch" placeholder="Поиск по имени или @username"></div>
+  <div id="privateResults" class="create-results"></div>
+  <button class="menu-row cancel" id="btnClosePrivate" style="margin-top:0.6rem;">Отмена</button>
+</div></div>
+
+<div id="modal-autodelete" class="modal"><div class="modal-content">
+  <h2>Автоудаление сообщений</h2>
+  <button class="menu-row" data-ad="0">Выключено</button>
+  <button class="menu-row" data-ad="3600">1 час (Sqwid+)</button>
+  <button class="menu-row" data-ad="43200">12 часов (Sqwid+)</button>
+  <button class="menu-row" data-ad="86400">24 часа</button>
+  <button class="menu-row" data-ad="604800">7 дней</button>
+  <button class="menu-row" data-ad="2592000">30 дней</button>
+  <button class="menu-row cancel" id="btnCloseAutoDelete">Отмена</button>
+</div></div>
+
+<div id="modal-autodelete-edit" class="modal"><div class="modal-content">
+  <h2>Автоудаление сообщений</h2>
+  <button class="menu-row" data-ad="0">Выключено</button>
+  <button class="menu-row" data-ad="3600">1 час (Sqwid+)</button>
+  <button class="menu-row" data-ad="43200">12 часов (Sqwid+)</button>
+  <button class="menu-row" data-ad="86400">24 часа</button>
+  <button class="menu-row" data-ad="604800">7 дней</button>
+  <button class="menu-row" data-ad="2592000">30 дней</button>
+  <button class="menu-row cancel" id="btnCloseAutoDeleteEdit">Отмена</button>
+</div></div>
+
+<div id="modal-member-actions" class="modal"><div class="modal-content">
+  <div style="text-align:center;margin-bottom:0.9rem;">
+    <img id="maAva" style="width:4rem;height:4rem;border-radius:50%;object-fit:cover;background:#f97316;margin-bottom:0.5rem;" alt="">
+    <div id="maName" style="font-size:1.06rem;font-weight:700;color:var(--text);">—</div>
+    <div id="maUsername" style="font-size:0.82rem;color:var(--text-2);">—</div>
+  </div>
+  <button class="menu-row" id="btnMaViewProfile">Профиль</button>
+  <button class="menu-row" id="btnMaMakeAdmin" style="display:none;">Назначить админом</button>
+  <button class="menu-row" id="btnMaRemoveAdmin" style="display:none;">Снять админа</button>
+  <button class="menu-row" id="btnMaBan" style="display:none;color:#ef4444;">Забанить</button>
+  <button class="menu-row" id="btnMaUnban" style="display:none;color:#10b981;">Разбанить</button>
+  <button class="menu-row" id="btnMaMute" style="display:none;color:#f59e0b;">Замутить</button>
+  <button class="menu-row" id="btnMaUnmute" style="display:none;color:#10b981;">Размутить</button>
+  <button class="menu-row" id="btnMaFreeze" style="display:none;color:#3b82f6;">Заморозить</button>
+  <button class="menu-row" id="btnMaUnfreeze" style="display:none;color:#10b981;">Разморозить</button>
+  <button class="menu-row danger" id="btnMaKick" style="display:none;">Удалить из чата</button>
+  <button class="menu-row cancel" id="btnMaCancel">Отмена</button>
+</div></div>
+
+<div id="modal-owner-user" class="modal"><div class="modal-content">
+  <div style="text-align:center;margin-bottom:0.9rem;">
+    <img id="ouAva" style="width:4rem;height:4rem;border-radius:50%;object-fit:cover;background:#f97316;margin-bottom:0.5rem;" alt="">
+    <div id="ouName" style="font-size:1.06rem;font-weight:700;color:var(--text);">—</div>
+    <div id="ouUsername" style="font-size:0.82rem;color:var(--text-2);">—</div>
+  </div>
+  <button class="menu-row" id="btnOuProfile">Профиль</button>
+  <button class="menu-row" id="btnOuVerify" style="color:#3b82f6;">Верифицировать</button>
+  <button class="menu-row" id="btnOuUnverify" style="color:#94a3b8;display:none;">Снять верификацию</button>
+  <button class="menu-row" id="btnOuBan" style="color:#ef4444;">Забанить</button>
+  <button class="menu-row" id="btnOuUnban" style="color:#10b981;display:none;">Разбанить</button>
+  <button class="menu-row" id="btnOuMute" style="color:#f59e0b;">Замутить</button>
+  <button class="menu-row" id="btnOuUnmute" style="color:#10b981;display:none;">Размутить</button>
+  <button class="menu-row" id="btnOuFreeze" style="color:#3b82f6;">Заморозить</button>
+  <button class="menu-row" id="btnOuUnfreeze" style="color:#10b981;display:none;">Разморозить</button>
+  <button class="menu-row" id="btnOuMakeModerator" data-owner-only="1" style="color:#8b5cf6;">Назначить модератором</button>
+  <button class="menu-row" id="btnOuRemoveModerator" data-owner-only="1" style="color:#ef4444;display:none;">Снять модератора</button>
+  <button class="menu-row cancel" id="btnOuCancel">Отмена</button>
+</div></div>
+
+<div id="modal-report" class="modal"><div class="modal-content">
+  <h2>Жалоба</h2>
+  <div style="font-size:0.84rem;color:var(--text-2);margin-bottom:0.75rem;" id="reportTargetInfo">—</div>
+  <div class="settings-field">
+    <label>Причина</label>
+    <select id="reportReason" class="settings-select">
+      <option value="spam">Спам</option>
+      <option value="abuse">Оскорбления</option>
+      <option value="violence">Насилие / угрозы</option>
+      <option value="adult">18+ контент</option>
+      <option value="scam">Мошенничество</option>
+      <option value="other">Другое</option>
+    </select>
+  </div>
+  <div class="settings-field">
+    <label>Комментарий (необязательно)</label>
+    <textarea id="reportComment" maxlength="300" rows="3" placeholder="Опишите подробнее..."></textarea>
+  </div>
+  <button class="btn-create" id="btnReportSubmit" style="width:100%;background:linear-gradient(135deg,#ef4444,#dc2626);">Отправить жалобу</button>
+  <button class="btn-secondary" id="btnReportCancel" style="width:100%;margin-top:0.5rem;">Отмена</button>
+</div></div>
+
+<div id="modal-chatMenu" class="modal"><div class="modal-content">
+  <button class="menu-row" id="btnBlockUser">Заблокировать</button>
+  <button class="menu-row danger" id="btnDeleteChat">Удалить чат</button>
+  <button class="menu-row cancel" id="btnCloseChatMenu">Отмена</button>
+</div></div>
+
+<div id="modal-msgMenu" class="modal"><div class="modal-content">
+  <button class="menu-row" id="btnReactMsg">Реакция</button>
+  <button class="menu-row" id="btnPinMsg">Закрепить</button>
+  <button class="menu-row" id="btnEditMsg">Изменить</button>
+  <button class="menu-row danger" id="btnDeleteMsg">Удалить</button>
+  <button class="menu-row danger" id="btnReportMsg">Пожаловаться</button>
+  <button class="menu-row cancel" id="btnCloseMsgMenu">Отмена</button>
+</div></div>
+
+<div id="modal-msgActions" class="modal"><div class="modal-content">
+  <button class="menu-row" id="maActionReply">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px;"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+    Ответить
+  </button>
+  <button class="menu-row" id="maActionCopy">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    Копировать
+  </button>
+  <button class="menu-row" id="maActionDelete" style="color:#ef4444;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    Удалить
+  </button>
+  <button class="menu-row cancel" id="maActionCancel">Отмена</button>
+</div></div>
+
+<div id="modal-react" class="modal"><div class="modal-content react-content">
+  <div class="react-grid" id="reactGrid"></div>
+  <button class="menu-row cancel" id="btnCloseReact">Отмена</button>
+</div></div>
+
+<div id="modal-prompt" class="modal"><div class="modal-content">
+  <h2 id="promptTitle">Введите</h2>
+  <input id="promptInput" placeholder="" class="settings-input" style="margin-bottom:0.75rem;">
+  <div style="display:flex;gap:0.6rem;margin-top:0.5rem;">
+    <button class="btn-secondary" id="promptCancel" style="flex:1;">Отмена</button>
+    <button class="btn-create" id="promptOk" style="flex:1;">ОК</button>
+  </div>
+</div></div>
+
+<div id="modal-alert" class="modal"><div class="modal-content" style="text-align:center;">
+  <h2 id="alertTitle" style="margin:0 0 0.6rem;">Сообщение</h2>
+  <div id="alertText" style="color:var(--text-2);font-size:0.94rem;line-height:1.5;margin-bottom:1.1rem;white-space:pre-wrap;word-break:break-word;"></div>
+  <div style="display:flex;gap:0.6rem;">
+    <button class="btn-secondary" id="alertCancel" style="flex:1;display:none;">Отмена</button>
+    <button class="btn-create" id="alertOk" style="flex:1;">ОК</button>
+  </div>
+</div></div>
+
+<div id="modal-2fa" class="modal"><div class="modal-content">
+  <h2>Двухэтапная аутентификация</h2>
+  <div id="twoFASetupStep">
+    <div style="font-size:0.88rem;color:var(--text-2);line-height:1.5;margin-bottom:0.75rem;">
+      Отсканируй QR-код в Google Authenticator / Authy, затем введи 6-значный код.
+    </div>
+    <div class="twofa-qr" id="twoFAQr"></div>
+    <div class="twofa-code-row">
+      <input class="twofa-code-input" id="twofa1" maxlength="1" inputmode="numeric">
+      <input class="twofa-code-input" id="twofa2" maxlength="1" inputmode="numeric">
+      <input class="twofa-code-input" id="twofa3" maxlength="1" inputmode="numeric">
+      <input class="twofa-code-input" id="twofa4" maxlength="1" inputmode="numeric">
+      <input class="twofa-code-input" id="twofa5" maxlength="1" inputmode="numeric">
+      <input class="twofa-code-input" id="twofa6" maxlength="1" inputmode="numeric">
+    </div>
+    <button class="btn-create" id="btn2FAVerify" style="width:100%;margin-top:0.6rem;">Подтвердить</button>
+    <button class="btn-secondary" id="btn2FACancel" style="width:100%;margin-top:0.5rem;">Отмена</button>
+  </div>
+</div></div>
   <div id="modal-guess" class="modal">
     <div class="modal-content" style="text-align:center;">
       <h2>Угадай число</h2>
@@ -912,46 +1223,37 @@
     </div>
   </div>
 
-  <!-- МОДАЛКА: СЛОТ-МАШИНА -->
   <div id="modal-slots" class="modal">
     <div class="modal-content" style="text-align:center;padding:1.25rem 1rem 1.5rem;">
       <h2>Слот-машина</h2>
       <div style="font-size:0.82rem;color:var(--text-2);margin-bottom:0.9rem;line-height:1.5;">
         Крути барабаны. Собери 3 одинаковых — получишь крупный выигрыш.
       </div>
-
       <div id="slotsStage" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid rgba(245,158,11,0.4);border-radius:1.25rem;padding:1.5rem 1rem;margin:1rem 0;box-shadow:inset 0 4px 20px rgba(0,0,0,0.5);">
         <div class="slot-reel" id="slotReel0">❓</div>
         <div class="slot-reel" id="slotReel1">❓</div>
         <div class="slot-reel" id="slotReel2">❓</div>
       </div>
-
       <div id="slotsResult" style="font-size:1rem;font-weight:800;min-height:1.5rem;margin-bottom:0.9rem;color:#f59e0b;"></div>
-
       <div style="font-size:0.75rem;color:var(--text-3);margin-bottom:0.6rem;">
         Ставка: <b style="color:#f59e0b;">50 SQ</b> за спин
       </div>
-
       <button class="btn-create" id="btnSlotsSpin" style="width:100%;">Крутить (50 SQ)</button>
       <button class="btn-secondary" id="btnSlotsClose" style="width:100%;margin-top:0.5rem;">Закрыть</button>
     </div>
   </div>
 
-  <!-- МОДАЛКА: КРАШ -->
   <div id="modal-crash" class="modal">
     <div class="modal-content" style="text-align:center;padding:1.25rem 1rem 1.5rem;">
       <h2>Краш</h2>
-
       <div id="crashSetup">
         <div style="font-size:0.82rem;color:var(--text-2);margin-bottom:0.9rem;line-height:1.5;">
           Введи сумму ставки. Кривая начнёт расти — жми «Забрать» до краха.
         </div>
-
         <div class="settings-field" style="margin-bottom:0.75rem;">
           <label>Сумма ставки (мин. 500 SQ)</label>
           <input id="crashBetInput" type="number" min="500" value="500" placeholder="500">
         </div>
-
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem;margin-bottom:0.9rem;">
           <button class="btn-secondary crash-quick" data-amount="500" style="font-size:0.82rem;padding:0.6rem;">500</button>
           <button class="btn-secondary crash-quick" data-amount="1000" style="font-size:0.82rem;padding:0.6rem;">1 000</button>
@@ -960,282 +1262,40 @@
           <button class="btn-secondary crash-quick" data-amount="50000" style="font-size:0.82rem;padding:0.6rem;">50 000</button>
           <button class="btn-secondary crash-quick" data-amount="all" style="font-size:0.82rem;padding:0.6rem;">ВСЁ</button>
         </div>
-
         <button class="btn-create" id="btnCrashStart" style="width:100%;">Старт</button>
       </div>
-
       <div id="crashGame" style="display:none;">
         <div id="crashMultiplier" style="font-size:4rem;font-weight:900;color:#10b981;letter-spacing:-0.2rem;margin:1rem 0 0.5rem;transition:color 0.3s ease;text-shadow:0 0 24px rgba(16,185,129,0.4);">x1.00</div>
-
         <div style="font-size:0.82rem;color:var(--text-2);margin-bottom:0.5rem;">
           Ставка: <b id="crashBetDisplay" style="color:#f59e0b;">500</b> SQ
         </div>
-
         <div style="font-size:0.88rem;color:var(--text-2);margin-bottom:1rem;">
           Заберёшь: <b id="crashWinDisplay" style="color:#10b981;font-size:1.06rem;">500</b> SQ
         </div>
-
         <div style="height:0.5rem;background:rgba(15,23,42,0.06);border-radius:999px;overflow:hidden;margin-bottom:1.25rem;">
           <div id="crashProgress" style="height:100%;width:0%;background:linear-gradient(90deg,#10b981,#f59e0b,#ef4444);transition:width 0.1s linear;"></div>
         </div>
-
         <button class="btn-create" id="btnCrashCashout" style="width:100%;background:linear-gradient(135deg,#10b981,#06b6d4);">Забрать</button>
       </div>
-
       <div id="crashResult" style="display:none;">
         <div id="crashResultIcon" style="font-size:4.5rem;margin:1rem 0;">💥</div>
         <div id="crashResultText" style="font-size:1.25rem;font-weight:800;margin-bottom:1rem;color:#ef4444;">Крах!</div>
         <div id="crashResultAmount" style="font-size:1.5rem;font-weight:800;margin-bottom:1.25rem;color:#ef4444;">−500 SQ</div>
         <button class="btn-create" id="btnCrashAgain" style="width:100%;">Ещё раз</button>
       </div>
-
       <button class="btn-secondary" id="btnCrashClose" style="width:100%;margin-top:0.5rem;">Закрыть</button>
     </div>
   </div>
-
-  <!-- ЭКРАН: БАН -->
-  <div id="screen-banned" class="screen">
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;">
-      <div style="font-size:5rem;margin-bottom:1.25rem;">🚫</div>
-      <h2 style="font-size:1.5rem;font-weight:800;color:#ef4444;margin:0 0 0.75rem;">Аккаунт заблокирован</h2>
-      <div style="font-size:0.94rem;color:var(--text-2);line-height:1.5;max-width:18rem;">
-        Ваш аккаунт был заблокирован администрацией Sqwid.
-      </div>
-      <button class="btn-secondary" id="btnBannedLogout" style="margin-top:2rem;color:#ef4444;width:100%;max-width:18rem;">
-        Выйти из аккаунта
-      </button>
-    </div>
-  </div>
-
-  <!-- ЭКРАН ЗВОНКА -->
-  <div id="screen-call" class="screen">
-    <header class="top-bar" style="background:rgba(0,0,0,0.9);color:#fff;position:relative;">
-      <button id="btnCallMinimize" style="width:36px;height:36px;border-radius:50%;border:none;background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-right:8px;flex-shrink:0;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-      </button>
-      <div style="flex:1;min-width:0;">
-        <div style="color:#fff;font-size:1rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="callPeerName">Звонок...</div>
-        <div id="callStatus" style="color:#a1a1aa;font-size:0.78rem;font-weight:600;margin-top:2px;">Соединение...</div>
-      </div>
-      <div id="callTimer" style="font-size:0.85rem;font-weight:800;color:#10b981;font-variant-numeric:tabular-nums;">00:00</div>
-    </header>
-
-    <div id="callVideoContainer" style="flex:1;position:relative;background:#000;overflow:hidden;">
-      <video id="remoteVideo" autoplay playsinline style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:2;"></video>
-      <video id="localVideo" autoplay playsinline muted style="position:absolute;bottom:1rem;right:1rem;width:100px;height:140px;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,0.3);background:#1a1a1a;z-index:5;"></video>
-
-      <div id="callAvatar" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%, #1a1a1a, #000);z-index:1;">
-        <div id="callAvatarCircle" style="width:140px;height:140px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--grad-1);box-shadow:0 0 80px rgba(255,255,255,0.3);position:relative;">
-          <span id="callAvatarLetter" style="font-size:3.5rem;font-weight:900;color:#fff;">?</span>
-        </div>
-        <div style="margin-top:24px;font-size:1.5rem;font-weight:900;color:#fff;" id="callAvatarName">—</div>
-        <div style="margin-top:8px;font-size:0.9rem;color:#a1a1aa;" id="callAvatarStatus">Вызов...</div>
-        <div id="callRingingDots" style="display:flex;gap:8px;margin-top:24px;">
-          <div style="width:10px;height:10px;border-radius:50%;background:#fff;animation:callDot 1.4s ease-in-out infinite;"></div>
-          <div style="width:10px;height:10px;border-radius:50%;background:#fff;animation:callDot 1.4s ease-in-out 0.2s infinite;"></div>
-          <div style="width:10px;height:10px;border-radius:50%;background:#fff;animation:callDot 1.4s ease-in-out 0.4s infinite;"></div>
-        </div>
-      </div>
-    </div>
-
-    <div style="padding:1.5rem 1rem 2rem;background:rgba(0,0,0,0.95);display:flex;justify-content:center;gap:1.2rem;align-items:center;">
-      <button id="btnCallMute" style="width:3.5rem;height:3.5rem;border-radius:50%;border:none;background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.2s ease;">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-      </button>
-      <button id="btnCallEnd" style="width:4.5rem;height:4.5rem;border-radius:50%;border:none;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(239,68,68,0.4);transition:transform 0.2s ease;">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-      <button id="btnCallCam" style="width:3.5rem;height:3.5rem;border-radius:50%;border:none;background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.2s ease;">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      </button>
-    </div>
-  </div>
-
-  <!-- МОДАЛКА ВХОДЯЩЕГО ЗВОНКА -->
-  <div id="modal-incoming-call" class="modal">
-    <div class="modal-content" style="text-align:center;">
-      <div style="font-size:4rem;margin-bottom:0.5rem;">📞</div>
-      <h2 id="incomingCallName" style="margin:0 0 0.5rem;">Пользователь</h2>
-      <div style="color:var(--text-2);font-size:0.9rem;margin-bottom:1.5rem;" id="incomingCallType">Аудиозвонок</div>
-      <div style="display:flex;gap:1rem;justify-content:center;">
-        <button id="btnIncomingDecline" style="flex:1;padding:1rem;border-radius:16px;border:none;background:rgba(239,68,68,0.15);color:#ef4444;font-weight:800;font-size:1rem;cursor:pointer;">Отклонить</button>
-        <button id="btnIncomingAccept" style="flex:1;padding:1rem;border-radius:16px;border:none;background:linear-gradient(135deg,#10b981,#06b6d4);color:#fff;font-weight:800;font-size:1rem;cursor:pointer;">Принять</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- НИЖНЕЕ МЕНЮ -->
-  <nav class="bottom-nav" id="bottomNav">
-    <button class="nav-btn active" data-screen="screen-chats">
-      <svg class="nav-icon" width="22" height="22"><use href="#ico-users"/></svg>
-      <span class="nav-label" data-i18n="nav.chats">Чаты</span>
-    </button>
-    <button class="nav-btn" data-screen="screen-settings">
-      <svg class="nav-icon" width="22" height="22"><use href="#ico-cog"/></svg>
-      <span class="nav-label" data-i18n="nav.settings">Настройки</span>
-    </button>
-    <button class="nav-btn" data-screen="screen-profile">
-      <svg class="nav-icon" width="22" height="22"><use href="#ico-user"/></svg>
-      <span class="nav-label" data-i18n="nav.profile">Профиль</span>
-    </button>
-  </nav>
-
-  <!-- МОДАЛКИ -->
-  <div id="modal-create" class="modal"><div class="modal-content">
-    <button class="menu-row" id="btnCreatePrivate">Создать личный чат</button>
-    <button class="menu-row" id="btnCreateGroup">Создать группу</button>
-    <button class="menu-row" id="btnCreateChannel">Создать канал</button>
-    <button class="menu-row cancel" id="btnCloseCreate">Отмена</button>
-  </div></div>
-
-  <div id="modal-private" class="modal"><div class="modal-content">
-    <h2>Новый личный чат</h2>
-    <div class="settings-field"><input id="privateSearch" placeholder="Поиск по имени или @username"></div>
-    <div id="privateResults" class="create-results"></div>
-    <button class="menu-row cancel" id="btnClosePrivate" style="margin-top:0.6rem;">Отмена</button>
-  </div></div>
-
-  <div id="modal-autodelete" class="modal"><div class="modal-content">
-    <h2>Автоудаление сообщений</h2>
-    <button class="menu-row" data-ad="0">Выключено</button>
-    <button class="menu-row" data-ad="3600">1 час (Sqwid+)</button>
-    <button class="menu-row" data-ad="43200">12 часов (Sqwid+)</button>
-    <button class="menu-row" data-ad="86400">24 часа</button>
-    <button class="menu-row" data-ad="604800">7 дней</button>
-    <button class="menu-row" data-ad="2592000">30 дней</button>
-    <button class="menu-row cancel" id="btnCloseAutoDelete">Отмена</button>
-  </div></div>
-
-  <div id="modal-autodelete-edit" class="modal"><div class="modal-content">
-    <h2>Автоудаление сообщений</h2>
-    <button class="menu-row" data-ad="0">Выключено</button>
-    <button class="menu-row" data-ad="3600">1 час (Sqwid+)</button>
-    <button class="menu-row" data-ad="43200">12 часов (Sqwid+)</button>
-    <button class="menu-row" data-ad="86400">24 часа</button>
-    <button class="menu-row" data-ad="604800">7 дней</button>
-    <button class="menu-row" data-ad="2592000">30 дней</button>
-    <button class="menu-row cancel" id="btnCloseAutoDeleteEdit">Отмена</button>
-  </div></div>
-
-  <div id="modal-member-actions" class="modal"><div class="modal-content">
-    <div style="text-align:center;margin-bottom:0.9rem;">
-      <img id="maAva" style="width:4rem;height:4rem;border-radius:50%;object-fit:cover;background:#f97316;margin-bottom:0.5rem;" alt="">
-      <div id="maName" style="font-size:1.06rem;font-weight:700;color:var(--text);">—</div>
-      <div id="maUsername" style="font-size:0.82rem;color:var(--text-2);">—</div>
-    </div>
-    <button class="menu-row" id="btnMaViewProfile">Профиль</button>
-    <button class="menu-row" id="btnMaMakeAdmin" style="display:none;">Назначить админом</button>
-    <button class="menu-row" id="btnMaRemoveAdmin" style="display:none;">Снять админа</button>
-    <button class="menu-row" id="btnMaBan" style="display:none;color:#ef4444;">Забанить</button>
-    <button class="menu-row" id="btnMaUnban" style="display:none;color:#10b981;">Разбанить</button>
-    <button class="menu-row" id="btnMaMute" style="display:none;color:#f59e0b;">Замутить</button>
-    <button class="menu-row" id="btnMaUnmute" style="display:none;color:#10b981;">Размутить</button>
-    <button class="menu-row" id="btnMaFreeze" style="display:none;color:#3b82f6;">Заморозить</button>
-    <button class="menu-row" id="btnMaUnfreeze" style="display:none;color:#10b981;">Разморозить</button>
-    <button class="menu-row danger" id="btnMaKick" style="display:none;">Удалить из чата</button>
-    <button class="menu-row cancel" id="btnMaCancel">Отмена</button>
-  </div></div>
-
-  <div id="modal-owner-user" class="modal"><div class="modal-content">
-    <div style="text-align:center;margin-bottom:0.9rem;">
-      <img id="ouAva" style="width:4rem;height:4rem;border-radius:50%;object-fit:cover;background:#f97316;margin-bottom:0.5rem;" alt="">
-      <div id="ouName" style="font-size:1.06rem;font-weight:700;color:var(--text);">—</div>
-      <div id="ouUsername" style="font-size:0.82rem;color:var(--text-2);">—</div>
-    </div>
-    <button class="menu-row" id="btnOuProfile">Профиль</button>
-    <button class="menu-row" id="btnOuVerify" style="color:#3b82f6;">Верифицировать</button>
-    <button class="menu-row" id="btnOuUnverify" style="color:#94a3b8;display:none;">Снять верификацию</button>
-    <button class="menu-row" id="btnOuBan" style="color:#ef4444;">Забанить</button>
-    <button class="menu-row" id="btnOuUnban" style="color:#10b981;display:none;">Разбанить</button>
-    <button class="menu-row" id="btnOuMute" style="color:#f59e0b;">Замутить</button>
-    <button class="menu-row" id="btnOuUnmute" style="color:#10b981;display:none;">Размутить</button>
-    <button class="menu-row" id="btnOuFreeze" style="color:#3b82f6;">Заморозить</button>
-    <button class="menu-row" id="btnOuUnfreeze" style="color:#10b981;display:none;">Разморозить</button>
-    <button class="menu-row" id="btnOuMakeModerator" data-owner-only="1" style="color:#8b5cf6;">Назначить модератором</button>
-    <button class="menu-row" id="btnOuRemoveModerator" data-owner-only="1" style="color:#ef4444;display:none;">Снять модератора</button>
-    <button class="menu-row cancel" id="btnOuCancel">Отмена</button>
-  </div></div>
-
-  <div id="modal-report" class="modal"><div class="modal-content">
-    <h2>Жалоба</h2>
-    <div style="font-size:0.84rem;color:var(--text-2);margin-bottom:0.75rem;" id="reportTargetInfo">—</div>
+<div id="modal-group-invite" class="modal">
+  <div class="modal-content">
+    <h2>Пригласить в звонок</h2>
     <div class="settings-field">
-      <label>Причина</label>
-      <select id="reportReason" class="settings-select">
-        <option value="spam">Спам</option>
-        <option value="abuse">Оскорбления</option>
-        <option value="violence">Насилие / угрозы</option>
-        <option value="adult">18+ контент</option>
-        <option value="scam">Мошенничество</option>
-        <option value="other">Другое</option>
-      </select>
+      <input id="groupInviteSearch" class="settings-input" placeholder="Поиск по имени или @username">
     </div>
-    <div class="settings-field">
-      <label>Комментарий (необязательно)</label>
-      <textarea id="reportComment" maxlength="300" rows="3" placeholder="Опишите подробнее..."></textarea>
-    </div>
-    <button class="btn-create" id="btnReportSubmit" style="width:100%;background:linear-gradient(135deg,#ef4444,#dc2626);">Отправить жалобу</button>
-    <button class="btn-secondary" id="btnReportCancel" style="width:100%;margin-top:0.5rem;">Отмена</button>
-  </div></div>
-
-  <div id="modal-chatMenu" class="modal"><div class="modal-content">
-    <button class="menu-row" id="btnBlockUser">Заблокировать</button>
-    <button class="menu-row danger" id="btnDeleteChat">Удалить чат</button>
-    <button class="menu-row cancel" id="btnCloseChatMenu">Отмена</button>
-  </div></div>
-
-  <div id="modal-msgMenu" class="modal"><div class="modal-content">
-    <button class="menu-row" id="btnReactMsg">Реакция</button>
-    <button class="menu-row" id="btnPinMsg">Закрепить</button>
-    <button class="menu-row" id="btnEditMsg">Изменить</button>
-    <button class="menu-row danger" id="btnDeleteMsg">Удалить</button>
-    <button class="menu-row danger" id="btnReportMsg">Пожаловаться</button>
-    <button class="menu-row cancel" id="btnCloseMsgMenu">Отмена</button>
-  </div></div>
-
-  <div id="modal-react" class="modal"><div class="modal-content react-content">
-    <div class="react-grid" id="reactGrid"></div>
-    <button class="menu-row cancel" id="btnCloseReact">Отмена</button>
-  </div></div>
-
-  <div id="modal-prompt" class="modal"><div class="modal-content">
-    <h2 id="promptTitle">Введите</h2>
-    <input id="promptInput" placeholder="" class="settings-input" style="margin-bottom:0.75rem;">
-    <div style="display:flex;gap:0.6rem;margin-top:0.5rem;">
-      <button class="btn-secondary" id="promptCancel" style="flex:1;">Отмена</button>
-      <button class="btn-create" id="promptOk" style="flex:1;">ОК</button>
-    </div>
-  </div></div>
-
-  <div id="modal-alert" class="modal"><div class="modal-content" style="text-align:center;">
-    <h2 id="alertTitle" style="margin:0 0 0.6rem;">Сообщение</h2>
-    <div id="alertText" style="color:var(--text-2);font-size:0.94rem;line-height:1.5;margin-bottom:1.1rem;white-space:pre-wrap;word-break:break-word;"></div>
-    <div style="display:flex;gap:0.6rem;">
-      <button class="btn-secondary" id="alertCancel" style="flex:1;display:none;">Отмена</button>
-      <button class="btn-create" id="alertOk" style="flex:1;">ОК</button>
-    </div>
-  </div></div>
-
-  <div id="modal-2fa" class="modal"><div class="modal-content">
-    <h2>Двухэтапная аутентификация</h2>
-    <div id="twoFASetupStep">
-      <div style="font-size:0.88rem;color:var(--text-2);line-height:1.5;margin-bottom:0.75rem;">
-        Отсканируй QR-код в Google Authenticator / Authy, затем введи 6-значный код.
-      </div>
-      <div class="twofa-qr" id="twoFAQr"></div>
-      <div class="twofa-code-row">
-        <input class="twofa-code-input" id="twofa1" maxlength="1" inputmode="numeric">
-        <input class="twofa-code-input" id="twofa2" maxlength="1" inputmode="numeric">
-        <input class="twofa-code-input" id="twofa3" maxlength="1" inputmode="numeric">
-        <input class="twofa-code-input" id="twofa4" maxlength="1" inputmode="numeric">
-        <input class="twofa-code-input" id="twofa5" maxlength="1" inputmode="numeric">
-        <input class="twofa-code-input" id="twofa6" maxlength="1" inputmode="numeric">
-      </div>
-      <button class="btn-create" id="btn2FAVerify" style="width:100%;margin-top:0.6rem;">Подтвердить</button>
-      <button class="btn-secondary" id="btn2FACancel" style="width:100%;margin-top:0.5rem;">Отмена</button>
-    </div>
-  </div></div>
-
+    <div id="groupInviteResults" class="create-results" style="max-height:20rem;overflow-y:auto;"></div>
+    <button class="menu-row cancel" id="btnGroupInviteCancel" style="margin-top:0.6rem;">Отмена</button>
+  </div>
+</div>
   <script src="i18n.js"></script>
   <script type="module" src="chat-main.js"></script>
   <script type="module" src="moderation.js"></script>
@@ -1255,5 +1315,9 @@
   <script type="module" src="games.js"></script>
   <script type="module" src="sqwidfire.js"></script>
   <script type="module" src="calls.js"></script>
+  <script type="module" src="shop.js"></script>
+  <script type="module" src="qr-profile.js"></script>
+  <script type="module" src="ux.js"></script>
+  <script type="module" src="group-calls.js"></script>
 </body>
 </html>

@@ -51,6 +51,23 @@ waitForSqwidProfile((S) => {
     return myData.plusUntil && myData.plusUntil > Date.now();
   }
 
+  /* ---------- ПРЕСЕТЫ ФОНА (из магазина) ---------- */
+  const BG_PRESETS = {
+    sunset: "linear-gradient(135deg, #f97316, #ec4899)",
+    ocean:  "linear-gradient(135deg, #06b6d4, #3b82f6)",
+    night:  "linear-gradient(135deg, #1e1b4b, #312e81)",
+    forest: "linear-gradient(135deg, #10b981, #047857)",
+    space:  "radial-gradient(circle at 50% 30%, #1e1b4b, #000)"
+  };
+
+  /* ---------- ЗНАЧКИ (из магазина) ---------- */
+  const BADGE_SVG = {
+    star:    `<svg viewBox="0 0 24 24" width="16" height="16" fill="#f59e0b" style="vertical-align:middle;margin-left:4px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+    crown:   `<svg viewBox="0 0 24 24" width="16" height="16" fill="#f59e0b" style="vertical-align:middle;margin-left:4px;"><path d="M3 7l4 4 5-7 5 7 4-4v12H3V7z"/></svg>`,
+    fire:    `<svg viewBox="0 0 24 24" width="16" height="16" fill="#f97316" style="vertical-align:middle;margin-left:4px;"><path d="M12 2s4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 1-3s-5 4-5 9a8 8 0 0 0 16 0c0-6-8-14-8-14z"/></svg>`,
+    diamond: `<svg viewBox="0 0 24 24" width="16" height="16" fill="#06b6d4" style="vertical-align:middle;margin-left:4px;"><path d="M6 2l-4 6 10 14L22 8l-4-6z"/></svg>`
+  };
+
   /* ---------- ПАРАЛЛАКС ---------- */
   scroll.addEventListener("scroll", () => {
     const y = scroll.scrollTop;
@@ -87,16 +104,34 @@ waitForSqwidProfile((S) => {
     const name = myData.name || currentUser.email.split("@")[0];
     const plus = isPlus();
 
-    // Имя: градиент для Sqwid+ или обычный цвет
+    // Имя: градиент для Sqwid+, градиент/цвет из магазина, или обычный
     let nameHTML = "";
-    if (plus && myData.plusGradient !== false) {
-      nameHTML += `<span class="nick-plus">${escH(name)}</span>`;
+    let fontStyle = "";
+    if (myData.nickFont === "bold") fontStyle += "font-weight:900;";
+    if (myData.nickFont === "italic") fontStyle += "font-style:italic;";
+    if (myData.nickFont === "mono") fontStyle += "font-family:'JetBrains Mono',monospace;";
+    if (myData.nickFont === "script") fontStyle += "font-family:'Caveat',cursive;";
+
+    if (myData.nickColor && typeof myData.nickColor === "string" && myData.nickColor.startsWith("linear-gradient")) {
+      // Градиент из магазина
+      nameHTML += `<span style="display:inline-block;background:${myData.nickColor};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;font-weight:800;${fontStyle}">${escH(name)}</span>`;
     } else if (myData.nickColor) {
-      nameHTML += `<span style="color:${myData.nickColor}">${escH(name)}</span>`;
+      // Сплошной цвет из магазина
+      nameHTML += `<span style="color:${myData.nickColor};${fontStyle}">${escH(name)}</span>`;
+    } else if (plus && myData.plusGradient !== false) {
+      // Sqwid+ градиент
+      nameHTML += `<span class="nick-plus" style="${fontStyle}">${escH(name)}</span>`;
     } else {
-      nameHTML += escH(name);
+      nameHTML += `<span style="${fontStyle}">${escH(name)}</span>`;
     }
+
     if (myData.nickEmoji) nameHTML += ` <span class="nick-emoji">${myData.nickEmoji}</span>`;
+
+    // Значок из магазина
+    if (myData.shopEquipped && myData.shopEquipped.badge && BADGE_SVG[myData.shopEquipped.badge]) {
+      nameHTML += BADGE_SVG[myData.shopEquipped.badge];
+    }
+
     if (nameEl) nameEl.innerHTML = nameHTML;
 
     if (unEl) unEl.textContent = myData.username ? "@" + myData.username : "";
@@ -107,12 +142,13 @@ waitForSqwidProfile((S) => {
       bioEl.classList.toggle("bio-long", plus);
     }
 
+    // Баланс — как есть, без форматирования
     if (coinsEl) coinsEl.textContent = "🪙 " + (myData.coins || 0) + " SQ";
 
     // Плашка Sqwid+
     renderPlusBadge(plus);
 
-    // Кастомный фон профиля
+    // Фон профиля (файл или пресет)
     renderProfileBg(plus);
 
     // Рамка авы
@@ -156,16 +192,34 @@ waitForSqwidProfile((S) => {
     badge.innerHTML = `⭐ Sqwid+ до ${dateStr}`;
   }
 
-  /* ---------- ФОН ПРОФИЛЯ (только Sqwid+) ---------- */
+  /* ---------- ФОН ПРОФИЛЯ ---------- */
   function renderProfileBg(plus) {
     if (!scroll) return;
+
+    // 1) Загруженный фон (Sqwid+)
     if (plus && myData.profileBg) {
       scroll.style.backgroundImage = `url(${myData.profileBg})`;
+      scroll.style.backgroundSize = "cover";
+      scroll.style.backgroundPosition = "center";
+      scroll.style.backgroundRepeat = "no-repeat";
       scroll.classList.add("has-bg");
-    } else {
-      scroll.style.backgroundImage = "";
-      scroll.classList.remove("has-bg");
+      return;
     }
+
+    // 2) Пресет из магазина
+    const preset = myData.profileBgPreset && BG_PRESETS[myData.profileBgPreset];
+    if (preset) {
+      scroll.style.backgroundImage = preset;
+      scroll.style.backgroundSize = "cover";
+      scroll.style.backgroundPosition = "center";
+      scroll.style.backgroundRepeat = "no-repeat";
+      scroll.classList.add("has-bg");
+      return;
+    }
+
+    // 3) Ничего
+    scroll.style.backgroundImage = "";
+    scroll.classList.remove("has-bg");
   }
 
   /* ---------- СОЦИАЛЬНЫЕ ССЫЛКИ (только Sqwid+) ---------- */
@@ -327,6 +381,31 @@ waitForSqwidProfile((S) => {
       const pm = document.getElementById("pmOpenOwner");
       if (pm) pm.style.display = (isOwner || isMod) ? "block" : "none";
       modal.classList.add("active");
+    });
+  }
+
+  /* ============================================================
+     КНОПКИ МАГАЗИНА И QR
+     ============================================================ */
+  const btnOpenShop = document.getElementById("btnOpenShop");
+  if (btnOpenShop) {
+    btnOpenShop.addEventListener("click", () => {
+      if (window.Sqwid && window.Sqwid.openShop) {
+        window.Sqwid.openShop();
+      } else {
+        S.showToast("Магазин загружается...", "info");
+      }
+    });
+  }
+
+  const btnOpenQr = document.getElementById("btnOpenQr");
+  if (btnOpenQr) {
+    btnOpenQr.addEventListener("click", () => {
+      if (window.Sqwid && window.Sqwid.openQr) {
+        window.Sqwid.openQr();
+      } else {
+        S.showToast("QR-код загружается...", "info");
+      }
     });
   }
 

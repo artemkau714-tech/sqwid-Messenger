@@ -48,7 +48,34 @@ waitForSqwidCalls((S) => {
   let callTimerInterval = null;
   let callStartTime = 0;
   let isMinimized = false;
+/* ============================================================
+   ЭКСПОРТ СОСТОЯНИЯ ДЛЯ group-calls.js
+   ============================================================ */
+window.Sqwid.callState = {
+  get peerConnection() { return peerConnection; },
+  get localStream() { return localStream; },
+  get remoteStream() { return remoteStream; },
+  get currentCallId() { return currentCallId; },
+  get currentCallType() { return currentCallType; },
+  get callPartnerUid() { return callPartnerUid; },
+  get callPartnerName() { return callPartnerName; },
+  get callPartnerPhoto() { return callPartnerPhoto; },
+  get isCaller() { return isCaller; },
+  get isMinimized() { return isMinimized; },
+  get callStartTime() { return callStartTime; },
 
+  setCallId: (v) => { currentCallId = v; },
+  setCallType: (v) => { currentCallType = v; },
+  setPartnerUid: (v) => { callPartnerUid = v; },
+  setPartnerName: (v) => { callPartnerName = v; },
+  setPartnerPhoto: (v) => { callPartnerPhoto = v; },
+  setMinimized: (v) => { isMinimized = v; },
+
+  // Флаг: запрет закрывать localStream при cleanup (для передачи в group-calls)
+  keepStream: false,
+  // Флаг: экран звонка занят групповым режимом
+  groupMode: false
+};
   /* ============================================================
      ЗВУКИ (WebAudio API — генерация без файлов)
      ============================================================ */
@@ -232,10 +259,18 @@ waitForSqwidCalls((S) => {
      UI ЭКРАНА ЗВОНКА
      ============================================================ */
   function showCallScreen() {
-    isMinimized = false;
-    hideMiniWidget();
-    S.showScreen("screen-call");
-  }
+  isMinimized = false;
+  hideMiniWidget();
+  S.showScreen("screen-call");
+
+  // Показываем миникамеру и кнопку камеры ТОЛЬКО при видеозвонке
+  const localVideo = document.getElementById("localVideo");
+  const btnCam = document.getElementById("btnCallCam");
+  const isVideo = currentCallType === "video";
+
+  if (localVideo) localVideo.style.display = isVideo ? "block" : "none";
+  if (btnCam) btnCam.style.display = isVideo ? "flex" : "none";
+}
 
   function setCallStatus(text) {
     const el = document.getElementById("callStatus");
@@ -349,10 +384,12 @@ waitForSqwidCalls((S) => {
     stopCallTimer();
     hideMiniWidget();
 
-    if (localStream) {
-      localStream.getTracks().forEach(t => t.stop());
-      localStream = null;
-    }
+    if (localStream && !window.Sqwid.callState.keepStream) {
+  localStream.getTracks().forEach(t => t.stop());
+  localStream = null;
+} else if (localStream && window.Sqwid.callState.keepStream) {
+  // Передали стрим в групповой режим — не трогаем
+}
     if (peerConnection) {
       peerConnection.close();
       peerConnection = null;
@@ -361,21 +398,24 @@ waitForSqwidCalls((S) => {
     if (unsubAnswerListener) { unsubAnswerListener(); unsubAnswerListener = null; }
     if (unsubIceListener) { unsubIceListener(); unsubIceListener = null; }
 
-    currentCallId = null;
-    currentCallType = null;
-    callPartnerUid = null;
-    callPartnerPhoto = "";
-    isCaller = false;
-    incomingCallData = null;
-    isMinimized = false;
+    if (!window.Sqwid.callState.groupMode) {
+  currentCallId = null;
+  currentCallType = null;
+  callPartnerUid = null;
+  callPartnerPhoto = "";
+  isCaller = false;
+  incomingCallData = null;
+  isMinimized = false;
+}
 
-    if (S.getChatId && S.getChatId()) {
-      S.showScreen("screen-messages");
-    } else {
-      S.showScreen("screen-chats");
-    }
+    if (!window.Sqwid.callState.groupMode) {
+  if (S.getChatId && S.getChatId()) {
+    S.showScreen("screen-messages");
+  } else {
+    S.showScreen("screen-chats");
   }
-
+}
+  }
   /* ============================================================
      PEER CONNECTION
      ============================================================ */
@@ -538,22 +578,27 @@ waitForSqwidCalls((S) => {
   }
 
   function showIncomingModal(call) {
-    const modal = document.getElementById("modal-incoming-call");
-    if (!modal || modal.classList.contains("active")) return;
+  const banner = document.getElementById("incomingCallBanner");
+  if (!banner) return;
+  if (banner.classList.contains("active")) return;
 
-    const nameEl = document.getElementById("incomingCallName");
-    const typeEl = document.getElementById("incomingCallType");
-    if (nameEl) nameEl.textContent = call.fromName || "Пользователь";
-    if (typeEl) typeEl.textContent = call.type === "video" ? "Видеозвонок" : "Аудиозвонок";
+  const nameEl = document.getElementById("incomingCallName");
+  const typeEl = document.getElementById("incomingCallType");
+  if (nameEl) nameEl.textContent = call.fromName || "Пользователь";
+  if (typeEl) typeEl.textContent = call.type === "video" ? "Видеозвонок" : "Аудиозвонок";
 
-    modal.classList.add("active");
-  }
+  banner.classList.add("active", "pulsing");
+  document.body.classList.add("has-incoming-call");
+}
 
   function hideIncomingModal() {
-    const modal = document.getElementById("modal-incoming-call");
-    if (modal) modal.classList.remove("active");
-    incomingCallData = null;
+  const banner = document.getElementById("incomingCallBanner");
+  if (banner) {
+    banner.classList.remove("active", "pulsing");
   }
+  document.body.classList.remove("has-incoming-call");
+  incomingCallData = null;
+}
 
   /* ============================================================
      ПРИНЯТЬ
@@ -634,16 +679,23 @@ waitForSqwidCalls((S) => {
      ЗАВЕРШИТЬ
      ============================================================ */
   async function endCall() {
-    if (currentCallId) {
-      try {
-        await update(ref(db, `calls/${currentCallId}`), {
-          status: "ended",
-          endedAt: Date.now()
-        });
-      } catch (e) {}
+  if (window.Sqwid.callState.groupMode) {
+    // Групповой режим сам разберётся
+    if (window.Sqwid.endGroupCall) {
+      window.Sqwid.endGroupCall();
+      return;
     }
-    cleanupCall();
   }
+  if (currentCallId) {
+    try {
+      await update(ref(db, `calls/${currentCallId}`), {
+        status: "ended",
+        endedAt: Date.now()
+      });
+    } catch (e) {}
+  }
+  cleanupCall();
+}
 
   /* ============================================================
      КНОПКИ

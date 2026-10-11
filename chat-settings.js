@@ -98,6 +98,7 @@ waitForSqwidSettings((S) => {
       avatarBase64 = null;
       avatarChanged = false;
       renderSettings();
+      renderLangPicker();
       S.showScreen("screen-settings");
     });
   });
@@ -166,14 +167,19 @@ waitForSqwidSettings((S) => {
 
     // Кастомизация ника (только Plus)
     const nickCustom = document.getElementById("settingsNickCustom");
+    const nickFont = document.getElementById("settingsNickFont");
     const nickEmoji = document.getElementById("settingsNickEmoji");
     if (nickCustom && nickEmoji) {
       const plus = isPlus();
       nickCustom.style.display = plus ? "block" : "none";
+      if (nickFont) nickFont.style.display = plus ? "block" : "none";
       nickEmoji.style.display = plus ? "block" : "none";
       if (plus) {
         document.querySelectorAll(".nick-color-btn").forEach(b => {
           b.classList.toggle("active", (b.dataset.color || "") === (myData.nickColor || ""));
+        });
+        document.querySelectorAll(".nick-font-btn").forEach(b => {
+          b.classList.toggle("active", (b.dataset.font || "normal") === (myData.nickFont || "normal"));
         });
         document.querySelectorAll(".nick-emoji-btn").forEach(b => {
           b.classList.toggle("active", (b.dataset.emoji || "") === (myData.nickEmoji || ""));
@@ -288,13 +294,23 @@ waitForSqwidSettings((S) => {
     });
   });
 
+  document.querySelectorAll(".nick-font-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (!isPlus()) return S.showAlert("Только для Sqwid+", "Инфо");
+      const font = btn.dataset.font || "normal";
+      document.querySelectorAll(".nick-font-btn").forEach(b => b.classList.toggle("active", b === btn));
+      await update(ref(db, "users/" + currentUser.uid), { nickFont: font === "normal" ? null : font });
+      S.showToast("Шрифт сохранён", "ok");
+    });
+  });
+
   document.querySelectorAll(".nick-emoji-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
       if (!isPlus()) return S.showAlert("Только для Sqwid+", "Инфо");
       const emoji = btn.dataset.emoji || "";
       document.querySelectorAll(".nick-emoji-btn").forEach(b => b.classList.toggle("active", b === btn));
       await update(ref(db, "users/" + currentUser.uid), { nickEmoji: emoji || null });
-      S.showToast("Эмодзи сохранён", "ok");
+      S.showToast("Значок сохранён", "ok");
     });
   });
 
@@ -479,47 +495,49 @@ waitForSqwidSettings((S) => {
   function askPrompt(text, placeholder) {
     return S.showPrompt(text, placeholder, "");
   }
-/* ============================================================
-   ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКОВ
-   ============================================================ */
-function renderLangPicker() {
-  const box = document.getElementById("langPicker");
-  if (!box) return;
-  if (!window.SqwidI18n) return;
 
-  const { LANGUAGE_NAMES, LANGUAGE_FLAGS, getLanguage, setLanguage, t } = window.SqwidI18n;
-  const currentLang = getLanguage();
+  /* ============================================================
+     ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКОВ
+     ============================================================ */
+  function renderLangPicker() {
+    const box = document.getElementById("langPicker");
+    if (!box) return;
+    if (!window.SqwidI18n) return;
 
-  box.innerHTML = "";
-  ["ru", "en", "es", "de", "zh"].forEach(code => {
-    const btn = document.createElement("button");
-    btn.className = "theme-btn" + (code === currentLang ? " active" : "");
-    btn.type = "button";
-    btn.dataset.lang = code;
-    btn.innerHTML = `
-      <div class="theme-btn-icon">${LANGUAGE_FLAGS[code]}</div>
-      <div class="theme-btn-label">${code.toUpperCase()}</div>
-    `;
-    btn.addEventListener("click", () => {
-      setLanguage(code);
-      renderLangPicker();
-      S.showToast(t("common.save"), "ok");
+    const { LANGUAGE_NAMES, LANGUAGE_FLAGS, getLanguage, setLanguage, t } = window.SqwidI18n;
+    const currentLang = getLanguage();
+
+    box.innerHTML = "";
+    ["ru", "en", "es", "de", "zh"].forEach(code => {
+      const btn = document.createElement("button");
+      btn.className = "theme-btn" + (code === currentLang ? " active" : "");
+      btn.type = "button";
+      btn.dataset.lang = code;
+      btn.innerHTML = `
+        <div class="theme-btn-icon">${LANGUAGE_FLAGS[code]}</div>
+        <div class="theme-btn-label">${code.toUpperCase()}</div>
+      `;
+      btn.addEventListener("click", () => {
+        setLanguage(code);
+        renderLangPicker();
+        if (t) S.showToast(t("common.save") || "Сохранено", "ok");
+      });
+      box.appendChild(btn);
     });
-    box.appendChild(btn);
-  });
-}
+  }
 
-// Рендерим при открытии настроек
-const origNavBtns = document.querySelectorAll('.nav-btn[data-screen="screen-settings"]');
-origNavBtns.forEach(b => {
-  b.addEventListener("click", () => {
-    setTimeout(renderLangPicker, 100);
+  // Рендерим при открытии настроек
+  const origNavBtns = document.querySelectorAll('.nav-btn[data-screen="screen-settings"]');
+  origNavBtns.forEach(b => {
+    b.addEventListener("click", () => {
+      setTimeout(renderLangPicker, 100);
+    });
   });
-});
 
-// И сразу, если экран настроек уже активен
-if (document.getElementById("screen-settings")?.classList.contains("active")) {
-  renderLangPicker();
-}
+  // И сразу, если экран настроек уже активен
+  if (document.getElementById("screen-settings")?.classList.contains("active")) {
+    renderLangPicker();
+  }
+
   console.log("✅ chat-settings.js готов");
 });
