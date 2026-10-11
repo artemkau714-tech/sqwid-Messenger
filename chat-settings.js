@@ -1,7 +1,6 @@
 /* ============================================================
    chat-settings.js — настройки
-   Профиль, приватность, PIN, аккаунт, ТЕМА (светлая/тёмная/девчачья),
-   Sqwid+ (фон + соцсети), валидация URL
+   Профиль, приватность, PIN, аккаунт, темы, Sqwid+, кастомизация ника
    ============================================================ */
 
 console.log("🚀 chat-settings.js загружен, жду Sqwid...");
@@ -56,7 +55,7 @@ waitForSqwidSettings((S) => {
   }
 
   /* ============================================================
-     ТЕМА — applyTheme
+     ТЕМА
      ============================================================ */
   function applyTheme(theme) {
     if (theme === "dark") {
@@ -143,7 +142,6 @@ waitForSqwidSettings((S) => {
     const balEl = document.getElementById("settingsBalance");
     if (balEl) balEl.textContent = "🪙 " + (myData.coins || 0) + " SQ";
 
-    // Обновить состояние кнопок темы
     let cur = "light";
     try { cur = localStorage.getItem("sqwid_theme") || "light"; } catch (e) {}
     const light = document.getElementById("themeLight");
@@ -165,6 +163,23 @@ waitForSqwidSettings((S) => {
         setVal("settingsSocialYoutube", social.youtube || "");
       }
     }
+
+    // Кастомизация ника (только Plus)
+    const nickCustom = document.getElementById("settingsNickCustom");
+    const nickEmoji = document.getElementById("settingsNickEmoji");
+    if (nickCustom && nickEmoji) {
+      const plus = isPlus();
+      nickCustom.style.display = plus ? "block" : "none";
+      nickEmoji.style.display = plus ? "block" : "none";
+      if (plus) {
+        document.querySelectorAll(".nick-color-btn").forEach(b => {
+          b.classList.toggle("active", (b.dataset.color || "") === (myData.nickColor || ""));
+        });
+        document.querySelectorAll(".nick-emoji-btn").forEach(b => {
+          b.classList.toggle("active", (b.dataset.emoji || "") === (myData.nickEmoji || ""));
+        });
+      }
+    }
   }
 
   function setVal(id, v) {
@@ -177,7 +192,7 @@ waitForSqwidSettings((S) => {
   }
 
   /* ============================================================
-     ТЕМА — обработчики кнопок
+     ТЕМА — обработчики
      ============================================================ */
   const btnThemeLight = document.getElementById("themeLight");
   if (btnThemeLight) btnThemeLight.addEventListener("click", () => applyTheme("light"));
@@ -261,6 +276,29 @@ waitForSqwidSettings((S) => {
   });
 
   /* ============================================================
+     КАСТОМИЗАЦИЯ НИКА
+     ============================================================ */
+  document.querySelectorAll(".nick-color-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (!isPlus()) return S.showAlert("Только для Sqwid+", "Инфо");
+      const color = btn.dataset.color || "";
+      document.querySelectorAll(".nick-color-btn").forEach(b => b.classList.toggle("active", b === btn));
+      await update(ref(db, "users/" + currentUser.uid), { nickColor: color || null });
+      S.showToast("Цвет сохранён", "ok");
+    });
+  });
+
+  document.querySelectorAll(".nick-emoji-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (!isPlus()) return S.showAlert("Только для Sqwid+", "Инфо");
+      const emoji = btn.dataset.emoji || "";
+      document.querySelectorAll(".nick-emoji-btn").forEach(b => b.classList.toggle("active", b === btn));
+      await update(ref(db, "users/" + currentUser.uid), { nickEmoji: emoji || null });
+      S.showToast("Эмодзи сохранён", "ok");
+    });
+  });
+
+  /* ============================================================
      SQWID+ — ФОН ПРОФИЛЯ + СОЦСЕТИ
      ============================================================ */
   const btnUploadProfileBg = document.getElementById("btnUploadProfileBg");
@@ -296,7 +334,6 @@ waitForSqwidSettings((S) => {
       const rawIg = (document.getElementById("settingsSocialInstagram").value || "").trim();
       const rawYt = (document.getElementById("settingsSocialYoutube").value || "").trim();
 
-      // Валидация ссылок
       const telegram = sanitizeUrl(rawTg);
       const instagram = sanitizeUrl(rawIg);
       const youtube = sanitizeUrl(rawYt);
@@ -442,6 +479,47 @@ waitForSqwidSettings((S) => {
   function askPrompt(text, placeholder) {
     return S.showPrompt(text, placeholder, "");
   }
+/* ============================================================
+   ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКОВ
+   ============================================================ */
+function renderLangPicker() {
+  const box = document.getElementById("langPicker");
+  if (!box) return;
+  if (!window.SqwidI18n) return;
 
+  const { LANGUAGE_NAMES, LANGUAGE_FLAGS, getLanguage, setLanguage, t } = window.SqwidI18n;
+  const currentLang = getLanguage();
+
+  box.innerHTML = "";
+  ["ru", "en", "es", "de", "zh"].forEach(code => {
+    const btn = document.createElement("button");
+    btn.className = "theme-btn" + (code === currentLang ? " active" : "");
+    btn.type = "button";
+    btn.dataset.lang = code;
+    btn.innerHTML = `
+      <div class="theme-btn-icon">${LANGUAGE_FLAGS[code]}</div>
+      <div class="theme-btn-label">${code.toUpperCase()}</div>
+    `;
+    btn.addEventListener("click", () => {
+      setLanguage(code);
+      renderLangPicker();
+      S.showToast(t("common.save"), "ok");
+    });
+    box.appendChild(btn);
+  });
+}
+
+// Рендерим при открытии настроек
+const origNavBtns = document.querySelectorAll('.nav-btn[data-screen="screen-settings"]');
+origNavBtns.forEach(b => {
+  b.addEventListener("click", () => {
+    setTimeout(renderLangPicker, 100);
+  });
+});
+
+// И сразу, если экран настроек уже активен
+if (document.getElementById("screen-settings")?.classList.contains("active")) {
+  renderLangPicker();
+}
   console.log("✅ chat-settings.js готов");
 });

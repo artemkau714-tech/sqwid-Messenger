@@ -1,5 +1,5 @@
 /* ============================================================
-   owner.js — Owner-панель + жалобы + логи + верификация + магазин + лимиты + защита владельца
+   owner.js — Owner-панель + жалобы + логи + верификация + лимиты + защита владельца + статистика
    ============================================================ */
 
 console.log("🚀 owner.js загружен, жду Sqwid...");
@@ -33,26 +33,17 @@ waitForSqwidOwner((S) => {
 
   console.log("🔥 owner.js активирован", { isOwner, isSpecialMod });
 
-  /* ============================================================
-     СОСТОЯНИЕ
-     ============================================================ */
   let allUsers = {};
   let allChats = {};
   let allReports = {};
   let allLogs = {};
-  let shopItemsCache = {};
 
   let givePickedUid = null;
   let plusPickedUid = null;
   let ownerUserModalUid = null;
   let reportsFilter = "new";
-  let shopFilter = "all";
   let currentReportId = null;
   let reportContext = null;
-
-  function canManageShop() {
-    return isOwner || isSpecialMod;
-  }
 
   /* ============================================================
      ПОДПИСКИ
@@ -82,25 +73,12 @@ waitForSqwidOwner((S) => {
     }
   });
 
-  onValue(ref(db, "shop/items"), (s) => {
-    shopItemsCache = s.val() || {};
-    if (isOwnerScreenActive()) renderShopAdmin();
-  });
-
   onValue(ref(db, "users/" + currentUser.uid), (s) => {
     const me = s.val() || {};
     isModerator = isOwner || isSpecialMod || me.role === "moderator";
 
     const btn = document.getElementById("btnOpenOwnerPanel");
     if (btn) btn.style.display = (isOwner || isModerator) ? "block" : "none";
-
-    const canShop = canManageShop();
-    document.querySelectorAll('.owner-tab[data-tab="shop"]').forEach(el => {
-      el.style.display = canShop ? "" : "none";
-    });
-    document.querySelectorAll('.owner-pane[data-pane="shop"]').forEach(el => {
-      el.style.display = canShop ? "" : "none";
-    });
 
     const canEconomy = isOwner || isSpecialMod;
     document.querySelectorAll('.owner-tab[data-tab="economy"]').forEach(el => {
@@ -135,12 +113,18 @@ waitForSqwidOwner((S) => {
     if (u.photo && u.photo.startsWith("data:image")) {
       return `<div class="owner-user-ava" style="width:${sz}px;height:${sz}px;"><img src="${u.photo}"></div>`;
     }
+    if (u.photo && !u.photo.startsWith("data:")) {
+      return `<div class="owner-user-ava" style="width:${sz}px;height:${sz}px;"><img src="${u.photo}"></div>`;
+    }
     const letter = (u.name || u.email || "?").trim().charAt(0).toUpperCase();
     return `<div class="owner-user-ava" style="width:${sz}px;height:${sz}px;">${escH(letter)}</div>`;
   }
   function makeChatAvaHTML(c, size) {
     const sz = size || 40;
     if (c.photo && c.photo.startsWith("data:image")) {
+      return `<div class="owner-user-ava" style="width:${sz}px;height:${sz}px;"><img src="${c.photo}"></div>`;
+    }
+    if (c.photo && !c.photo.startsWith("data:")) {
       return `<div class="owner-user-ava" style="width:${sz}px;height:${sz}px;"><img src="${c.photo}"></div>`;
     }
     const letter = (c.name || "?").trim().charAt(0).toUpperCase();
@@ -154,8 +138,6 @@ waitForSqwidOwner((S) => {
     const el = document.getElementById(id);
     if (el) el.style.display = on ? "block" : "none";
   }
-
-  /* Имя юзера для отображения — всегда что-то показываем */
   function getUserDisplayName(u, uid) {
     if (u.name) return u.name;
     if (u.email) return u.email.split("@")[0];
@@ -268,11 +250,6 @@ waitForSqwidOwner((S) => {
       el.style.display = isOwner ? "" : "none";
     });
 
-    if (canManageShop()) {
-      document.querySelectorAll('.owner-tab[data-tab="shop"]').forEach(el => el.style.display = "");
-      document.querySelectorAll('.owner-pane[data-pane="shop"]').forEach(el => el.style.display = "");
-    }
-
     if (isOwner || isSpecialMod) {
       document.querySelectorAll('.owner-tab[data-tab="economy"]').forEach(el => el.style.display = "");
       document.querySelectorAll('.owner-pane[data-pane="economy"]').forEach(el => el.style.display = "");
@@ -294,6 +271,12 @@ waitForSqwidOwner((S) => {
   if (btnBackOwner) btnBackOwner.addEventListener("click", () => S.showScreen("screen-chats"));
 
   /* ============================================================
+     КНОПКА ОТКРЫТИЯ ПАНЕЛИ (без setInterval)
+     ============================================================ */
+  const ownerBtn = document.getElementById("btnOpenOwnerPanel");
+  if (ownerBtn) ownerBtn.addEventListener("click", openOwnerPanel);
+
+  /* ============================================================
      ВКЛАДКИ
      ============================================================ */
   document.querySelectorAll(".owner-tab").forEach(tab => {
@@ -304,23 +287,23 @@ waitForSqwidOwner((S) => {
         p.classList.toggle("active", p.dataset.pane === target);
       });
       if (target === "overview")   renderOverview();
+      if (target === "stats")      renderStats();
       if (target === "economy")    renderEconomy();
       if (target === "users")      renderUsers();
       if (target === "chats")      renderChats();
       if (target === "reports")    renderReports();
       if (target === "moderators") renderModerators();
-      if (target === "shop")       renderShopAdmin();
     });
   });
 
   function renderOwnerAll() {
     renderOverview();
+    renderStats();
     renderEconomy();
     renderUsers();
     renderChats();
     renderReports();
     renderModerators();
-    renderShopAdmin();
   }
 
   /* ============================================================
@@ -395,6 +378,148 @@ Sqwid+: ${plusCount}
   }
 
   /* ============================================================
+     СТАТИСТИКА
+     ============================================================ */
+  async function renderStats() {
+    if (!isOwner && !isModerator) return;
+
+    const days = 30;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const byDay = {};
+    for (let i = 0; i < days; i++) {
+      const d = new Date(today.getTime() - i * 86400000);
+      const key = d.toISOString().slice(0, 10);
+      byDay[key] = { messages: 0, users: 0, chats: 0 };
+    }
+
+    const msgsSnap = await get(ref(db, "messages"));
+    const allMsgs = msgsSnap.val() || {};
+    const userMsgCount = {};
+    for (const cid in allMsgs) {
+      const msgs = allMsgs[cid] || {};
+      for (const mid in msgs) {
+        const m = msgs[mid];
+        if (!m.timestamp) continue;
+        const key = new Date(m.timestamp).toISOString().slice(0, 10);
+        if (byDay[key]) byDay[key].messages++;
+        if (m.sender) userMsgCount[m.sender] = (userMsgCount[m.sender] || 0) + 1;
+      }
+    }
+
+    for (const uid in allUsers) {
+      const ts = allUsers[uid].createdAt;
+      if (!ts) continue;
+      const key = new Date(ts).toISOString().slice(0, 10);
+      if (byDay[key]) byDay[key].users++;
+    }
+
+    for (const cid in allChats) {
+      const ts = allChats[cid].createdAt;
+      if (!ts) continue;
+      const key = new Date(ts).toISOString().slice(0, 10);
+      if (byDay[key]) byDay[key].chats++;
+    }
+
+    function buildChart(containerId, labelsId, daysCount) {
+      const box = document.getElementById(containerId);
+      const labels = document.getElementById(labelsId);
+      if (!box) return;
+      box.innerHTML = "";
+      if (labels) labels.innerHTML = "";
+
+      const arr = [];
+      for (let i = daysCount - 1; i >= 0; i--) {
+        const d = new Date(today.getTime() - i * 86400000);
+        const key = d.toISOString().slice(0, 10);
+        arr.push({ key, data: byDay[key] || { messages: 0, users: 0, chats: 0 } });
+      }
+      const max = Math.max(1, ...arr.map(a => a.data.messages));
+
+      arr.forEach(a => {
+        const bar = document.createElement("div");
+        bar.className = "owner-chart-bar";
+        bar.style.height = (a.data.messages / max * 100) + "%";
+        bar.title = a.key + ": " + a.data.messages + " сообщений";
+        box.appendChild(bar);
+      });
+
+      if (labels) {
+        const first = document.createElement("span");
+        first.textContent = arr[0].key.slice(5);
+        const last = document.createElement("span");
+        last.textContent = arr[arr.length - 1].key.slice(5);
+        labels.appendChild(first);
+        labels.appendChild(last);
+      }
+    }
+
+    buildChart("ownerChart7", "ownerChart7Labels", 7);
+    buildChart("ownerChart30", "ownerChart30Labels", 30);
+
+    const topUsersBox = document.getElementById("ownerTopUsers");
+    if (topUsersBox) {
+      const arr = Object.entries(userMsgCount)
+        .map(([uid, count]) => ({ uid, count, u: allUsers[uid] || {} }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+      topUsersBox.innerHTML = "";
+      if (arr.length === 0) {
+        topUsersBox.innerHTML = '<div class="create-empty">Пока нет данных</div>';
+      } else {
+        arr.forEach((item, i) => {
+          const rankClass = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "";
+          const row = document.createElement("div");
+          row.className = "owner-top-row";
+          const ava = item.u.photo && item.u.photo.startsWith("data:image")
+            ? `<img src="${item.u.photo}">`
+            : escH((item.u.name || item.u.email || "?").charAt(0).toUpperCase());
+          row.innerHTML = `
+            <div class="owner-top-rank ${rankClass}">${i + 1}</div>
+            <div class="owner-user-ava" style="width:2rem;height:2rem;font-size:0.8rem;">${ava}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:0.88rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escH(getUserDisplayName(item.u, item.uid))}</div>
+              <div style="font-size:0.75rem;color:var(--text-2);">${item.count} сообщений</div>
+            </div>
+          `;
+          row.addEventListener("click", () => openOwnerUserModal(item.uid));
+          topUsersBox.appendChild(row);
+        });
+      }
+    }
+
+    const topChatsBox = document.getElementById("ownerTopChats");
+    if (topChatsBox) {
+      const arr = Object.entries(allChats)
+        .map(([cid, c]) => ({ cid, c, count: Object.keys(c.members || {}).length }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+      topChatsBox.innerHTML = "";
+      if (arr.length === 0) {
+        topChatsBox.innerHTML = '<div class="create-empty">Пока нет данных</div>';
+      } else {
+        arr.forEach((item, i) => {
+          const rankClass = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "";
+          const row = document.createElement("div");
+          row.className = "owner-top-row";
+          const ava = item.c.photo && item.c.photo.startsWith("data:image")
+            ? `<img src="${item.c.photo}">`
+            : escH((item.c.name || "?").charAt(0).toUpperCase());
+          row.innerHTML = `
+            <div class="owner-top-rank ${rankClass}">${i + 1}</div>
+            <div class="owner-user-ava" style="width:2rem;height:2rem;font-size:0.8rem;">${ava}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:0.88rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escH(item.c.name || "Чат")}</div>
+              <div style="font-size:0.75rem;color:var(--text-2);">${item.count} участников</div>
+            </div>
+          `;
+          topChatsBox.appendChild(row);
+        });
+      }
+    }
+  }
+
+  /* ============================================================
      ЭКОНОМИКА
      ============================================================ */
   function renderEconomy() {
@@ -457,7 +582,6 @@ Sqwid+: ${plusCount}
     });
   }
 
-  /* --- ВЫДАТЬ SQ --- */
   const btnGiveSQ = document.getElementById("btnOwnerGiveSQ");
   if (btnGiveSQ) btnGiveSQ.addEventListener("click", async () => {
     if (!isOwner && !isSpecialMod) return;
@@ -486,7 +610,6 @@ Sqwid+: ${plusCount}
     refreshDailyLimitUI();
   });
 
-  /* --- ЗАБРАТЬ SQ --- */
   const btnTakeSQ = document.getElementById("btnOwnerTakeSQ");
   if (btnTakeSQ) btnTakeSQ.addEventListener("click", async () => {
     if (!isOwner && !isSpecialMod) return;
@@ -500,7 +623,6 @@ Sqwid+: ${plusCount}
     S.showToast(`-${amt} SQ`, "ok");
   });
 
-  /* --- ВЫДАТЬ SQWID+ --- */
   const btnGivePlus = document.getElementById("btnOwnerGivePlus");
   if (btnGivePlus) btnGivePlus.addEventListener("click", async () => {
     if (!isOwner && !isSpecialMod) return;
@@ -522,7 +644,6 @@ Sqwid+: ${plusCount}
     S.showToast("Sqwid+ выдан", "ok");
   });
 
-  /* --- ЗАБРАТЬ SQWID+ --- */
   const btnTakePlus = document.getElementById("btnOwnerTakePlus");
   if (btnTakePlus) btnTakePlus.addEventListener("click", async () => {
     if (!isOwner && !isSpecialMod) return;
@@ -625,7 +746,7 @@ Sqwid+: ${plusCount}
           <div class="owner-user-sub">${Object.keys(c.members || {}).length} участников</div>
           ${badges.length ? `<div class="owner-user-badges">${badges.join("")}</div>` : ""}
         </div>
-        <button class="inventory-item-btn" data-verify-chat="${c.cid}" style="color:#3b82f6;">${c.verified ? "Снять ✓" : "✓ Вериф."}</button>
+        <button class="btn-secondary" data-verify-chat="${c.cid}" style="width:auto;padding:0.4rem 0.75rem;font-size:0.75rem;color:#3b82f6;">${c.verified ? "Снять ✓" : "✓ Вериф."}</button>
       `;
       row.addEventListener("click", (e) => {
         if (e.target.dataset.verifyChat) return;
@@ -664,9 +785,10 @@ Sqwid+: ${plusCount}
     const avaEl = document.getElementById("ouAva");
     if (avaEl) {
       if (u.photo && u.photo.startsWith("data:image")) avaEl.src = u.photo;
+      else if (u.photo && !u.photo.startsWith("data:")) avaEl.src = u.photo;
       else {
         const l = (u.name || u.email || "?").trim().charAt(0).toUpperCase();
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#6366f1"/><text x="50%" y="55%" font-size="36" fill="#fff" text-anchor="middle" font-family="Arial">${l}</text></svg>`;
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#f97316"/><text x="50%" y="55%" font-size="36" fill="#fff" text-anchor="middle" font-family="Arial">${l}</text></svg>`;
         avaEl.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
       }
     }
@@ -983,7 +1105,7 @@ Sqwid+: ${plusCount}
               <div class="owner-user-name">${escH(getUserDisplayName(u, u.uid))}</div>
               <div class="owner-user-sub">${escH(getUserSub(u, u.uid))}</div>
             </div>
-            <button class="inventory-item-btn remove" data-mod-remove="${u.uid}">Снять</button>
+            <button class="btn-secondary" data-mod-remove="${u.uid}" style="width:auto;padding:0.4rem 0.75rem;font-size:0.75rem;color:#ef4444;">Снять</button>
           `;
           row.querySelector("[data-mod-remove]").addEventListener("click", async (e) => {
             e.stopPropagation();
@@ -1026,169 +1148,8 @@ Sqwid+: ${plusCount}
   }
 
   /* ============================================================
-     УПРАВЛЕНИЕ МАГАЗИНОМ
+     ЖАЛОБА
      ============================================================ */
-  function renderShopAdmin() {
-    if (!canManageShop()) return;
-
-    const list = document.getElementById("shopItemsList");
-    if (!list) return;
-    const q = (document.getElementById("shopItemsSearch")?.value || "").toLowerCase().trim();
-    list.innerHTML = "";
-
-    const arr = [];
-    for (const id in shopItemsCache) {
-      const it = shopItemsCache[id];
-      const type = it.type || "unknown";
-      if (shopFilter !== "all" && type !== shopFilter) continue;
-      if (q && !(it.name || "").toLowerCase().includes(q) && !id.toLowerCase().includes(q)) continue;
-      arr.push({ id, ...it });
-    }
-    arr.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-    if (arr.length === 0) {
-      list.innerHTML = '<div class="create-empty">Товаров нет</div>';
-      return;
-    }
-
-    arr.forEach(it => {
-      const row = document.createElement("div");
-      row.className = "owner-user-row";
-      row.innerHTML = `
-        <div class="owner-user-ava" style="background:#f1f5f9;font-size:20px;">${escH(it.icon || "🏷")}</div>
-        <div class="owner-user-info">
-          <div class="owner-user-name">${escH(it.name || it.value || it.id)}</div>
-          <div class="owner-user-sub">${escH(it.type || "")} · 🪙 ${it.price || 0} SQ</div>
-          <div class="owner-user-sub" style="font-size:11px;color:#94a3b8;font-family:'JetBrains Mono',monospace;">${escH(it.id)}</div>
-        </div>
-        <button class="inventory-item-btn remove" data-delete="${it.id}">Удалить</button>
-      `;
-      row.querySelector("[data-delete]").addEventListener("click", async (e) => {
-        e.stopPropagation();
-        const ok = await S.showConfirm("Удалить товар «" + (it.name || it.id) + "»?", "Удалить");
-        if (!ok) return;
-        await remove(ref(db, "shop/items/" + it.id));
-        await logAction("Удалил товар", it.name || it.id, null, "shop");
-        S.showToast("Товар удалён", "ok");
-        renderShopAdmin();
-      });
-      list.appendChild(row);
-    });
-  }
-
-  document.querySelectorAll('[data-shop-filter]').forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll('[data-shop-filter]').forEach(x => x.classList.toggle("active", x === btn));
-      shopFilter = btn.dataset.shopFilter;
-      renderShopAdmin();
-    });
-  });
-
-  const shopItemsSearch = document.getElementById("shopItemsSearch");
-  if (shopItemsSearch) shopItemsSearch.addEventListener("input", renderShopAdmin);
-
-  const shopAddType = document.getElementById("shopAddType");
-  if (shopAddType) {
-    shopAddType.addEventListener("change", () => {
-      const hint = document.getElementById("shopAddValueHint");
-      if (!hint) return;
-      const t = shopAddType.value;
-      const hints = {
-        username: "Для юзернейма — только латиница (a-z), цифры, _ . От 3 до 20 символов.",
-        vip_username: "VIP юзернейм — то же, но показывается отдельным разделом.",
-        phone: "Формат: +7 999 123-45-67 или как удобно.",
-        nickColor: "HEX-цвет, например #ff0000.",
-        emoji: "Один эмодзи, например 🔥.",
-        frame: "Название рамки: gold, fire, rainbow (или своё)."
-      };
-      hint.textContent = hints[t] || "";
-    });
-  }
-
-  const btnShopAdd = document.getElementById("btnShopAdd");
-  if (btnShopAdd) btnShopAdd.addEventListener("click", async () => {
-    if (!canManageShop()) return S.showToast("Нет доступа", "error");
-
-    const type = document.getElementById("shopAddType").value;
-    const id = (document.getElementById("shopAddId").value || "").trim();
-    const name = (document.getElementById("shopAddName").value || "").trim();
-    const value = (document.getElementById("shopAddValue").value || "").trim();
-    const price = parseInt(document.getElementById("shopAddPrice").value) || 0;
-    const preview = (document.getElementById("shopAddPreview").value || "").trim();
-    const icon = (document.getElementById("shopAddIcon").value || "").trim();
-
-    if (!id) return S.showToast("Введите ID товара", "error");
-    if (!/^[a-zA-Z0-9_]+$/.test(id)) return S.showToast("ID: только латиница, цифры, _", "error");
-    if (!name) return S.showToast("Введите название", "error");
-    if (!value) return S.showToast("Введите значение", "error");
-    if (price <= 0) return S.showToast("Цена > 0", "error");
-
-    if (type === "username" || type === "vip_username") {
-      if (!/^[a-z0-9_]{3,20}$/.test(value.toLowerCase())) {
-        return S.showToast("Юзернейм: латиница (a-z), цифры, _ , 3-20", "error");
-      }
-      const usersSnap = await get(ref(db, "users"));
-      const users = usersSnap.val() || {};
-      for (const uid in users) {
-        if (users[uid].username && users[uid].username.toLowerCase() === value.toLowerCase()) {
-          return S.showToast("Юзернейм @" + value + " уже занят", "error");
-        }
-      }
-    }
-
-    if (type === "nickColor" && !/^#[0-9a-fA-F]{6}$/.test(value)) {
-      return S.showToast("Цвет в формате #RRGGBB", "error");
-    }
-
-    if (type === "phone") {
-      if (!/^\+?[\d\s\-()]{7,20}$/.test(value)) {
-        return S.showToast("Неверный формат номера", "error");
-      }
-    }
-
-    const payload = {
-      id, type, name, value, price,
-      preview: preview || (type === "username" ? "Уникальный юзернейм" : name),
-      icon: icon || defaultIcon(type),
-      createdAt: Date.now(),
-      createdBy: currentUser.uid,
-      createdByEmail: currentUser.email,
-      isVip: type === "vip_username"
-    };
-
-    try {
-      await set(ref(db, "shop/items/" + id), payload);
-      await logAction("Добавил товар", `${type} · ${name} · ${price} SQ`, null, "shop");
-      S.showToast("Товар добавлен", "ok");
-      document.getElementById("shopAddId").value = "";
-      document.getElementById("shopAddName").value = "";
-      document.getElementById("shopAddValue").value = "";
-      document.getElementById("shopAddPreview").value = "";
-      document.getElementById("shopAddIcon").value = "";
-      renderShopAdmin();
-    } catch (e) {
-      S.showToast("Ошибка: " + e.message, "error");
-    }
-  });
-
-  function defaultIcon(type) {
-    if (type === "username") return "🏷";
-    if (type === "vip_username") return "💎";
-    if (type === "phone") return "📞";
-    if (type === "nickColor") return "🎨";
-    if (type === "emoji") return "😀";
-    if (type === "frame") return "🖼";
-    return "🏷";
-  }
-
-  setInterval(() => {
-    const btn = document.getElementById("btnOpenOwnerPanel");
-    if (btn && !btn.dataset.bound) {
-      btn.dataset.bound = "1";
-      btn.addEventListener("click", openOwnerPanel);
-    }
-  }, 800);
-
   window.Sqwid.openReportModal = function ({ targetType, targetUid, chatId, messageIds, targetLabel }) {
     reportContext = { targetType, targetUid, chatId, messageIds, targetLabel };
     setText("reportTargetInfo", targetLabel || "—");

@@ -1,6 +1,6 @@
 /* ============================================================
    games.js — Sqwid Games
-   Угадай число + Рулетка подарков + Слот-машина + Краш + квесты + Sqwid+
+   Угадай число + Слот-машина + Краш + квесты + Sqwid+
    ============================================================ */
 
 console.log("🚀 games.js загружен, жду Sqwid...");
@@ -30,7 +30,6 @@ waitForSqwidGames((S) => {
   let myData = {};
   let dailyStats = { games: 0, won: 0, lost: 0, winAmount: 0 };
   let dailyQuests = {};
-  let myGifts = {};
 
   function isPlus() {
     return myData.plusUntil && myData.plusUntil > Date.now();
@@ -43,10 +42,6 @@ waitForSqwidGames((S) => {
     myData = snap.val() || {};
     updateBalanceUI();
     renderDailyBonus();
-  });
-
-  onValue(ref(db, "users/" + currentUser.uid + "/gifts"), (snap) => {
-    myGifts = snap.val() || {};
   });
 
   onValue(ref(db, "users/" + currentUser.uid + "/dailyGames"), (snap) => {
@@ -201,7 +196,6 @@ waitForSqwidGames((S) => {
     btn.addEventListener("click", () => {
       const game = btn.dataset.game;
       if (game === "guess") startGuess();
-      if (game === "roulette") openRoulette();
       if (game === "slots") openSlots();
       if (game === "crash") openCrash();
     });
@@ -282,278 +276,6 @@ waitForSqwidGames((S) => {
   const btnGuessClose = document.getElementById("btnGuessClose");
   if (btnGuessClose) btnGuessClose.addEventListener("click", () => {
     document.getElementById("modal-guess").classList.remove("active");
-  });
-
-  /* ============================================================
-     РУЛЕТКА ПОДАРКОВ
-     ============================================================ */
-  let rouletteSelectedGiftId = null;
-  let rouletteSelectedGift = null;
-  let rouletteSpinning = false;
-  let rouletteAngle = 0;
-
-  const ROULETTE_SECTORS = [
-    { mult: 0,  label: "Ничего", emoji: "💨", color: "#3f3f46" },
-    { mult: 2,  label: "x2",     emoji: "🔥", color: "#10b981" },
-    { mult: 0,  label: "Ничего", emoji: "💨", color: "#3f3f46" },
-    { mult: 5,  label: "x5",     emoji: "💎", color: "#3b82f6" },
-    { mult: 0,  label: "Ничего", emoji: "💨", color: "#3f3f46" },
-    { mult: 2,  label: "x2",     emoji: "🔥", color: "#10b981" },
-    { mult: 0,  label: "Ничего", emoji: "💨", color: "#3f3f46" },
-    { mult: 20, label: "x20",    emoji: "🌟", color: "#f59e0b" },
-    { mult: 0,  label: "Ничего", emoji: "💨", color: "#3f3f46" },
-    { mult: 2,  label: "x2",     emoji: "🔥", color: "#10b981" },
-    { mult: 0,  label: "Ничего", emoji: "💨", color: "#3f3f46" },
-    { mult: 50, label: "x50",    emoji: "👑", color: "#ec4899" }
-  ];
-
-  function drawRouletteWheel() {
-    const svg = document.getElementById("rouletteWheel");
-    if (!svg) return;
-    svg.innerHTML = "";
-    const N = ROULETTE_SECTORS.length;
-    const R = 100;
-    const cx = 100, cy = 100;
-
-    for (let i = 0; i < N; i++) {
-      const s = ROULETTE_SECTORS[i];
-      const a1 = (i / N) * 2 * Math.PI - Math.PI / 2;
-      const a2 = ((i + 1) / N) * 2 * Math.PI - Math.PI / 2;
-      const x1 = cx + R * Math.cos(a1);
-      const y1 = cy + R * Math.sin(a1);
-      const x2 = cx + R * Math.cos(a2);
-      const y2 = cy + R * Math.sin(a2);
-      const largeArc = (a2 - a1) > Math.PI ? 1 : 0;
-
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      path.setAttribute("d", `M ${cx} ${cy} L ${x1} ${y1} A ${R} ${R} 0 ${largeArc} 1 ${x2} ${y2} Z`);
-      path.setAttribute("fill", s.color);
-      path.setAttribute("stroke", "rgba(255,255,255,0.35)");
-      path.setAttribute("stroke-width", "0.6");
-      svg.appendChild(path);
-
-      const midA = (a1 + a2) / 2;
-      const tx = cx + (R * 0.65) * Math.cos(midA);
-      const ty = cy + (R * 0.65) * Math.sin(midA);
-      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      text.setAttribute("x", tx);
-      text.setAttribute("y", ty);
-      text.setAttribute("font-size", "14");
-      text.setAttribute("text-anchor", "middle");
-      text.setAttribute("dominant-baseline", "middle");
-      text.setAttribute("fill", "#fff");
-      text.setAttribute("transform", `rotate(${(midA * 180 / Math.PI) + 90}, ${tx}, ${ty})`);
-      text.textContent = s.emoji;
-      svg.appendChild(text);
-    }
-  }
-
-  function openRoulette() {
-    rouletteSelectedGiftId = null;
-    rouletteSelectedGift = null;
-    rouletteSpinning = false;
-    rouletteAngle = 0;
-
-    drawRouletteWheel();
-
-    const wheel = document.getElementById("rouletteWheel");
-    if (wheel) {
-      wheel.style.transition = "transform 0s";
-      wheel.style.transform = "rotate(0deg)";
-    }
-    const res = document.getElementById("rouletteResult");
-    if (res) res.textContent = "";
-    const center = document.getElementById("rouletteCenter");
-    if (center) center.textContent = "🎁";
-    const btn = document.getElementById("btnRouletteSpin");
-    if (btn) btn.disabled = true;
-
-    renderRouletteGiftPick();
-    document.getElementById("modal-roulette").classList.add("active");
-  }
-
-  function renderRouletteGiftPick() {
-    const box = document.getElementById("rouletteGiftPick");
-    if (!box) return;
-    box.innerHTML = "";
-
-    const arr = Object.entries(myGifts).map(([gid, g]) => ({ gid, ...g })).filter(g => g && g.icon);
-
-    if (arr.length === 0) {
-      box.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:12px;">У вас нет подарков. Получите подарок от друга.</div>';
-      return;
-    }
-
-    const title = document.createElement("div");
-    title.style.cssText = "font-size:13px;color:#475569;margin-bottom:6px;font-weight:700;";
-    title.textContent = "Выбери подарок:";
-    box.appendChild(title);
-
-    const grid = document.createElement("div");
-    grid.style.cssText = "display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-height:140px;overflow-y:auto;padding:2px;";
-
-    arr.forEach(g => {
-      const card = document.createElement("button");
-      card.type = "button";
-      card.style.cssText = `
-        background:${rouletteSelectedGiftId === g.gid ? "linear-gradient(135deg,rgba(245,158,11,0.25),rgba(236,72,153,0.2))" : "rgba(255,255,255,0.6)"};
-        border:2px solid ${rouletteSelectedGiftId === g.gid ? "#f59e0b" : "rgba(15,23,42,0.08)"};
-        border-radius:12px;
-        padding:8px 4px;
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        gap:2px;
-        cursor:pointer;
-        font-family:inherit;
-      `;
-      card.innerHTML = `
-        <img src="${g.icon}" style="width:30px;height:30px;object-fit:contain;">
-        <div style="font-size:10px;color:#f59e0b;font-weight:800;">${g.price || 0} SQ</div>
-      `;
-      card.onclick = () => {
-        rouletteSelectedGiftId = g.gid;
-        rouletteSelectedGift = g;
-        renderRouletteGiftPick();
-        const btn = document.getElementById("btnRouletteSpin");
-        if (btn) btn.disabled = false;
-      };
-      grid.appendChild(card);
-    });
-
-    box.appendChild(grid);
-  }
-
-  const btnRouletteSpin = document.getElementById("btnRouletteSpin");
-  if (btnRouletteSpin) btnRouletteSpin.addEventListener("click", async () => {
-    if (rouletteSpinning) return;
-    if (!rouletteSelectedGiftId || !rouletteSelectedGift) {
-      S.showToast("Выбери подарок", "warn");
-      return;
-    }
-
-    rouletteSpinning = true;
-    btnRouletteSpin.disabled = true;
-    const res = document.getElementById("rouletteResult");
-    if (res) res.textContent = "";
-
-    const idx = Math.floor(Math.random() * ROULETTE_SECTORS.length);
-    const prize = ROULETTE_SECTORS[idx];
-
-    const N = ROULETTE_SECTORS.length;
-    const sectorAngle = 360 / N;
-    const sectorCenterLocal = idx * sectorAngle + sectorAngle / 2;
-
-    const spins = 5 + Math.floor(Math.random() * 3);
-    const maxJitter = sectorAngle * 0.4;
-    const jitter = (Math.random() - 0.5) * 2 * maxJitter;
-
-    const finalAngle = rouletteAngle + spins * 360 + (360 - sectorCenterLocal) + jitter;
-
-    const wheel = document.getElementById("rouletteWheel");
-    if (wheel) {
-      wheel.style.transition = "transform 3.5s cubic-bezier(0.17, 0.67, 0.12, 1)";
-      wheel.style.transform = `rotate(${finalAngle}deg)`;
-    }
-
-    rouletteAngle = finalAngle;
-    if (rouletteAngle > 360 * 20) rouletteAngle = rouletteAngle % 360;
-
-    setTimeout(() => {
-      showRouletteResult(prize);
-    }, 3600);
-  });
-
-  async function showRouletteResult(prize) {
-    const res = document.getElementById("rouletteResult");
-    const center = document.getElementById("rouletteCenter");
-    const gift = rouletteSelectedGift;
-    const giftId = rouletteSelectedGiftId;
-
-    if (!gift || !giftId) {
-      rouletteSpinning = false;
-      if (btnRouletteSpin) btnRouletteSpin.disabled = false;
-      return;
-    }
-
-    if (center) center.textContent = prize.emoji;
-
-    if (prize.mult === 0) {
-      if (res) {
-        res.style.color = "#ef4444";
-        res.textContent = "💨 Ничего. Подарок сгорел";
-      }
-
-      try {
-        await update(ref(db, "users/" + currentUser.uid + "/gifts/" + giftId), {
-          lostAt: Date.now(),
-          lostByRoulette: true
-        });
-        setTimeout(async () => {
-          try { await update(ref(db, "users/" + currentUser.uid + "/gifts/" + giftId), null); } catch (e) {}
-        }, 800);
-      } catch (e) {}
-
-      const botRef = push(ref(db, "botChat/" + currentUser.uid));
-      await set(botRef, {
-        from: "Sqwid Games",
-        text: `💨 Рулетка: подарок «${gift.name}» сгорел.`,
-        timestamp: Date.now(),
-        type: "system",
-        kind: "games"
-      });
-
-    } else {
-      const newPrice = (gift.price || 0) * prize.mult;
-      if (res) {
-        res.style.color = prize.color;
-        res.textContent = `${prize.emoji} ${prize.label}! Подарок теперь ${newPrice} SQ`;
-      }
-
-      try {
-        await update(ref(db, "users/" + currentUser.uid + "/gifts/" + giftId), {
-          price: newPrice,
-          multiplied: (gift.multiplied || 1) * prize.mult,
-          lastMultipliedAt: Date.now()
-        });
-      } catch (e) {}
-
-      const botRef = push(ref(db, "botChat/" + currentUser.uid));
-      await set(botRef, {
-        from: "Sqwid Games",
-        text: `🎉 Рулетка: ${prize.emoji} ${prize.label}!\nПодарок «${gift.name}» теперь стоит ${newPrice} SQ`,
-        timestamp: Date.now(),
-        type: "system",
-        kind: "games"
-      });
-
-      S.showToast(`${prize.emoji} ${prize.label}!`, "ok", 3000);
-    }
-
-    const today = todayKey();
-    const newStats = {
-      date: today,
-      games: (dailyStats.games || 0) + 1,
-      won: (dailyStats.won || 0) + (prize.mult > 0 ? 1 : 0),
-      lost: (dailyStats.lost || 0) + (prize.mult > 0 ? 0 : 1),
-      winAmount: dailyStats.winAmount || 0
-    };
-    try {
-      await update(ref(db, "users/" + currentUser.uid + "/dailyGames"), newStats);
-      dailyStats = newStats;
-    } catch (e) {}
-
-    rouletteSpinning = false;
-    if (btnRouletteSpin) btnRouletteSpin.disabled = false;
-    rouletteSelectedGiftId = null;
-    rouletteSelectedGift = null;
-    setTimeout(() => renderRouletteGiftPick(), 1200);
-  }
-
-  const btnRouletteClose = document.getElementById("btnRouletteClose");
-  if (btnRouletteClose) btnRouletteClose.addEventListener("click", () => {
-    if (rouletteSpinning) return;
-    document.getElementById("modal-roulette").classList.remove("active");
   });
 
   /* ============================================================
@@ -750,14 +472,13 @@ waitForSqwidGames((S) => {
 
   const CRASH_MIN = 500;
 
-  // Генерация точки краха — максимум x100
   function generateCrashPoint() {
     const r = Math.random();
-    if (r < 0.40) return 1.00 + Math.random() * 0.50;      // x1.00–x1.50 (40%)
-    if (r < 0.70) return 1.50 + Math.random() * 1.50;      // x1.50–x3.00 (30%)
-    if (r < 0.90) return 3.00 + Math.random() * 7.00;      // x3.00–x10.00 (20%)
-    if (r < 0.98) return 10.00 + Math.random() * 40.00;    // x10.00–x50.00 (8%)
-    return 50.00 + Math.random() * 50.00;                  // x50.00–x100.00 (2%)
+    if (r < 0.40) return 1.00 + Math.random() * 0.50;
+    if (r < 0.70) return 1.50 + Math.random() * 1.50;
+    if (r < 0.90) return 3.00 + Math.random() * 7.00;
+    if (r < 0.98) return 10.00 + Math.random() * 40.00;
+    return 50.00 + Math.random() * 50.00;
   }
 
   function openCrash() {
@@ -968,9 +689,7 @@ waitForSqwidGames((S) => {
      ЕЖЕДНЕВНЫЕ КВЕСТЫ
      ============================================================ */
   const QUESTS = [
-    { key: "gift", icon: "🎁", name: "Подарить 1 подарок", reward: 200 },
     { key: "chat_create", icon: "👥", name: "Создать 1 чат или канал", reward: 150 },
-    { key: "buy", icon: "🏷", name: "Купить 1 товар в магазине", reward: 100 },
     { key: "play", icon: "🎮", name: "Пройти 1 мини-игру", reward: 100 }
   ];
 
@@ -1022,17 +741,6 @@ waitForSqwidGames((S) => {
   async function checkQuestDone(key) {
     const today = todayKey();
 
-    if (key === "gift") {
-      const snap = await get(ref(db, "gifts"));
-      const all = snap.val() || {};
-      const todayTs = new Date().setHours(0, 0, 0, 0);
-      for (const id in all) {
-        const g = all[id];
-        if (g.fromUid === currentUser.uid && (g.timestamp || 0) >= todayTs) return true;
-      }
-      return false;
-    }
-
     if (key === "chat_create") {
       const snap = await get(ref(db, "chats"));
       const all = snap.val() || {};
@@ -1040,17 +748,6 @@ waitForSqwidGames((S) => {
       for (const id in all) {
         const c = all[id];
         if (c.owner === currentUser.uid && (c.createdAt || 0) >= todayTs) return true;
-      }
-      return false;
-    }
-
-    if (key === "buy") {
-      const meSnap = await get(ref(db, "users/" + currentUser.uid + "/inventory"));
-      const inv = meSnap.val() || {};
-      const todayTs = new Date().setHours(0, 0, 0, 0);
-      for (const id in inv) {
-        const it = inv[id];
-        if (it && typeof it === "object" && (it.boughtAt || 0) >= todayTs) return true;
       }
       return false;
     }

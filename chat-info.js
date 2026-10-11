@@ -1,5 +1,5 @@
 /* ============================================================
-   chat-info.js — информация о чате/группе/канале, участники, роли, модерация
+   chat-info.js — инфо о чате, участники, роли, модерация
    ============================================================ */
 
 console.log("🚀 chat-info.js загружен, жду Sqwid...");
@@ -37,7 +37,7 @@ waitForSqwidChatInfo((S) => {
   let memberActionsUid = null;
 
   /* ============================================================
-     ОТКРЫТИЕ ЭКРАНА ИНФОРМАЦИИ
+     ОТКРЫТИЕ ЭКРАНА
      ============================================================ */
   async function openChatInfo(chatId) {
     if (!chatId) return;
@@ -70,7 +70,7 @@ waitForSqwidChatInfo((S) => {
   if (window.Sqwid) window.Sqwid.openChatInfo = openChatInfo;
 
   /* ============================================================
-     РЕНДЕР ИНФО
+     РЕНДЕР
      ============================================================ */
   function renderChatInfo() {
     if (!currentChat || !viewingChatId) return;
@@ -178,7 +178,11 @@ waitForSqwidChatInfo((S) => {
     const muted = !!mutes[viewingChatId];
     const muteIcon = document.getElementById("ciMuteIcon");
     const muteLabel = document.getElementById("ciMuteLabel");
-    if (muteIcon) muteIcon.textContent = muted ? "🔕" : "🔔";
+    if (muteIcon) {
+      muteIcon.innerHTML = muted
+        ? `<svg width="22" height="22"><use href="#ico-bell-off"/></svg>`
+        : `<svg width="22" height="22"><use href="#ico-bell"/></svg>`;
+    }
     if (muteLabel) muteLabel.textContent = muted ? "Вкл. звук" : "Выкл. звук";
 
     const preview = document.getElementById("ciMembersPreview");
@@ -234,7 +238,6 @@ waitForSqwidChatInfo((S) => {
     let nameHTML = escH(u.name || u.email || "Пользователь");
     if (u.verified) nameHTML += ` <img src="verify.PNG" style="width:12px;height:12px;vertical-align:middle;margin-left:3px;">`;
 
-    // Значки статуса (бан/мут/мороз)
     let statusHTML = "";
     if (u.banned) statusHTML += `<span style="font-size:10px;background:rgba(239,68,68,0.2);color:#ef4444;padding:1px 5px;border-radius:999px;font-weight:800;margin-left:4px;">BAN</span>`;
     if (u.muted) statusHTML += `<span style="font-size:10px;background:rgba(245,158,11,0.2);color:#f59e0b;padding:1px 5px;border-radius:999px;font-weight:800;margin-left:4px;">MUTE</span>`;
@@ -495,12 +498,11 @@ waitForSqwidChatInfo((S) => {
   }
 
   /* ============================================================
-     ДЕЙСТВИЯ С УЧАСТНИКОМ (с модерацией)
+     ДЕЙСТВИЯ С УЧАСТНИКОМ
      ============================================================ */
   async function openMemberActions(uid) {
     if (!currentChat) return;
 
-    // Принудительно обновить данные пользователя из базы
     try {
       const freshSnap = await get(ref(db, "users/" + uid));
       const fresh = freshSnap.val() || {};
@@ -515,7 +517,7 @@ waitForSqwidChatInfo((S) => {
       if (u.photo && u.photo.startsWith("data:image")) ava.src = u.photo;
       else {
         const letter = (u.name || u.email || "?").trim().charAt(0).toUpperCase();
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#6366f1"/><text x="50%" y="55%" font-size="36" fill="#fff" text-anchor="middle" font-family="Arial">${letter}</text></svg>`;
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#f97316"/><text x="50%" y="55%" font-size="36" fill="#fff" text-anchor="middle" font-family="Arial">${letter}</text></svg>`;
         ava.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
       }
     }
@@ -585,7 +587,6 @@ waitForSqwidChatInfo((S) => {
       } else btnKick.style.display = "none";
     }
 
-    /* === МОДЕРАЦИЯ: бан / мут / заморозка === */
     const targetBanned = u.banned === true;
     const targetMuted = u.muted === true;
     const targetFrozen = u.frozen === true;
@@ -698,7 +699,7 @@ waitForSqwidChatInfo((S) => {
   });
 
   /* ============================================================
-     ЖАЛОБА НА ЧАТ / КАНАЛ
+     ЖАЛОБА
      ============================================================ */
   const btnReportChat = document.getElementById("btnReportChat");
   if (btnReportChat) btnReportChat.addEventListener("click", () => {

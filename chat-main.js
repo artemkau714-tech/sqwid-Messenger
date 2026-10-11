@@ -1,6 +1,6 @@
 /* ============================================================
-   chat-main.js — список чатов + чат + создание + модерация
-   + реакции + просмотры + Sqwid+ плюшки
+   chat-main.js — ФИНАЛЬНАЯ версия
+   Бот Sqwid Fire + pet_invite + хуки onChatOpen/onChatClose
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -59,22 +59,13 @@ let cgAutoDelete = 0;
 let memberAddMode = false;
 let memberAddChatId = null;
 
-/* ============================================================
-   КОНСТАНТЫ РЕАКЦИЙ
-   ============================================================ */
 const REACTIONS_DEFAULT = ["👍", "❤️", "🔥", "😂", "😮", "😢", "🎉", "👎", "🤔", "💯", "🙏", "😡"];
 const REACTIONS_CHANNEL = ["👍", "❤️", "🔥", "🎉"];
 const REACTIONS_PLUS = ["💫", "🌟", "⭐", "✨"];
 
-/* ============================================================
-   КОНСТАНТЫ ОБОЕВ
-   ============================================================ */
 const CHAT_BACKGROUNDS = ["diamonds", "dots", "waves", "grid", "stars"];
 const CHAT_BACKGROUNDS_PLUS = ["plus-gold", "plus-space", "plus-waves"];
 
-/* ============================================================
-   ХЕЛПЕРЫ
-   ============================================================ */
 function escH(t) {
   const d = document.createElement("div");
   d.textContent = t == null ? "" : t;
@@ -95,22 +86,18 @@ function fmtShortTime(ts) {
 function isImg(s) { return typeof s === "string" && s.startsWith("data:image"); }
 function svgLetter(text) {
   const ch = (text || "?").trim().charAt(0).toUpperCase() || "?";
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#3b82f6"/><text x="50%" y="55%" font-size="36" fill="#fff" text-anchor="middle" font-family="Arial">${ch}</text></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#f97316"/><text x="50%" y="55%" font-size="36" fill="#fff" text-anchor="middle" font-family="Arial">${ch}</text></svg>`;
   return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
 }
 function verifiedIcon(flag) {
   return flag ? `<img src="verify.PNG" style="width:14px;height:14px;vertical-align:middle;margin-left:4px;">` : "";
 }
-
-/* Проверка: настоящее сообщение или мусор */
 function isRealMessage(m) {
   if (!m || typeof m !== "object") return false;
-  if (m.text || m.photo || m.gift) return true;
+  if (m.text || m.photo || m.voice) return true;
   if (m.sender && m.timestamp) return true;
   return false;
 }
-
-/* Активен ли Sqwid+ */
 function isPlusUser() {
   return currentUserData && currentUserData.plusUntil && currentUserData.plusUntil > Date.now();
 }
@@ -129,15 +116,12 @@ function showScreen(id) {
       "screen-choose-members", "screen-chat-info", "screen-edit-chat",
       "screen-chat-members", "screen-owner", "screen-report-view",
       "screen-search-messages", "screen-gallery", "screen-viewer",
-      "screen-banned", "screen-trade", "screen-games"
+      "screen-banned", "screen-games"
     ].includes(id);
     if (nav) nav.style.display = hideNav ? "none" : "flex";
   } catch (e) {}
 }
 
-/* ============================================================
-   МОДАЛКИ
-   ============================================================ */
 function showAlert(text, title = "Сообщение") {
   return new Promise((resolve) => {
     try {
@@ -226,9 +210,6 @@ function showToast(text, type = "info", duration = 2500) {
   } catch (e) {}
 }
 
-/* ============================================================
-   СПИСОК РЕАКЦИЙ
-   ============================================================ */
 function getReactionList() {
   const isChannel = currentChatData && currentChatData.type === "channel";
   const base = isChannel ? REACTIONS_CHANNEL : REACTIONS_DEFAULT;
@@ -236,14 +217,10 @@ function getReactionList() {
   return base;
 }
 
-/* ============================================================
-   ОБОИ
-   ============================================================ */
 function getAllBackgrounds() {
   if (isPlusUser()) return CHAT_BACKGROUNDS.concat(CHAT_BACKGROUNDS_PLUS);
   return CHAT_BACKGROUNDS;
 }
-
 function setChatBackground(name) {
   const box = document.getElementById("messages");
   if (!box) return;
@@ -252,7 +229,6 @@ function setChatBackground(name) {
   box.dataset.bg = bg;
   try { localStorage.setItem("sqwid_chat_bg_" + currentUser.uid, bg); } catch (e) {}
 }
-
 function loadChatBackground() {
   try {
     const saved = localStorage.getItem("sqwid_chat_bg_" + currentUser.uid);
@@ -263,16 +239,13 @@ function loadChatBackground() {
   } catch (e) {}
 }
 
-/* ============================================================
-   СТАРТ
-   ============================================================ */
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     if (unsubChats) { unsubChats(); unsubChats = null; }
     if (unsubMessages) { unsubMessages(); unsubMessages = null; }
     if (unsubUserSelf) { unsubUserSelf(); unsubUserSelf = null; }
     if (unsubUsers) { unsubUsers(); unsubUsers = null; }
-    window.location.href = "index.html";
+    window.location.replace("index.html");
     return;
   }
   currentUser = user;
@@ -293,7 +266,8 @@ onAuthStateChanged(auth, async (user) => {
     openAddMembersToChat: (id) => openAddMembersToChat(id),
     setChatBackground: (n) => setChatBackground(n),
     CHAT_BACKGROUNDS: CHAT_BACKGROUNDS,
-    isPlus: () => isPlusUser()
+    isPlus: () => isPlusUser(),
+    refreshChatList: () => loadChats()
   };
 
   if (unsubUserSelf) unsubUserSelf();
@@ -305,6 +279,7 @@ onAuthStateChanged(auth, async (user) => {
       const ava = document.getElementById("myAvatar");
       if (ava) {
         if (isImg(currentUserData.photo)) ava.src = currentUserData.photo;
+        else if (currentUserData.photo && !currentUserData.photo.startsWith("data:")) ava.src = currentUserData.photo;
         else ava.src = svgLetter(currentUserData.name || user.email);
       }
     } catch (e) {}
@@ -322,9 +297,6 @@ onAuthStateChanged(auth, async (user) => {
   });
 });
 
-/* ============================================================
-   СПИСОК ЧАТОВ
-   ============================================================ */
 function loadChats() {
   if (unsubChats) unsubChats();
   unsubChats = onValue(ref(db, "chats"), (snap) => {
@@ -340,6 +312,12 @@ function loadChats() {
         const c = chats[id];
         if (!c.members || !c.members[currentUser.uid]) continue;
         if (search && !(c.name || "").toLowerCase().includes(search)) continue;
+
+        if (window.Sqwid && window.Sqwid.passesFolder) {
+          const unread = c.unreadCount || 0;
+          if (!window.Sqwid.passesFolder(c, unread)) continue;
+        }
+
         myChats.push({ id, ...c });
       }
 
@@ -353,18 +331,26 @@ function loadChats() {
         let avatarUrl = "";
         let verified = false;
         let isFrozen = false;
+        let otherUid = null;
         if (c.type === "private") {
-          const otherUid = Object.keys(c.members || {}).find(u => u !== currentUser.uid);
+          otherUid = Object.keys(c.members || {}).find(u => u !== currentUser.uid);
           if (otherUid) {
             const ou = userMap[otherUid] || {};
             displayName = ou.name || ou.email || displayName;
-            avatarUrl = isImg(ou.photo) ? ou.photo : svgLetter(displayName);
+            avatarUrl = isImg(ou.photo) ? ou.photo : (ou.photo && !ou.photo.startsWith("data:") ? ou.photo : svgLetter(displayName));
             verified = ou.verified;
             isFrozen = ou.frozen === true;
           }
         } else {
-          avatarUrl = isImg(c.photo) ? c.photo : svgLetter(displayName);
+          avatarUrl = isImg(c.photo) ? c.photo : (c.photo && !c.photo.startsWith("data:") ? c.photo : svgLetter(displayName));
           verified = c.verified;
+        }
+
+        let onlineHTML = "";
+        if (c.type === "private" && otherUid && window.Sqwid && window.Sqwid.isUserOnline) {
+          if (window.Sqwid.isUserOnline(otherUid)) {
+            onlineHTML = '<span class="online-dot"></span>';
+          }
         }
 
         const avatarHTML = isFrozen
@@ -378,14 +364,22 @@ function loadChats() {
         const frozenClass = isFrozen ? " frozen-name" : "";
         const frozenAvaClass = isFrozen ? " frozen-ava" : "";
 
+        let lastText = last;
+        if (c.type === "private" && otherUid && window.Sqwid && window.Sqwid.getLastSeenText) {
+          const t = window.Sqwid.getLastSeenText(otherUid);
+          if (t === "в сети") {
+            lastText = `<span class="chat-last-status">в сети</span>`;
+          }
+        }
+
         li.innerHTML = `
-          <div class="chat-ava${frozenAvaClass}">${avatarHTML}</div>
+          <div class="chat-ava${frozenAvaClass}">${avatarHTML}${onlineHTML}</div>
           <div class="chat-info">
             <div class="chat-name-row">
               <div class="chat-name${frozenClass}">${escH(displayName)}${verifiedIcon(verified)}${badge}</div>
               <div class="chat-time">${time}</div>
             </div>
-            <div class="chat-last">${escH(last)}</div>
+            <div class="chat-last">${lastText}</div>
           </div>
         `;
         li.addEventListener("click", () => openChat(c.id));
@@ -397,9 +391,6 @@ function loadChats() {
 const searchInputEl = document.getElementById("searchInput");
 if (searchInputEl) searchInputEl.addEventListener("input", loadChats);
 
-/* ============================================================
-   ОТКРЫТИЕ ЧАТА
-   ============================================================ */
 async function openChat(chatId) {
   try {
     const snap = await get(ref(db, "chats/" + chatId));
@@ -416,23 +407,29 @@ async function openChat(chatId) {
     let avatarUrl = "";
     let verified = false;
     let isFrozen = false;
+    let otherUid = null;
     if (chat.type === "private") {
-      const otherUid = Object.keys(chat.members || {}).find(u => u !== currentUser.uid);
+      otherUid = Object.keys(chat.members || {}).find(u => u !== currentUser.uid);
       if (otherUid) {
         const ou = userMap[otherUid] || {};
         displayName = ou.name || ou.email || displayName;
-        avatarUrl = isImg(ou.photo) ? ou.photo : svgLetter(displayName);
+        avatarUrl = isImg(ou.photo) ? ou.photo : (ou.photo && !ou.photo.startsWith("data:") ? ou.photo : svgLetter(displayName));
         verified = ou.verified;
         isFrozen = ou.frozen === true;
       }
     } else {
-      avatarUrl = isImg(chat.photo) ? chat.photo : svgLetter(displayName);
+      avatarUrl = isImg(chat.photo) ? chat.photo : (chat.photo && !chat.photo.startsWith("data:") ? chat.photo : svgLetter(displayName));
       verified = chat.verified;
     }
 
     const nameEl = document.getElementById("chatName");
     if (nameEl) {
-      nameEl.innerHTML = escH(displayName) + verifiedIcon(verified);
+      let extra = "";
+      if (chat.type === "private" && otherUid && window.Sqwid && window.Sqwid.getLastSeenText) {
+        const t = window.Sqwid.getLastSeenText(otherUid);
+        if (t) extra = ` <span style="font-size:0.72rem;font-weight:600;color:var(--text-3);">· ${t}</span>`;
+      }
+      nameEl.innerHTML = escH(displayName) + verifiedIcon(verified) + extra;
       if (isFrozen) nameEl.classList.add("frozen-name");
       else nameEl.classList.remove("frozen-name");
     }
@@ -457,9 +454,8 @@ async function openChat(chatId) {
       cannotReason = "📢 Писать могут только администраторы канала";
     }
 
-    if (chat.type === "private") {
-      const otherUid = Object.keys(chat.members || {}).find(u => u !== currentUser.uid);
-      const other = otherUid ? (userMap[otherUid] || {}) : {};
+    if (chat.type === "private" && otherUid) {
+      const other = userMap[otherUid] || {};
       if (other.banned === true) {
         canWrite = false;
         cannotReason = "🚫 Пользователь заблокирован — писать нельзя";
@@ -490,6 +486,11 @@ async function openChat(chatId) {
     showScreen("screen-messages");
     loadChatBackground();
 
+    // ⭐ ХУК: сообщаем sqwidpet.js что чат открыт
+    if (window.Sqwid && window.Sqwid.onChatOpen) {
+      try { window.Sqwid.onChatOpen(chatId); } catch (e) {}
+    }
+
     if (unsubMessages) unsubMessages();
     const msgsRef = query(ref(db, "messages/" + chatId), orderByChild("timestamp"), limitToLast(200));
     unsubMessages = onValue(msgsRef, async (snapshot) => {
@@ -519,7 +520,6 @@ async function openChat(chatId) {
         });
         box.scrollTop = box.scrollHeight;
 
-        // === ПРОСМОТРЫ В КАНАЛАХ ===
         if (chat.type === "channel") {
           const today = new Date().toISOString().slice(0, 10);
           for (const m of arr) {
@@ -542,47 +542,102 @@ async function openChat(chatId) {
   }
 }
 
-/* ============================================================
-   РЕНДЕР СООБЩЕНИЯ
-   ============================================================ */
 function renderMessage(msg, chatId) {
   const box = document.getElementById("messages");
   if (!box) return;
+
   const isOwn = msg.sender === currentUser.uid;
   const div = document.createElement("div");
   div.className = "msg " + (isOwn ? "own" : "other");
   div.dataset.msgId = msg.id || "";
 
+  const isPinned = currentChatData && currentChatData.pinned && currentChatData.pinned.messageId === msg.id;
+  if (isPinned) div.classList.add("msg-pinned");
+
+  /* ============================================================
+     ПРИВЕТСТВИЕ БОТА С КНОПКОЙ СТАРТ
+     ============================================================ */
+  if (msg.type === "bot_greeting") {
+    div.innerHTML = `
+      <div class="msg-bot-greeting" style="min-width:220px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M12 2s4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 1-3s-5 4-5 9a8 8 0 0 0 16 0c0-6-8-14-8-14z"/></svg>
+          </div>
+          <div style="font-weight:800;font-size:14px;">Sqwid Fire</div>
+        </div>
+        <div style="font-size:14px;line-height:1.4;color:var(--text);white-space:pre-wrap;">${escH(msg.text || "")}</div>
+        <button data-bot-start="1" data-chat-id="${chatId}" style="margin-top:12px;width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#f97316,#ec4899);color:#fff;font-weight:800;font-size:15px;cursor:pointer;">🚀 Старт</button>
+      </div>
+    `;
+    box.appendChild(div);
+    return;
+  }
+
+  /* ============================================================
+     ПРИГЛАШЕНИЕ В SQWID PET (кнопки видит только получатель)
+     ============================================================ */
+  if (msg.type === "pet_invite" && msg.petInvite) {
+    const inv = msg.petInvite;
+    const status = inv.status;
+    const isRecipient = (inv.from !== currentUser.uid);
+
+    let buttonsHTML = "";
+    if (status === "pending") {
+      if (isRecipient) {
+        buttonsHTML = `
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <button data-pet-accept="${msg.id}" data-chat-id="${chatId}" style="flex:1;padding:10px;border-radius:12px;border:none;background:linear-gradient(135deg,#f97316,#ec4899);color:#fff;font-weight:800;font-size:14px;cursor:pointer;">Согласен</button>
+            <button data-pet-decline="${msg.id}" data-chat-id="${chatId}" style="flex:1;padding:10px;border-radius:12px;border:1px solid rgba(15,23,42,0.1);background:transparent;color:#64748b;font-weight:700;font-size:14px;cursor:pointer;">Отказано</button>
+          </div>
+        `;
+      } else {
+        buttonsHTML = `<div style="margin-top:12px;font-size:13px;color:#94a3b8;font-weight:700;">⏳ Ожидаем ответа...</div>`;
+      }
+    } else if (status === "accepted") {
+      buttonsHTML = `<div style="margin-top:10px;font-size:13px;color:#10b981;font-weight:700;">✅ Принято</div>`;
+    } else if (status === "declined") {
+      buttonsHTML = `<div style="margin-top:10px;font-size:13px;color:#94a3b8;font-weight:700;">✕ Отклонено</div>`;
+    }
+
+    div.innerHTML = `
+      <div class="msg-pet-invite" style="min-width:260px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M12 2s4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 1-3s-5 4-5 9a8 8 0 0 0 16 0c0-6-8-14-8-14z"/></svg>
+          </div>
+          <div style="font-weight:800;font-size:14px;">Sqwid Fire</div>
+        </div>
+        <div style="font-size:14px;line-height:1.4;color:var(--text);white-space:pre-wrap;">${escH(msg.text || "")}</div>
+        ${buttonsHTML}
+      </div>
+    `;
+    box.appendChild(div);
+    return;
+  }
+
+  /* ============================================================
+     ОБЫЧНЫЕ СООБЩЕНИЯ
+     ============================================================ */
   const isGroup = currentChatData && currentChatData.type !== "private";
   let senderHTML = "";
   if (!isOwn && isGroup && msg.sender) {
     const su = userMap[msg.sender] || {};
     const isFrozen = su.frozen === true;
     const frozenClass = isFrozen ? " frozen-name" : "";
-    senderHTML = `<div class="msg-sender${frozenClass}" style="font-size:11.5px;font-weight:700;color:#6366f1;margin-bottom:3px;">${escH(su.name || su.email || "Пользователь")}${verifiedIcon(su.verified)}</div>`;
+    senderHTML = `<div class="msg-sender${frozenClass}" style="font-size:11.5px;font-weight:700;color:#f97316;margin-bottom:3px;">${escH(su.name || su.email || "Пользователь")}${verifiedIcon(su.verified)}</div>`;
   }
 
   let contentHTML = "";
   if (msg.type === "photo" && msg.photo) {
     contentHTML += `<img class="msg-photo" src="${msg.photo}" alt="">`;
     if (msg.text) contentHTML += `<div>${escH(msg.text)}</div>`;
-  } else if (msg.type === "gift" && msg.gift) {
-    const g = msg.gift || {};
-    const giftIcon = g.icon || "sqwidstar.png";
-    const giftName = g.name || "Подарок";
-    const giftPrice = g.price || 0;
-    const fromLabel = g.hideName && !isOwn ? "Аноним" : (g.fromName || "Пользователь");
-    contentHTML = `
-      <div class="msg-gift">
-        <div class="msg-gift-preview"><img src="${giftIcon}" alt=""></div>
-        <div class="msg-gift-name">${escH(giftName)}</div>
-        <div class="msg-gift-caption">
-          ${escH(fromLabel)} ${isOwn ? "отправил(а)" : "отправил(а) вам"}<br>
-          стоимостью <b>${giftPrice} SQ</b>
-        </div>
-        ${g.message ? `<div class="msg-gift-desc">💬 ${escH(g.message)}</div>` : ""}
-      </div>
-    `;
+  } else if (msg.type === "voice" && msg.voice) {
+    if (window.Sqwid && window.Sqwid.renderVoiceContent) {
+      contentHTML += window.Sqwid.renderVoiceContent(msg);
+    } else {
+      contentHTML += `<div>🎤 Голосовое (${msg.duration || 0}с)</div>`;
+    }
   } else {
     contentHTML += `<div>${escH(msg.text || "")}</div>`;
   }
@@ -599,7 +654,7 @@ function renderMessage(msg, chatId) {
     ${viewsHTML}
   `;
 
-  if (!isOwn && msg.type !== "gift") {
+  if (!isOwn) {
     const reportBtn = document.createElement("button");
     reportBtn.className = "msg-report-btn";
     reportBtn.textContent = "!";
@@ -691,9 +746,6 @@ function renderMessage(msg, chatId) {
   box.appendChild(div);
 }
 
-/* ============================================================
-   РЕАКЦИИ
-   ============================================================ */
 async function toggleReaction(chatId, msgId, emoji) {
   if (!msgId || msgId === "undefined") return;
   try {
@@ -740,8 +792,8 @@ function openReactPicker() {
       b.textContent = e;
       const cur = longPressMsg && longPressMsg.msg && longPressMsg.msg.reactions;
       if (cur && cur[e] && cur[e][currentUser.uid]) {
-        b.style.background = "rgba(99,102,241,0.3)";
-        b.style.borderColor = "rgba(99,102,241,0.7)";
+        b.style.background = "rgba(249,115,22,0.3)";
+        b.style.borderColor = "rgba(249,115,22,0.7)";
       }
       b.onclick = async () => {
         if (!longPressMsg) return;
@@ -759,9 +811,6 @@ if (closeReactBtn) closeReactBtn.addEventListener("click", () => {
   document.getElementById("modal-react").classList.remove("active");
 });
 
-/* ============================================================
-   ДОЛГОЕ НАЖАТИЕ
-   ============================================================ */
 function attachLongPress(el, msg, chatId) {
   let timer = null, triggered = false;
   const start = () => {
@@ -799,14 +848,17 @@ function openMsgMenu(msg, chatId) {
   const canEdit = isOwn || (isChannel && isAdmin);
   const canDelete = isOwn || (isChannel && isAdmin);
   const canReport = !isOwn;
+  const canPin = isAdmin || isOwn;
 
   const editBtn = document.getElementById("btnEditMsg");
   const delBtn = document.getElementById("btnDeleteMsg");
   const repBtn = document.getElementById("btnReportMsg");
+  const pinBtn = document.getElementById("btnPinMsg");
 
-  if (editBtn) editBtn.style.display = (canEdit && msg.type !== "photo" && msg.type !== "gift") ? "block" : "none";
+  if (editBtn) editBtn.style.display = (canEdit && msg.type !== "photo") ? "block" : "none";
   if (delBtn) delBtn.style.display = canDelete ? "block" : "none";
   if (repBtn) repBtn.style.display = canReport ? "block" : "none";
+  if (pinBtn) pinBtn.style.display = canPin ? "block" : "none";
 
   const modal = document.getElementById("modal-msgMenu");
   if (modal) modal.classList.add("active");
@@ -820,7 +872,6 @@ if (closeMsgMenuBtn) closeMsgMenuBtn.addEventListener("click", () => {
   if (cb) cb.style.display = "none";
 });
 
-/* Удаление */
 const deleteMsgBtn = document.getElementById("btnDeleteMsg");
 if (deleteMsgBtn) deleteMsgBtn.addEventListener("click", async () => {
   if (!longPressMsg) return;
@@ -841,7 +892,6 @@ if (deleteMsgBtn) deleteMsgBtn.addEventListener("click", async () => {
   longPressMsg = null;
 });
 
-/* Редактирование */
 const editMsgBtn = document.getElementById("btnEditMsg");
 if (editMsgBtn) editMsgBtn.addEventListener("click", () => {
   if (!longPressMsg) return;
@@ -855,7 +905,7 @@ if (editMsgBtn) editMsgBtn.addEventListener("click", () => {
 
   if (!canEdit) { showToast("Нет прав на редактирование", "error"); return; }
   if (msg.type === "photo") { showToast("Фото не редактируется", "error"); return; }
-  if (msg.type === "gift") { showToast("Подарок не редактируется", "error"); return; }
+  if (msg.type === "voice") { showToast("Голосовое не редактируется", "error"); return; }
 
   document.getElementById("msgInput").value = msg.text || "";
   editingMsgId = msg.id;
@@ -889,9 +939,15 @@ if (reportMsgBtn) reportMsgBtn.addEventListener("click", () => {
   longPressMsg = null;
 });
 
-/* ============================================================
-   ОТМЕНА РЕДАКТИРОВАНИЯ
-   ============================================================ */
+const pinMsgBtn = document.getElementById("btnPinMsg");
+if (pinMsgBtn) pinMsgBtn.addEventListener("click", async () => {
+  if (!longPressMsg) return;
+  const { msg, chatId } = longPressMsg;
+  document.getElementById("modal-msgMenu").classList.remove("active");
+  if (window.Sqwid.pinMessage) await window.Sqwid.pinMessage(msg, chatId);
+  longPressMsg = null;
+});
+
 const btnCancelEdit = document.getElementById("btnCancelEdit");
 if (btnCancelEdit) btnCancelEdit.addEventListener("click", () => {
   editingMsgId = null;
@@ -900,9 +956,6 @@ if (btnCancelEdit) btnCancelEdit.addEventListener("click", () => {
   btnCancelEdit.style.display = "none";
 });
 
-/* ============================================================
-   ОТПРАВКА СООБЩЕНИЙ
-   ============================================================ */
 async function sendMessage() {
   const input = document.getElementById("msgInput");
   const text = input.value.trim();
@@ -917,7 +970,6 @@ async function sendMessage() {
     return;
   }
 
-  // Лимит длины: Sqwid+ до 4000, остальные до 500
   const maxLen = isPlusUser() ? 4000 : 500;
   if (text.length > maxLen) {
     showToast(`Максимум ${maxLen} символов${isPlusUser() ? "" : " (Sqwid+ = 4000)"}`, "error");
@@ -980,7 +1032,6 @@ if (fileInput) fileInput.addEventListener("change", (e) => {
   e.target.value = "";
   if (!file.type.startsWith("image/")) { showToast("Только изображения", "error"); return; }
 
-  // Лимит фото: Sqwid+ до 5 МБ, остальные до 500 КБ
   const maxSize = isPlusUser() ? 5 * 1024 * 1024 : 500 * 1024;
   if (file.size > maxSize) {
     showToast(isPlusUser() ? "Фото до 5 МБ" : "Фото до 500 КБ (Sqwid+ = 5 МБ)", "error");
@@ -1025,13 +1076,16 @@ if (btnSendPhoto) btnSendPhoto.addEventListener("click", async () => {
 });
 
 /* ============================================================
-   НАВИГАЦИЯ
+   НАВИГАЦИЯ + ХУК onChatClose
    ============================================================ */
 const btnBack = document.getElementById("btnBack");
 if (btnBack) btnBack.addEventListener("click", () => {
   if (unsubMessages) { unsubMessages(); unsubMessages = null; }
   currentChatId = null;
   currentChatData = null;
+  if (window.Sqwid && window.Sqwid.onChatClose) {
+    try { window.Sqwid.onChatClose(); } catch (e) {}
+  }
   showScreen("screen-chats");
 });
 const btnBurger = document.getElementById("btnBurger");
@@ -1044,13 +1098,13 @@ document.querySelectorAll(".nav-btn").forEach(b => {
       currentChatId = null;
       currentChatData = null;
     }
+    if (window.Sqwid && window.Sqwid.onChatClose) {
+      try { window.Sqwid.onChatClose(); } catch (e) {}
+    }
     showScreen(b.dataset.screen);
   });
 });
 
-/* ============================================================
-   КЛИК ПО ШАПКЕ ЧАТА
-   ============================================================ */
 function attachChatHeaderHandlers() {
   const nameEl = document.getElementById("chatName");
   const avaEl = document.getElementById("chatBarAva");
@@ -1078,9 +1132,6 @@ function attachChatHeaderHandlers() {
 }
 setInterval(attachChatHeaderHandlers, 800);
 
-/* ============================================================
-   МЕНЮ ЧАТА
-   ============================================================ */
 const btnChatMenu = document.getElementById("btnChatMenu");
 if (btnChatMenu) btnChatMenu.addEventListener("click", () => {
   document.getElementById("modal-chatMenu").classList.add("active");
@@ -1099,6 +1150,9 @@ if (btnDeleteChat) btnDeleteChat.addEventListener("click", async () => {
   currentChatId = null;
   currentChatData = null;
   if (unsubMessages) { unsubMessages(); unsubMessages = null; }
+  if (window.Sqwid && window.Sqwid.onChatClose) {
+    try { window.Sqwid.onChatClose(); } catch (e) {}
+  }
   showScreen("screen-chats");
 });
 const btnDeleteFromBanner = document.getElementById("btnDeleteChatFromBanner");
@@ -1110,6 +1164,9 @@ if (btnDeleteFromBanner) btnDeleteFromBanner.addEventListener("click", async () 
   currentChatId = null;
   currentChatData = null;
   if (unsubMessages) { unsubMessages(); unsubMessages = null; }
+  if (window.Sqwid && window.Sqwid.onChatClose) {
+    try { window.Sqwid.onChatClose(); } catch (e) {}
+  }
   showScreen("screen-chats");
 });
 const btnBlockUser = document.getElementById("btnBlockUser");
@@ -1128,9 +1185,6 @@ if (btnBlockUser) btnBlockUser.addEventListener("click", async () => {
   showToast("Пользователь заблокирован", "ok");
 });
 
-/* ============================================================
-   СОЗДАНИЕ
-   ============================================================ */
 const btnNewChat = document.getElementById("btnNewChat");
 if (btnNewChat) btnNewChat.addEventListener("click", () => {
   document.getElementById("modal-create").classList.add("active");
@@ -1196,7 +1250,6 @@ if (btnCloseAutoDelete) btnCloseAutoDelete.addEventListener("click", () => {
 document.querySelectorAll("#modal-autodelete .menu-row[data-ad]").forEach(row => {
   row.addEventListener("click", () => {
     const ad = parseInt(row.dataset.ad) || 0;
-    // Проверка на Sqwid+ для 1ч и 12ч
     if ((ad === 3600 || ad === 43200) && !isPlusUser()) {
       showToast("Доступно только с Sqwid+ ⭐", "warn");
       return;
@@ -1331,6 +1384,12 @@ function renderPrivateResults(q) {
     `;
     row.addEventListener("click", async () => {
       document.getElementById("modal-private").classList.remove("active");
+      if (u.isBot && u.uid === "sqwidfire_bot") {
+        if (window.Sqwid && window.Sqwid.openSqwidFire) {
+          window.Sqwid.openSqwidFire();
+          return;
+        }
+      }
       await openOrCreatePrivate(u.uid, u.name || u.email || "Чат");
     });
     box.appendChild(row);
@@ -1361,9 +1420,6 @@ async function openOrCreatePrivate(otherUid, displayName) {
   openChat(newRef.key);
 }
 
-/* ============================================================
-   ВЫБОР УЧАСТНИКОВ
-   ============================================================ */
 function openChooseMembers() {
   const title = document.getElementById("cmTitle");
   if (title) {
@@ -1409,7 +1465,7 @@ function renderSelectedChips() {
     const u = userMap[uid] || {};
     const chip = document.createElement("div");
     chip.className = "create-chip";
-    const ava = isImg(u.photo) ? `<img src="${u.photo}">` : `<span style="width:24px;height:24px;border-radius:50%;background:#6366f1;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:#fff;">${escH((u.name || "?").charAt(0).toUpperCase())}</span>`;
+    const ava = isImg(u.photo) ? `<img src="${u.photo}">` : `<span style="width:24px;height:24px;border-radius:50%;background:#f97316;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:#fff;">${escH((u.name || "?").charAt(0).toUpperCase())}</span>`;
     chip.innerHTML = `${ava}<span>${escH(u.name || u.email || "Пользователь")}</span><span class="chip-x">✕</span>`;
     chip.querySelector(".chip-x").addEventListener("click", () => {
       delete createSelected[uid];
@@ -1485,7 +1541,6 @@ async function createGroup() {
   const name = (document.getElementById("cgName").value || "").trim();
   if (!name) return showToast("Введите название группы", "error");
 
-  // Лимит участников: Sqwid+ до 50, остальные до 20
   const maxMembers = isPlusUser() ? 50 : 20;
   const selectedCount = Object.keys(createSelected).length + 1;
   if (selectedCount > maxMembers) {
@@ -1560,6 +1615,21 @@ async function submitAddMembers() {
   } catch (e) {
     showToast("Ошибка: " + e.message, "error");
   }
+}
+
+(function applySavedTheme() {
+  try {
+    const saved = localStorage.getItem("sqwid_theme") || "light";
+    if (saved === "dark") document.body.setAttribute("data-theme", "dark");
+    else if (saved === "girl") document.body.setAttribute("data-theme", "girl");
+    else document.body.removeAttribute("data-theme");
+  } catch (e) {}
+})();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
 }
 
 console.log("✅ chat-main.js загружен");
