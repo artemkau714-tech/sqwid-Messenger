@@ -1,5 +1,5 @@
 /* ============================================================
-   calls.js — WebRTC звонки 1-на-1 через Firebase Realtime DB
+   calls.js — WebRTC звонки 1-на-1 + звук вызова + мини-виджет
    ============================================================ */
 
 console.log("🚀 calls.js загружен, жду Sqwid...");
@@ -27,7 +27,8 @@ waitForSqwidCalls((S) => {
   const ICE_SERVERS = {
     iceServers: [
       { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" }
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "stun:stun2.l.google.com:19302" }
     ]
   };
 
@@ -35,39 +36,150 @@ waitForSqwidCalls((S) => {
   let localStream = null;
   let remoteStream = null;
   let currentCallId = null;
-  let currentCallType = null; // "audio" | "video"
+  let currentCallType = null;
   let callPartnerUid = null;
   let callPartnerName = "Пользователь";
+  let callPartnerPhoto = "";
   let isCaller = false;
   let incomingCallData = null;
   let unsubCallListener = null;
   let unsubAnswerListener = null;
   let unsubIceListener = null;
+  let callTimerInterval = null;
+  let callStartTime = 0;
+  let isMinimized = false;
 
   /* ============================================================
-     ПРОВЕРКА ДОСТУПНОСТИ WEBRTC
+     ЗВУКИ (WebAudio API — генерация без файлов)
+     ============================================================ */
+  let audioCtx = null;
+  let ringtoneNode = null;
+  let ringtoneInterval = null;
+
+  function ensureAudioCtx() {
+    if (!audioCtx) {
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {}
+    }
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
+  // Исходящий вызов — "тууу-тууу-тууу" (гудки)
+  function startOutgoingRing() {
+    stopAllSounds();
+    ensureAudioCtx();
+    if (!audioCtx) return;
+
+    const playBeep = () => {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 425;
+      gain.gain.setValueAtTime(0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.02);
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime + 0.7);
+      gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.75);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.8);
+    };
+
+    playBeep();
+    ringtoneInterval = setInterval(playBeep, 1500);
+
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200, 100, 500]);
+  }
+
+  // Входящий — рингтон (более быстрый и громкий)
+  function startIncomingRing() {
+    stopAllSounds();
+    ensureAudioCtx();
+    if (!audioCtx) return;
+
+    const playRing = () => {
+      if (!audioCtx) return;
+      [0, 0.15].forEach((delay, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "triangle";
+        osc.frequency.value = i === 0 ? 900 : 700;
+        gain.gain.setValueAtTime(0, audioCtx.currentTime + delay);
+        gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + delay + 0.02);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime + delay + 0.12);
+        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + delay + 0.15);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + 0.2);
+      });
+    };
+
+    playRing();
+    ringtoneInterval = setInterval(playRing, 1200);
+
+    if (navigator.vibrate) navigator.vibrate([500, 300, 500, 300, 500, 300, 500]);
+  }
+
+  function stopAllSounds() {
+    if (ringtoneInterval) {
+      clearInterval(ringtoneInterval);
+      ringtoneInterval = null;
+    }
+    if (navigator.vibrate) navigator.vibrate(0);
+  }
+
+  /* ============================================================
+     ТАЙМЕР РАЗГОВОРА
+     ============================================================ */
+  function startCallTimer() {
+    stopCallTimer();
+    callStartTime = Date.now();
+    const timerEl = document.getElementById("callTimer");
+    if (timerEl) timerEl.textContent = "00:00";
+    const avaStatus = document.getElementById("callAvatarStatus");
+    if (avaStatus) avaStatus.textContent = "В разговоре";
+
+    callTimerInterval = setInterval(() => {
+      const sec = Math.floor((Date.now() - callStartTime) / 1000);
+      const mm = String(Math.floor(sec / 60)).padStart(2, "0");
+      const ss = String(sec % 60).padStart(2, "0");
+      const timerEl = document.getElementById("callTimer");
+      if (timerEl) timerEl.textContent = `${mm}:${ss}`;
+      const miniStatus = document.querySelector(".call-mini-status");
+      if (miniStatus) miniStatus.textContent = `${mm}:${ss}`;
+    }, 1000);
+  }
+
+  function stopCallTimer() {
+    if (callTimerInterval) {
+      clearInterval(callTimerInterval);
+      callTimerInterval = null;
+    }
+  }
+
+  /* ============================================================
+     ПРОВЕРКА WEBRTC
      ============================================================ */
   function isWebRTCSupported() {
     return !!(navigator.mediaDevices && window.RTCPeerConnection);
   }
 
-  /* ============================================================
-     ПОКАЗАТЬ/СКРЫТЬ КНОПКИ ЗВОНКА В ШАПКЕ
-     ============================================================ */
   function updateCallButtons() {
     const btnAudio = document.getElementById("btnCallAudio");
     const btnVideo = document.getElementById("btnCallVideo");
     const chat = S.getChatData && S.getChatData();
-
-    // Показываем только в личных чатах и если WebRTC поддерживается
     const isPrivate = chat && chat.type === "private";
     const supported = isWebRTCSupported();
-
     if (btnAudio) btnAudio.style.display = (isPrivate && supported) ? "flex" : "none";
     if (btnVideo) btnVideo.style.display = (isPrivate && supported) ? "flex" : "none";
   }
 
-  // Обновляем кнопки при открытии чата
   const origOnChatOpen = window.Sqwid.onChatOpen;
   window.Sqwid.onChatOpen = function (chatId) {
     if (origOnChatOpen) origOnChatOpen(chatId);
@@ -75,7 +187,7 @@ waitForSqwidCalls((S) => {
   };
 
   /* ============================================================
-     ПОЛУЧЕНИЕ ИМЕНИ СОБЕСЕДНИКА
+     ПОЛУЧЕНИЕ СОБЕСЕДНИКА
      ============================================================ */
   async function getPartnerInfo(chatId) {
     const chatSnap = await get(ref(db, "chats/" + chatId));
@@ -92,16 +204,17 @@ waitForSqwidCalls((S) => {
   }
 
   /* ============================================================
-     ПОЛУЧЕНИЕ МЕДИА
+     МЕДИА
      ============================================================ */
   async function getMedia(type) {
     try {
       const constraints = {
         audio: true,
-        video: type === "video" ? { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } } : false
+        video: type === "video"
+          ? { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }
+          : false
       };
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      return stream;
+      return await navigator.mediaDevices.getUserMedia(constraints);
     } catch (err) {
       console.error("Ошибка доступа к медиа:", err);
       if (err.name === "NotAllowedError") {
@@ -109,16 +222,18 @@ waitForSqwidCalls((S) => {
       } else if (err.name === "NotFoundError") {
         S.showAlert("Устройство не найдено", "Ошибка");
       } else {
-        S.showAlert("Не удалось получить доступ: " + err.message, "Ошибка");
+        S.showAlert("Ошибка: " + err.message, "Ошибка");
       }
       return null;
     }
   }
 
   /* ============================================================
-     ЭКРАН ЗВОНКА
+     UI ЭКРАНА ЗВОНКА
      ============================================================ */
   function showCallScreen() {
+    isMinimized = false;
+    hideMiniWidget();
     S.showScreen("screen-call");
   }
 
@@ -130,43 +245,110 @@ waitForSqwidCalls((S) => {
   function setPeerName(name) {
     const el = document.getElementById("callPeerName");
     if (el) el.textContent = name;
+    const avaName = document.getElementById("callAvatarName");
+    if (avaName) avaName.textContent = name;
+  }
+
+  function setAvatar(photo, name) {
+    const avaCircle = document.getElementById("callAvatarCircle");
+    const avaLetter = document.getElementById("callAvatarLetter");
+    if (!avaCircle) return;
+    if (photo && photo.startsWith("data:image")) {
+      avaCircle.innerHTML = `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;">`;
+    } else {
+      avaCircle.innerHTML = `<span style="font-size:3.5rem;font-weight:900;color:#fff;">${(name || "?").trim().charAt(0).toUpperCase()}</span>`;
+    }
   }
 
   function setupLocalVideo() {
     const localVideo = document.getElementById("localVideo");
-    if (localVideo && localStream) {
-      localVideo.srcObject = localStream;
-    }
+    if (localVideo && localStream) localVideo.srcObject = localStream;
   }
 
   function setupRemoteVideo() {
     const remoteVideo = document.getElementById("remoteVideo");
-    if (remoteVideo && remoteStream) {
-      remoteVideo.srcObject = remoteStream;
-    }
+    if (remoteVideo && remoteStream) remoteVideo.srcObject = remoteStream;
   }
 
-  function showAvatarFallback(photo, name) {
-    const ava = document.getElementById("callAvatar");
-    if (!ava) return;
-    if (photo && photo.startsWith("data:image")) {
-      ava.innerHTML = `<img src="${photo}" style="width:120px;height:120px;border-radius:50%;object-fit:cover;box-shadow:0 0 60px rgba(255,255,255,0.4);">`;
-    } else {
-      const letter = (name || "?").trim().charAt(0).toUpperCase();
-      ava.innerHTML = `<div style="width:120px;height:120px;border-radius:50%;background:var(--grad-1);display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:800;color:#fff;box-shadow:0 0 60px rgba(255,255,255,0.4);">${letter}</div>`;
-    }
-    ava.style.display = "flex";
-  }
-
-  function hideAvatarFallback() {
+  function hideAvatarOverlay() {
     const ava = document.getElementById("callAvatar");
     if (ava) ava.style.display = "none";
   }
 
+  function showAvatarOverlay(statusText) {
+    const ava = document.getElementById("callAvatar");
+    if (ava) ava.style.display = "flex";
+    const dots = document.getElementById("callRingingDots");
+    if (dots) dots.style.display = "flex";
+    if (statusText) {
+      const avaStatus = document.getElementById("callAvatarStatus");
+      if (avaStatus) avaStatus.textContent = statusText;
+    }
+  }
+
   /* ============================================================
-     ОЧИСТКА РЕСУРСОВ
+     МИНИ-ВИДЖЕТ (когда свернули)
+     ============================================================ */
+  function ensureMiniWidget() {
+    let w = document.getElementById("callMiniWidget");
+    if (w) return w;
+    w = document.createElement("div");
+    w.id = "callMiniWidget";
+    w.innerHTML = `
+      <div class="call-mini-ava" id="miniAva">?</div>
+      <div class="call-mini-info">
+        <div class="call-mini-name" id="miniName">—</div>
+        <div class="call-mini-status" id="miniStatus">Вызов...</div>
+      </div>
+      <button class="call-mini-end" id="miniEnd">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    `;
+    document.body.appendChild(w);
+
+    w.addEventListener("click", (e) => {
+      if (e.target.closest("#miniEnd")) return;
+      isMinimized = false;
+      hideMiniWidget();
+      S.showScreen("screen-call");
+    });
+
+    document.getElementById("miniEnd").addEventListener("click", (e) => {
+      e.stopPropagation();
+      endCall();
+    });
+
+    return w;
+  }
+
+  function showMiniWidget() {
+    const w = ensureMiniWidget();
+    const ava = document.getElementById("miniAva");
+    if (ava) {
+      if (callPartnerPhoto && callPartnerPhoto.startsWith("data:image")) {
+        ava.innerHTML = `<img src="${callPartnerPhoto}">`;
+      } else {
+        ava.textContent = (callPartnerName || "?").charAt(0).toUpperCase();
+      }
+    }
+    const name = document.getElementById("miniName");
+    if (name) name.textContent = callPartnerName;
+    w.classList.add("active");
+  }
+
+  function hideMiniWidget() {
+    const w = document.getElementById("callMiniWidget");
+    if (w) w.classList.remove("active");
+  }
+
+  /* ============================================================
+     ОЧИСТКА
      ============================================================ */
   function cleanupCall() {
+    stopAllSounds();
+    stopCallTimer();
+    hideMiniWidget();
+
     if (localStream) {
       localStream.getTracks().forEach(t => t.stop());
       localStream = null;
@@ -178,15 +360,15 @@ waitForSqwidCalls((S) => {
     remoteStream = null;
     if (unsubAnswerListener) { unsubAnswerListener(); unsubAnswerListener = null; }
     if (unsubIceListener) { unsubIceListener(); unsubIceListener = null; }
-    if (unsubCallListener) { unsubCallListener(); unsubCallListener = null; }
 
     currentCallId = null;
     currentCallType = null;
     callPartnerUid = null;
+    callPartnerPhoto = "";
     isCaller = false;
     incomingCallData = null;
+    isMinimized = false;
 
-    // Возвращаемся в чат
     if (S.getChatId && S.getChatId()) {
       S.showScreen("screen-messages");
     } else {
@@ -195,36 +377,33 @@ waitForSqwidCalls((S) => {
   }
 
   /* ============================================================
-     СОЗДАНИЕ PEER CONNECTION
+     PEER CONNECTION
      ============================================================ */
   function createPeerConnection(callId) {
     peerConnection = new RTCPeerConnection(ICE_SERVERS);
-
     remoteStream = new MediaStream();
 
-    // Добавляем наши треки
     localStream.getTracks().forEach(track => {
       peerConnection.addTrack(track, localStream);
     });
 
-    // Получаем треки собеседника
     peerConnection.ontrack = (event) => {
       event.streams[0].getTracks().forEach(track => {
         remoteStream.addTrack(track);
       });
       setupRemoteVideo();
-      hideAvatarFallback();
+      hideAvatarOverlay();
       setCallStatus("В разговоре");
+      startCallTimer();
+      stopAllSounds();
     };
 
-    // Отправляем наши ICE-кандидаты
     peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
         push(ref(db, `calls/${callId}/callerCandidates`), event.candidate.toJSON());
       }
     };
 
-    // Слушаем ICE собеседника
     if (unsubIceListener) unsubIceListener();
     unsubIceListener = onValue(ref(db, `calls/${callId}/calleeCandidates`), (snap) => {
       const candidates = snap.val() || {};
@@ -235,9 +414,13 @@ waitForSqwidCalls((S) => {
 
     peerConnection.onconnectionstatechange = () => {
       const state = peerConnection.connectionState;
-      if (state === "connected") setCallStatus("В разговоре");
-      else if (state === "disconnected") setCallStatus("Связь потеряна");
-      else if (state === "failed") {
+      if (state === "connected") {
+        setCallStatus("В разговоре");
+        startCallTimer();
+        stopAllSounds();
+      } else if (state === "disconnected") {
+        setCallStatus("Связь потеряна");
+      } else if (state === "failed") {
         setCallStatus("Ошибка соединения");
         setTimeout(cleanupCall, 2000);
       }
@@ -266,46 +449,66 @@ waitForSqwidCalls((S) => {
 
     callPartnerUid = partner.uid;
     callPartnerName = partner.name;
+    callPartnerPhoto = partner.photo;
     currentCallType = type;
     isCaller = true;
 
     setPeerName(partner.name);
-    setCallStatus("Вызов...");
-    showAvatarFallback(partner.photo, partner.name);
+    setCallStatus("Исходящий вызов...");
+    setAvatar(partner.photo, partner.name);
+    showAvatarOverlay("Вызов...");
     showCallScreen();
 
-    // Получаем медиа
+    // Звук гудков
+    startOutgoingRing();
+
     localStream = await getMedia(type);
     if (!localStream) {
+      stopAllSounds();
       cleanupCall();
       return;
     }
     setupLocalVideo();
 
-    // Создаём звонок в Firebase
     const callRef = push(ref(db, "calls"));
     currentCallId = callRef.key;
 
     await set(callRef, {
       from: currentUser.uid,
       fromName: (window._currentUserData && window._currentUserData.name) || "Пользователь",
+      fromPhoto: (window._currentUserData && window._currentUserData.photo) || "",
       to: partner.uid,
       type: type,
       status: "ringing",
       createdAt: Date.now()
     });
 
-    // Слушаем ответ
     if (unsubAnswerListener) unsubAnswerListener();
     unsubAnswerListener = onValue(ref(db, `calls/${currentCallId}/answer`), async (snap) => {
       const answer = snap.val();
-      if (answer && peerConnection) {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-        setCallStatus("Соединение...");
+      if (answer && peerConnection && peerConnection.signalingState !== "stable") {
+        try {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+          setCallStatus("Соединение...");
+          stopAllSounds();
+        } catch (e) {}
       }
     });
 
-    // Создаём offer
+    // Слушаем отказ
+    const statusUnsub = onValue(ref(db, `calls/${currentCallId}/status`), (snap) => {
+      const status = snap.val();
+      if (status === "declined") {
+        S.showToast("Звонок отклонён", "info");
+        statusUnsub();
+        cleanupCall();
+      } else if (status === "ended") {
+        S.showToast("Звонок завершён", "info");
+        statusUnsub();
+        cleanupCall();
+      }
+    });
+
     const pc = createPeerConnection(currentCallId);
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
@@ -316,7 +519,7 @@ waitForSqwidCalls((S) => {
   }
 
   /* ============================================================
-     ВХОДЯЩИЙ ЗВОНОК — СЛУШАТЕЛЬ
+     ВХОДЯЩИЙ ЗВОНОК
      ============================================================ */
   function startIncomingListener() {
     if (unsubCallListener) return;
@@ -325,9 +528,9 @@ waitForSqwidCalls((S) => {
       for (const callId in calls) {
         const call = calls[callId];
         if (call.to === currentUser.uid && call.status === "ringing" && !currentCallId) {
-          // Показываем модалку входящего
           incomingCallData = { callId, ...call };
           showIncomingModal(call);
+          startIncomingRing();
           return;
         }
       }
@@ -353,25 +556,28 @@ waitForSqwidCalls((S) => {
   }
 
   /* ============================================================
-     ПРИНЯТЬ ВХОДЯЩИЙ
+     ПРИНЯТЬ
      ============================================================ */
   async function acceptIncoming() {
     if (!incomingCallData) return;
     const call = incomingCallData;
 
+    stopAllSounds();
     hideIncomingModal();
 
     currentCallId = call.callId;
     callPartnerUid = call.from;
     callPartnerName = call.fromName || "Пользователь";
+    callPartnerPhoto = call.fromPhoto || "";
     currentCallType = call.type;
     isCaller = false;
 
     setPeerName(callPartnerName);
     setCallStatus("Соединение...");
+    setAvatar(callPartnerPhoto, callPartnerName);
+    showAvatarOverlay("Соединение...");
     showCallScreen();
 
-    // Получаем медиа
     localStream = await getMedia(call.type);
     if (!localStream) {
       await update(ref(db, `calls/${currentCallId}`), { status: "declined" });
@@ -380,10 +586,8 @@ waitForSqwidCalls((S) => {
     }
     setupLocalVideo();
 
-    // Создаём peer connection
     const pc = createPeerConnection(currentCallId);
 
-    // Получаем offer
     const callSnap = await get(ref(db, `calls/${currentCallId}`));
     const callData = callSnap.val();
     if (!callData || !callData.offer) {
@@ -394,17 +598,14 @@ waitForSqwidCalls((S) => {
 
     await pc.setRemoteDescription(new RTCSessionDescription(callData.offer));
 
-    // Создаём answer
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
 
-    // Отправляем answer
     await update(ref(db, `calls/${currentCallId}`), {
       status: "connected",
       answer: { type: answer.type, sdp: answer.sdp }
     });
 
-    // Слушаем ICE caller-а
     if (unsubIceListener) unsubIceListener();
     unsubIceListener = onValue(ref(db, `calls/${currentCallId}/callerCandidates`), (snap) => {
       const candidates = snap.val() || {};
@@ -417,32 +618,20 @@ waitForSqwidCalls((S) => {
   }
 
   /* ============================================================
-     ОТКЛОНИТЬ ВХОДЯЩИЙ
+     ОТКЛОНИТЬ
      ============================================================ */
   async function declineIncoming() {
     if (!incomingCallData) return;
     const callId = incomingCallData.callId;
+    stopAllSounds();
     hideIncomingModal();
 
     await update(ref(db, `calls/${callId}`), { status: "declined" });
     S.showToast("Звонок отклонён", "info");
-
-    // Уведомляем звонящего
-    const callSnap = await get(ref(db, `calls/${callId}`));
-    const call = callSnap.val();
-    if (call && call.from) {
-      const botRef = push(ref(db, "botChat/" + call.from));
-      await set(botRef, {
-        from: "Sqwid",
-        text: `📞 ${call.toName || "Пользователь"} отклонил(а) звонок`,
-        timestamp: Date.now(),
-        type: "system"
-      });
-    }
   }
 
   /* ============================================================
-     ЗАВЕРШИТЬ ЗВОНОК
+     ЗАВЕРШИТЬ
      ============================================================ */
   async function endCall() {
     if (currentCallId) {
@@ -457,17 +646,17 @@ waitForSqwidCalls((S) => {
   }
 
   /* ============================================================
-     КНОПКИ УПРАВЛЕНИЯ ВО ВРЕМЯ ЗВОНКА
+     КНОПКИ
      ============================================================ */
   const btnMute = document.getElementById("btnCallMute");
   if (btnMute) {
     btnMute.addEventListener("click", () => {
       if (!localStream) return;
-      const audioTrack = localStream.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        btnMute.style.background = audioTrack.enabled ? "rgba(255,255,255,0.15)" : "rgba(239,68,68,0.5)";
-        S.showToast(audioTrack.enabled ? "Микрофон включён" : "Микрофон выключен", "info");
+      const track = localStream.getAudioTracks()[0];
+      if (track) {
+        track.enabled = !track.enabled;
+        btnMute.classList.toggle("muted", !track.enabled);
+        S.showToast(track.enabled ? "Микрофон включён" : "Микрофон выключен", "info");
       }
     });
   }
@@ -476,48 +665,42 @@ waitForSqwidCalls((S) => {
   if (btnCam) {
     btnCam.addEventListener("click", () => {
       if (!localStream) return;
-      const videoTrack = localStream.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
-        btnCam.style.background = videoTrack.enabled ? "rgba(255,255,255,0.15)" : "rgba(239,68,68,0.5)";
-        S.showToast(videoTrack.enabled ? "Камера включена" : "Камера выключена", "info");
+      const track = localStream.getVideoTracks()[0];
+      if (track) {
+        track.enabled = !track.enabled;
+        btnCam.classList.toggle("off", !track.enabled);
+        S.showToast(track.enabled ? "Камера включена" : "Камера выключена", "info");
       }
     });
   }
 
   const btnEnd = document.getElementById("btnCallEnd");
-  if (btnEnd) {
-    btnEnd.addEventListener("click", endCall);
+  if (btnEnd) btnEnd.addEventListener("click", endCall);
+
+  const btnMinimize = document.getElementById("btnCallMinimize");
+  if (btnMinimize) {
+    btnMinimize.addEventListener("click", () => {
+      isMinimized = true;
+      showMiniWidget();
+      // Возвращаемся в чат
+      if (S.getChatId && S.getChatId()) S.showScreen("screen-messages");
+      else S.showScreen("screen-chats");
+    });
   }
 
-  /* ============================================================
-     КНОПКИ В ШАПКЕ ЧАТА
-     ============================================================ */
   const btnCallAudio = document.getElementById("btnCallAudio");
-  if (btnCallAudio) {
-    btnCallAudio.addEventListener("click", () => startCall("audio"));
-  }
+  if (btnCallAudio) btnCallAudio.addEventListener("click", () => startCall("audio"));
 
   const btnCallVideo = document.getElementById("btnCallVideo");
-  if (btnCallVideo) {
-    btnCallVideo.addEventListener("click", () => startCall("video"));
-  }
+  if (btnCallVideo) btnCallVideo.addEventListener("click", () => startCall("video"));
 
-  /* ============================================================
-     МОДАЛКА ВХОДЯЩЕГО
-     ============================================================ */
   const btnAccept = document.getElementById("btnIncomingAccept");
   if (btnAccept) btnAccept.addEventListener("click", acceptIncoming);
 
   const btnDecline = document.getElementById("btnIncomingDecline");
   if (btnDecline) btnDecline.addEventListener("click", declineIncoming);
 
-  /* ============================================================
-     СТАРТ СЛУШАТЕЛЯ
-     ============================================================ */
   startIncomingListener();
-
-  // Периодически обновляем кнопки (на случай смены чата)
   setInterval(updateCallButtons, 1000);
 
   console.log("✅ calls.js готов");
