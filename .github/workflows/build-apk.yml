@@ -1,0 +1,54 @@
+name: Build Sqwid APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Capacitor
+        run: |
+          npm init -y
+          npm i @capacitor/core @capacitor/android
+          npm i -D @capacitor/cli
+
+      - name: Init Capacitor
+        run: |
+          npx cap init Sqwid com.sqwid.messenger --web-dir=.
+          npx cap add android
+
+      - name: Configure Android
+        run: |
+          # Разрешения для камеры и микрофона
+          sed -i 's|</manifest>|<uses-permission android:name="android.permission.CAMERA" />\n<uses-permission android:name="android.permission.RECORD_AUDIO" />\n<uses-permission android:name="android.permission.INTERNET" />\n</manifest>|' android/app/src/main/AndroidManifest.xml
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: sqwid-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
