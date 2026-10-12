@@ -1,0 +1,75 @@
+name: Build Sqwid APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Prepare package.json
+        run: |
+          cat > package.json <<'EOF'
+          {
+            "name": "sqwid",
+            "version": "1.0.0",
+            "description": "Sqwid Messenger",
+            "private": true
+          }
+          EOF
+
+      - name: Install Capacitor
+        run: |
+          npm install @capacitor/core@6 @capacitor/android@6
+          npm install -D @capacitor/cli@6
+
+      - name: Init Capacitor
+        run: |
+          npx cap init Sqwid com.sqwid.messenger --web-dir=.
+
+      - name: Add Android platform
+        run: |
+          npx cap add android
+
+      - name: Copy web assets
+        run: |
+          npx cap copy android
+
+      - name: Add permissions
+        run: |
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          sed -i 's|</manifest>|<uses-permission android:name="android.permission.CAMERA" />\n<uses-permission android:name="android.permission.RECORD_AUDIO" />\n<uses-permission android:name="android.permission.INTERNET" />\n<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n</manifest>|' "$MANIFEST"
+          echo "=== Manifest after patch ==="
+          cat "$MANIFEST"
+
+      - name: Build APK (debug)
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: sqwid-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
