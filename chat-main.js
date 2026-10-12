@@ -1,6 +1,7 @@
 /* ============================================================
    chat-main.js — ФИНАЛЬНАЯ версия
    Бот Sqwid Fire + pet_invite + хуки onChatOpen/onChatClose
+   + фильтр запрещённых слов (word-filter.js)
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -239,6 +240,14 @@ function loadChatBackground() {
   } catch (e) {}
 }
 
+/* ============================================================
+   ФИЛЬТР СЛОВ — ОБЁРТКА
+   ============================================================ */
+function checkFilter(text) {
+  if (!window.SqwidWordFilter) return { action: "allow" };
+  return window.SqwidWordFilter.analyze(text);
+}
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     if (unsubChats) { unsubChats(); unsubChats = null; }
@@ -296,6 +305,7 @@ onAuthStateChanged(auth, async (user) => {
     } catch (e) {}
   });
 });
+
 /* ============================================================
    SKELETON-ЗАГРУЗКА ЧАТОВ
    ============================================================ */
@@ -510,7 +520,7 @@ async function openChat(chatId) {
     showScreen("screen-messages");
     loadChatBackground();
 
-    // ⭐ ХУК: сообщаем sqwidpet.js что чат открыт
+    // ХУК: сообщаем sqwidpet.js что чат открыт
     if (window.Sqwid && window.Sqwid.onChatOpen) {
       try { window.Sqwid.onChatOpen(chatId); } catch (e) {}
     }
@@ -540,22 +550,23 @@ async function openChat(chatId) {
           }));
 
         arr.forEach(m => {
-  try { renderMessage(m, chatId); } catch (e) {}
-});
-box.scrollTop = box.scrollHeight;
+          try { renderMessage(m, chatId); } catch (e) {}
+        });
+        box.scrollTop = box.scrollHeight;
 
-// Помечаем входящие как прочитанные
-const readUpdates = {};
-let hasReadUpdates = false;
-for (const m of arr) {
-  if (m.sender === currentUser.uid) continue;
-  if (m.readBy && m.readBy[currentUser.uid]) continue;
-  readUpdates[`messages/${chatId}/${m.id}/readBy/${currentUser.uid}`] = Date.now();
-  hasReadUpdates = true;
-}
-if (hasReadUpdates) {
-  try { await update(ref(db), readUpdates); } catch (e) {}
-}
+        // Помечаем входящие как прочитанные
+        const readUpdates = {};
+        let hasReadUpdates = false;
+        for (const m of arr) {
+          if (m.sender === currentUser.uid) continue;
+          if (m.readBy && m.readBy[currentUser.uid]) continue;
+          readUpdates[`messages/${chatId}/${m.id}/readBy/${currentUser.uid}`] = Date.now();
+          hasReadUpdates = true;
+        }
+        if (hasReadUpdates) {
+          try { await update(ref(db), readUpdates); } catch (e) {}
+        }
+
         if (chat.type === "channel") {
           const today = new Date().toISOString().slice(0, 10);
           for (const m of arr) {
@@ -586,6 +597,11 @@ function renderMessage(msg, chatId) {
   const div = document.createElement("div");
   div.className = "msg " + (isOwn ? "own" : "other");
   div.dataset.msgId = msg.id || "";
+
+  // Помечаем flagged сообщения
+  if (msg.flagged) {
+    div.dataset.flagged = "1";
+  }
 
   const isPinned = currentChatData && currentChatData.pinned && currentChatData.pinned.messageId === msg.id;
   if (isPinned) div.classList.add("msg-pinned");
@@ -679,48 +695,47 @@ function renderMessage(msg, chatId) {
   }
 
   let viewsHTML = "";
-if (currentChatData && currentChatData.type === "channel") {
-  viewsHTML = `<div class="msg-views">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-      <circle cx="12" cy="12" r="3"/>
-    </svg>
-    ${msg.views || 0}
-  </div>`;
-}
-
-// Галочки для своих сообщений в личных чатах
-let checksHTML = "";
-if (isOwn && currentChatData && currentChatData.type === "private") {
-  const readBy = msg.readBy || {};
-  const partnerUid = Object.keys(currentChatData.members || {}).find(u => u !== currentUser.uid);
-  const isRead = partnerUid && readBy[partnerUid];
-
-  if (isRead) {
-    checksHTML = `<span class="msg-checks read" title="Прочитано">
-      <svg width="16" height="11" viewBox="0 0 18 12" fill="none">
-        <polyline points="1,6 5,10 11,2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <polyline points="7,6 11,10 17,2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  if (currentChatData && currentChatData.type === "channel") {
+    viewsHTML = `<div class="msg-views">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
       </svg>
-    </span>`;
-  } else {
-    checksHTML = `<span class="msg-checks" title="Отправлено">
-      <svg width="12" height="11" viewBox="0 0 14 12" fill="none">
-        <polyline points="1,6 5,10 11,2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </span>`;
+      ${msg.views || 0}
+    </div>`;
   }
-}
 
-div.innerHTML = `
-  ${senderHTML}
-  ${contentHTML}
-  <div class="msg-time">
-    ${fmtTime(msg.timestamp || Date.now())}
-    ${checksHTML}
-  </div>
-  ${viewsHTML}
-`;
+  let checksHTML = "";
+  if (isOwn && currentChatData && currentChatData.type === "private") {
+    const readBy = msg.readBy || {};
+    const partnerUid = Object.keys(currentChatData.members || {}).find(u => u !== currentUser.uid);
+    const isRead = partnerUid && readBy[partnerUid];
+
+    if (isRead) {
+      checksHTML = `<span class="msg-checks read" title="Прочитано">
+        <svg width="16" height="11" viewBox="0 0 18 12" fill="none">
+          <polyline points="1,6 5,10 11,2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="7,6 11,10 17,2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>`;
+    } else {
+      checksHTML = `<span class="msg-checks" title="Отправлено">
+        <svg width="12" height="11" viewBox="0 0 14 12" fill="none">
+          <polyline points="1,6 5,10 11,2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>`;
+    }
+  }
+
+  div.innerHTML = `
+    ${senderHTML}
+    ${contentHTML}
+    <div class="msg-time">
+      ${fmtTime(msg.timestamp || Date.now())}
+      ${checksHTML}
+    </div>
+    ${viewsHTML}
+  `;
 
   if (!isOwn) {
     const reportBtn = document.createElement("button");
@@ -907,6 +922,7 @@ function attachLongPress(el, msg, chatId) {
 
 function openMsgMenu(msg, chatId) {
   longPressMsg = { msg, chatId };
+  window._lastLongPressMsg = { id: msg.id, ...msg };
 
   const chat = window.Sqwid.getChatData ? window.Sqwid.getChatData() : null;
   const isOwn = msg.sender === currentUser.uid;
@@ -936,6 +952,7 @@ if (closeMsgMenuBtn) closeMsgMenuBtn.addEventListener("click", () => {
   document.getElementById("modal-msgMenu").classList.remove("active");
   longPressMsg = null;
   editingMsgId = null;
+  window._lastLongPressMsg = null;
   const cb = document.getElementById("btnCancelEdit");
   if (cb) cb.style.display = "none";
 });
@@ -958,6 +975,7 @@ if (deleteMsgBtn) deleteMsgBtn.addEventListener("click", async () => {
   await remove(ref(db, `messages/${chatId}/${msg.id}`));
   document.getElementById("modal-msgMenu").classList.remove("active");
   longPressMsg = null;
+  window._lastLongPressMsg = null;
 });
 
 const editMsgBtn = document.getElementById("btnEditMsg");
@@ -1038,6 +1056,25 @@ async function sendMessage() {
     return;
   }
 
+  /* ============================================================
+     ФИЛЬТР ЗАПРЕЩЁННЫХ СЛОВ
+     ============================================================ */
+  let pendingFlag = null;
+  if (window.SqwidWordFilter) {
+    const res = window.SqwidWordFilter.analyze(text);
+    if (res.action === "block") {
+      showToast("Сообщение отклонено: " + res.reason, "error", 3000);
+      return;
+    }
+    if (res.action === "flag") {
+      pendingFlag = {
+        reason: res.reason,
+        categories: res.categories,
+        matches: res.matches.map(m => m.word).slice(0, 5)
+      };
+    }
+  }
+
   const maxLen = isPlusUser() ? 4000 : 500;
   if (text.length > maxLen) {
     showToast(`Максимум ${maxLen} символов${isPlusUser() ? "" : " (Sqwid+ = 4000)"}`, "error");
@@ -1046,9 +1083,14 @@ async function sendMessage() {
 
   if (editingMsgId) {
     try {
-      await update(ref(db, `messages/${currentChatId}/${editingMsgId}`), {
-        text, editedAt: Date.now()
-      });
+      const upd = { text, editedAt: Date.now() };
+      if (pendingFlag) {
+        upd.flagged = true;
+        upd.flagReason = pendingFlag.reason;
+        upd.flagCategories = pendingFlag.categories;
+        upd.flagMatches = pendingFlag.matches;
+      }
+      await update(ref(db, `messages/${currentChatId}/${editingMsgId}`), upd);
     } catch (e) {
       showToast("Ошибка: " + e.message, "error");
     }
@@ -1060,12 +1102,19 @@ async function sendMessage() {
   }
 
   const newRef = push(ref(db, "messages/" + currentChatId));
-  await set(newRef, {
+  const msgPayload = {
     sender: currentUser.uid,
     type: "text",
     text,
     timestamp: Date.now()
-  });
+  };
+  if (pendingFlag) {
+    msgPayload.flagged = true;
+    msgPayload.flagReason = pendingFlag.reason;
+    msgPayload.flagCategories = pendingFlag.categories;
+    msgPayload.flagMatches = pendingFlag.matches;
+  }
+  await set(newRef, msgPayload);
 
   await update(ref(db, "chats/" + currentChatId), {
     lastMsg: text,
@@ -1131,11 +1180,40 @@ if (btnSendPhoto) btnSendPhoto.addEventListener("click", async () => {
   }
   const dataUrl = document.getElementById("photoPreviewImg").src;
   const caption = document.getElementById("photoCaption").value.trim();
+
+  /* ФИЛЬТР ПОДПИСИ */
+  let pendingFlag = null;
+  if (caption && window.SqwidWordFilter) {
+    const res = window.SqwidWordFilter.analyze(caption);
+    if (res.action === "block") {
+      showToast("Подпись отклонена: " + res.reason, "error", 3000);
+      return;
+    }
+    if (res.action === "flag") {
+      pendingFlag = {
+        reason: res.reason,
+        categories: res.categories,
+        matches: res.matches.map(m => m.word).slice(0, 5)
+      };
+    }
+  }
+
   if (!currentChatId || !dataUrl) return;
   const newRef = push(ref(db, "messages/" + currentChatId));
-  await set(newRef, {
-    sender: currentUser.uid, type: "photo", photo: dataUrl, text: caption, timestamp: Date.now()
-  });
+  const payload = {
+    sender: currentUser.uid,
+    type: "photo",
+    photo: dataUrl,
+    text: caption,
+    timestamp: Date.now()
+  };
+  if (pendingFlag) {
+    payload.flagged = true;
+    payload.flagReason = pendingFlag.reason;
+    payload.flagCategories = pendingFlag.categories;
+    payload.flagMatches = pendingFlag.matches;
+  }
+  await set(newRef, payload);
   await update(ref(db, "chats/" + currentChatId), {
     lastMsg: caption || "📷 Фото", lastMsgAt: Date.now(), lastMsgSender: currentUser.uid
   });
@@ -1387,6 +1465,13 @@ const btnNextCH = document.getElementById("btnNextCreateChannel");
 if (btnNextCH) btnNextCH.addEventListener("click", async () => {
   const name = (document.getElementById("chName").value || "").trim();
   if (!name) return showToast("Введите название канала", "error");
+
+  /* ФИЛЬТР НАЗВАНИЯ КАНАЛА */
+  if (window.SqwidWordFilter) {
+    const res = window.SqwidWordFilter.analyze(name);
+    if (res.action === "block") return showToast("Название канала содержит запрещённые слова", "error");
+  }
+
   const type = document.querySelector('input[name="chType"]:checked')?.value || "public";
   if (type === "public") {
     const un = (document.getElementById("chUsername").value || "").trim().toLowerCase();
@@ -1609,6 +1694,12 @@ async function createGroup() {
   const name = (document.getElementById("cgName").value || "").trim();
   if (!name) return showToast("Введите название группы", "error");
 
+  /* ФИЛЬТР НАЗВАНИЯ ГРУППЫ */
+  if (window.SqwidWordFilter) {
+    const res = window.SqwidWordFilter.analyze(name);
+    if (res.action === "block") return showToast("Название группы содержит запрещённые слова", "error");
+  }
+
   const maxMembers = isPlusUser() ? 50 : 20;
   const selectedCount = Object.keys(createSelected).length + 1;
   if (selectedCount > maxMembers) {
@@ -1632,7 +1723,19 @@ async function createGroup() {
 async function createChannel() {
   const name = (document.getElementById("chName").value || "").trim();
   if (!name) return showToast("Введите название канала", "error");
+
+  /* ФИЛЬТР НАЗВАНИЯ КАНАЛА */
+  if (window.SqwidWordFilter) {
+    const res = window.SqwidWordFilter.analyze(name);
+    if (res.action === "block") return showToast("Название канала содержит запрещённые слова", "error");
+  }
+
   const desc = (document.getElementById("chDesc").value || "").trim();
+  if (desc && window.SqwidWordFilter) {
+    const r = window.SqwidWordFilter.analyze(desc);
+    if (r.action === "block") return showToast("Описание содержит запрещённые слова", "error");
+  }
+
   const type = document.querySelector('input[name="chType"]:checked')?.value || "public";
   const username = type === "public" ? (document.getElementById("chUsername").value || "").trim().toLowerCase() : null;
   const members = { [currentUser.uid]: true };

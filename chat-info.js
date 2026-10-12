@@ -377,6 +377,14 @@ waitForSqwidChatInfo((S) => {
 
     const name = (document.getElementById("ecName").value || "").trim();
     if (!name) return S.showToast("Введите название", "error");
+    if (window.SqwidWordFilter) {
+  const r1 = window.SqwidWordFilter.analyze(name);
+  if (r1.action === "block") return S.showToast("Название содержит запрещённую лексику", "error");
+  if (desc) {
+    const r2 = window.SqwidWordFilter.analyze(desc);
+    if (r2.action === "block") return S.showToast("Описание содержит запрещённую лексику", "error");
+  }
+}
     const desc = (document.getElementById("ecDesc").value || "").trim();
 
     const updates = { name, description: desc };

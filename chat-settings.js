@@ -237,7 +237,12 @@ waitForSqwidSettings((S) => {
     const name = (document.getElementById("settingsName").value || "").trim();
     const usernameRaw = (document.getElementById("settingsUsername").value || "").trim().toLowerCase();
     const bio = (document.getElementById("settingsBio").value || "").trim();
-
+if (bio && window.SqwidWordFilter) {
+  const res = window.SqwidWordFilter.analyze(bio);
+  if (res.action === "block") {
+    return S.showAlert("Bio содержит запрещённую лексику", "Ошибка");
+  }
+}
     if (!name) return S.showAlert("Введите имя", "Ошибка");
     if (name.length > 30) return S.showAlert("Имя до 30 символов", "Ошибка");
 
