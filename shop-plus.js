@@ -1,7 +1,6 @@
 /* ============================================================
-   shop-plus.js — Магазин пополнения: сквидики + Sqwid+
-   Витрина с заглушкой оплаты (готова под подключение платёжки)
-   + Кастомная SVG-монетка SQ
+   shop-plus.js — Покупка Sqwid+ Premium
+   Кнопка "+" остаётся, но пакеты SQ убраны
    ============================================================ */
 
 console.log("🚀 shop-plus.js загружен, жду Sqwid...");
@@ -29,23 +28,13 @@ waitForSqwidShopPlus((S) => {
   let myData = {};
 
   /* ============================================================
-     КАТАЛОГ ТОВАРОВ
+     КАТАЛОГ — ТОЛЬКО ПРЕМИУМ, БЕЗ ПАКЕТОВ SQ
      ============================================================ */
   const CATALOG = {
     premium: [
       { id: "plus_1m", name: "1 месяц",   price: 199,  months: 1 },
       { id: "plus_3m", name: "3 месяца",  price: 800,  months: 3,  save: "Экономия 200₽" },
       { id: "plus_6m", name: "6 месяцев", price: 1600, months: 6,  save: "Экономия 400₽" }
-    ],
-    coins: [
-      { id: "coins_100",   name: "100 скв",   coins: 100,   price: 115 },
-      { id: "coins_250",   name: "250 скв",   coins: 250,   price: 270 },
-      { id: "coins_650",   name: "650 скв",   coins: 650,   price: 400 },
-      { id: "coins_1000",  name: "1000 скв",  coins: 1000,  price: 700 },
-      { id: "coins_1500",  name: "1500 скв",  coins: 1500,  price: 1000 },
-      { id: "coins_2500",  name: "2500 скв",  coins: 2500,  price: 3000 },
-      { id: "coins_5000",  name: "5000 скв",  coins: 5000,  price: 6000 },
-      { id: "coins_10000", name: "10000 скв", coins: 10000, price: 12000 }
     ]
   };
 
@@ -57,7 +46,7 @@ waitForSqwidShopPlus((S) => {
   });
 
   /* ============================================================
-     ОТКРЫТИЕ МЕНЮ ПОПОЛНЕНИЯ
+     ОТКРЫТИЕ МЕНЮ (по кнопке "+" или "Купить Sqwid+")
      ============================================================ */
   function openTopUp() {
     const modal = document.getElementById("modal-topup");
@@ -95,19 +84,29 @@ waitForSqwidShopPlus((S) => {
       box.appendChild(buildProductRow(item, "premium"));
     });
 
-    /* ---- COINS ---- */
-    const coinsTitle = document.createElement("div");
-    coinsTitle.className = "topup-section-title";
-    coinsTitle.style.marginTop = "1rem";
-    coinsTitle.innerHTML = `
-      <svg width="16" height="16" style="vertical-align:middle;margin-right:6px;"><use href="#ico-coin"/></svg>
-      Сквидики
+    /* ---- Информация о сквидиках ---- */
+    const coinsInfo = document.createElement("div");
+    coinsInfo.style.cssText = `
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.82rem;
+      color: var(--text-2);
+      line-height: 1.4;
     `;
-    box.appendChild(coinsTitle);
-
-    CATALOG.coins.forEach(item => {
-      box.appendChild(buildProductRow(item, "coins"));
-    });
+    coinsInfo.innerHTML = `
+      <svg width="20" height="20" style="flex-shrink:0;"><use href="#ico-coin"/></svg>
+      <div>
+        <b style="color:var(--text);">Сквидики зарабатываются в играх</b><br>
+        Заходи в Sqwid Games и получай SQ за победы, квесты и активность.
+      </div>
+    `;
+    box.appendChild(coinsInfo);
   }
 
   function buildProductRow(item, type) {
@@ -115,9 +114,7 @@ waitForSqwidShopPlus((S) => {
     row.className = "topup-product";
     row.type = "button";
 
-    const icon = type === "premium"
-      ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="#f59e0b"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`
-      : `<svg width="22" height="22"><use href="#ico-coin"/></svg>`;
+    const icon = `<svg width="22" height="22" viewBox="0 0 24 24" fill="#f59e0b"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
 
     const saveBadge = item.save ? `<span class="topup-save">${item.save}</span>` : "";
 
@@ -147,27 +144,22 @@ waitForSqwidShopPlus((S) => {
   function selectProduct(item, type) {
     selectedProduct = { item, type };
 
-    // Закрываем модалку меню
     const modal = document.getElementById("modal-topup");
     if (modal) modal.classList.remove("active");
 
-    // Заполняем экран заглушки
     const nameEl = document.getElementById("paySelectedName");
     const priceEl = document.getElementById("paySelectedPrice");
     const typeEl = document.getElementById("paySelectedType");
 
-    if (typeEl) {
-      typeEl.textContent = type === "premium" ? "Sqwid+ Premium" : "Сквидики";
-    }
+    if (typeEl) typeEl.textContent = "Sqwid+ Premium";
     if (nameEl) nameEl.textContent = item.name;
     if (priceEl) priceEl.textContent = item.price + "₽";
 
-    // Показываем экран заглушки
     S.showScreen("screen-payment-stub");
   }
 
   /* ============================================================
-     КНОПКИ СПОСОБОВ ОПЛАТЫ (пока заглушки)
+     КНОПКИ СПОСОБОВ ОПЛАТЫ (заглушки)
      ============================================================ */
   document.querySelectorAll("[data-pay-method]").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -185,7 +177,6 @@ waitForSqwidShopPlus((S) => {
   /* ============================================================
      КНОПКИ НАВИГАЦИИ
      ============================================================ */
-  // Отмена в модалке меню
   const btnTopUpCancel = document.getElementById("btnTopUpCancel");
   if (btnTopUpCancel) {
     btnTopUpCancel.addEventListener("click", () => {
@@ -194,7 +185,6 @@ waitForSqwidShopPlus((S) => {
     });
   }
 
-  // Назад из экрана заглушки → в профиль (НЕ в меню!)
   const btnBackFromPay = document.getElementById("btnBackFromPay");
   if (btnBackFromPay) {
     btnBackFromPay.addEventListener("click", () => {
@@ -203,23 +193,26 @@ waitForSqwidShopPlus((S) => {
   }
 
   /* ============================================================
-     ПРИВЯЗКА КНОПКИ "+" РЯДОМ С БАЛАНСОМ
+     ПРИВЯЗКА КНОПОК
      ============================================================ */
-  function bindPlusButton() {
-    const btn = document.getElementById("btnOpenTopUp");
-    if (!btn || btn.dataset.bound) return;
-    btn.dataset.bound = "1";
-    btn.addEventListener("click", () => openTopUp());
+  function bindButtons() {
+    // Кнопка "+" рядом с балансом
+    const btnPlus = document.getElementById("btnOpenTopUp");
+    if (btnPlus && !btnPlus.dataset.bound) {
+      btnPlus.dataset.bound = "1";
+      btnPlus.addEventListener("click", () => openTopUp());
+    }
+
+    // Отдельная кнопка "Купить Sqwid+" (если есть в HTML)
+    const btnBuyPlus = document.getElementById("btnBuySqwidPlus");
+    if (btnBuyPlus && !btnBuyPlus.dataset.bound) {
+      btnBuyPlus.dataset.bound = "1";
+      btnBuyPlus.addEventListener("click", () => openTopUp());
+    }
   }
 
-  bindPlusButton();
-  // Если DOM пересоздали — перепривязываем
-  const bindInterval = setInterval(() => {
-    bindPlusButton();
-    if (document.getElementById("btnOpenTopUp")) {
-      clearInterval(bindInterval);
-    }
-  }, 1000);
+  bindButtons();
+  setInterval(bindButtons, 1000);
 
-  console.log("✅ shop-plus.js готов");
+  console.log("✅ shop-plus.js готов (только Sqwid+)");
 });
