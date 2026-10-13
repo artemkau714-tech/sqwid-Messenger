@@ -3,6 +3,7 @@
    Бот Sqwid Fire + pet_invite + хуки onChatOpen/onChatClose
    + фильтр запрещённых слов (word-filter.js)
    + кастомная SVG-монетка SQ
+   + SVG-галочка верификации (без verify.PNG)
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -91,8 +92,9 @@ function svgLetter(text) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#f97316"/><text x="50%" y="55%" font-size="36" fill="#fff" text-anchor="middle" font-family="Arial">${ch}</text></svg>`;
   return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
 }
-function verifiedIcon(flag) {
-  return flag ? `<img src="verify.PNG" style="width:14px;height:14px;vertical-align:middle;margin-left:4px;">` : "";
+function verifiedIcon(flag, size = 14) {
+  if (!flag) return "";
+  return `<span class="verified-tappable" data-verified-open="1" style="margin-left:4px;"><svg width="${size}" height="${size}"><use href="#ico-verified"/></svg></span>`;
 }
 function coinIcon(size = 14) {
   return `<svg width="${size}" height="${size}" style="vertical-align:middle;margin-right:4px;display:inline-block;"><use href="#ico-coin"/></svg>`;
@@ -1778,5 +1780,28 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   });
 }
+/* ============================================================
+   КЛИК ПО ГАЛОЧКЕ ВЕРИФИКАЦИИ
+   ============================================================ */
+document.addEventListener("click", (e) => {
+  const el = e.target.closest("[data-verified-open]");
+  if (!el) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const modal = document.getElementById("modal-verified");
+  if (modal) modal.classList.add("active");
+}, true);
 
+document.addEventListener("click", (e) => {
+  if (e.target.id === "btnVerifiedModalClose") {
+    const modal = document.getElementById("modal-verified");
+    if (modal) modal.classList.remove("active");
+  }
+});
+
+document.addEventListener("click", (e) => {
+  if (e.target.id === "modal-verified") {
+    e.target.classList.remove("active");
+  }
+});
 console.log("✅ chat-main.js загружен");

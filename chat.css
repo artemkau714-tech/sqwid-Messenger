@@ -5376,3 +5376,166 @@ body[data-theme="girl"] .plus-info-icon {
   color: #ec4899;
   border-color: rgba(236, 72, 153, 0.25);
 }
+/* ============================================
+   МОДАЛКА "ВЕРИФИЦИРОВАННЫЙ АККАУНТ"
+   ============================================ */
+.verified-modal-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1rem;
+  animation: verifiedModalIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.verified-modal-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes verifiedModalIn {
+  0% { opacity: 0; transform: scale(0.3) rotate(-20deg); }
+  60% { opacity: 1; transform: scale(1.1) rotate(5deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.verified-modal-title {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--text);
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.02rem;
+}
+
+.verified-modal-subtitle {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 1rem;
+}
+
+.verified-modal-desc {
+  font-size: 0.88rem;
+  color: var(--text-2);
+  line-height: 1.5;
+  text-align: center;
+  padding: 0 0.5rem;
+}
+
+/* Кликабельная галочка */
+.verified-tappable {
+  cursor: pointer;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: inline-block;
+  vertical-align: middle;
+}
+.verified-tappable:active {
+  transform: scale(0.85);
+}
+/* ============================================
+   УБИРАЕМ СВЕЧЕНИЕ У КНОПОК
+   ============================================ */
+.btn-create,
+.nav-btn.active,
+.folder-chip.active,
+.send-plane,
+.mp-coins-plus,
+.chat-info-copy-btn,
+.photo-send-btn,
+.attach-btn,
+.record-btn,
+.topup-product,
+.games-card,
+.quest-btn,
+.owner-stat-card,
+.chat-info-action,
+.settings-link-row,
+.profile-group-row,
+.create-result,
+.menu-row,
+.reaction-chip,
+.payment-method-btn,
+.topup-product:hover,
+.games-card:hover,
+.quest-item,
+.owner-user-row,
+.mp-stat,
+.profile-tab.active,
+.theme-btn.active,
+.nick-color-btn.active,
+.nick-emoji-btn.active,
+.nick-font-btn.active,
+.owner-tab.active,
+.owner-filter.active,
+.shop-tab.active,
+.chat-back:active,
+.chat-menu-btn:active,
+.top-new-btn:active,
+.top-avatar-btn:active {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Убираем пульсацию кнопки отправки */
+.input-area.has-text .send-plane {
+  animation: none !important;
+}
+
+/* Убираем glow у свечения дышащих элементов */
+.nav-btn.active {
+  animation: none !important;
+}
+
+.folder-chip.active {
+  animation: none !important;
+}
+
+/* Убираем тень у нижнего меню */
+.bottom-nav {
+  box-shadow: none !important;
+}
+
+/* Убираем тень у аватарок */
+.chat-ava,
+.top-avatar-btn,
+.profile-ava,
+.profile-ava-wrap.frame-gold,
+.profile-ava-wrap.frame-fire,
+.profile-ava-wrap.frame-rainbow,
+.profile-ava-wrap.frame-plus,
+.chat-info-ava,
+.settings-photo {
+  box-shadow: none !important;
+}
+
+/* Убираем тени у карточек/модалок (опционально) */
+.modal-content {
+  box-shadow: none !important;
+}
+
+/* Убираем тени у иконок профиля */
+.settings-link-row svg,
+.plus-info-icon {
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Убираем drop-shadow у галочки */
+.verified-modal-icon svg {
+  filter: none !important;
+}
+
+/* Убираем свечение у ник-плюса (градиентный текст) */
+.nick-plus {
+  text-shadow: none !important;
+}
+
+/* Убираем shadow-glow у чего угодно */
+[class*="glow"],
+[style*="box-shadow"] {
+  /* не трогаем inline-стили, только классы */
+}
+
+/* Убираем анимацию дышащего тоста */
+.toast {
+  box-shadow: none !important;
+}

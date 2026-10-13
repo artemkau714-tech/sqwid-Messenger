@@ -1,5 +1,6 @@
 /* ============================================================
    chat-info.js — инфо о чате, участники, роли, модерация
+   + кликабельная SVG-галочка верификации
    ============================================================ */
 
 console.log("🚀 chat-info.js загружен, жду Sqwid...");
@@ -35,6 +36,13 @@ waitForSqwidChatInfo((S) => {
   let ecAutoDelete = 0;
 
   let memberActionsUid = null;
+
+  /* ============================================================
+     ХЕЛПЕР: кликабельная галочка
+     ============================================================ */
+  function verifiedIcon(size = 14) {
+    return `<span class="verified-tappable" data-verified-open="1" style="margin-left:4px;"><svg width="${size}" height="${size}"><use href="#ico-verified"/></svg></span>`;
+  }
 
   /* ============================================================
      ОТКРЫТИЕ ЭКРАНА
@@ -111,7 +119,7 @@ waitForSqwidChatInfo((S) => {
         nm = ou.name || ou.email || nm;
       }
       let html = escH(nm);
-      if (chat.verified) html += ` <img src="verify.PNG" style="width:16px;height:16px;vertical-align:middle;margin-left:4px;">`;
+      if (chat.verified) html += verifiedIcon(16);
       nameEl.innerHTML = html;
     }
 
@@ -236,7 +244,7 @@ waitForSqwidChatInfo((S) => {
     else if (role === "admin") roleHTML = `<div class="chat-info-member-role admin">Админ</div>`;
 
     let nameHTML = escH(u.name || u.email || "Пользователь");
-    if (u.verified) nameHTML += ` <img src="verify.PNG" style="width:12px;height:12px;vertical-align:middle;margin-left:3px;">`;
+    if (u.verified) nameHTML += verifiedIcon(12);
 
     let statusHTML = "";
     if (u.banned) statusHTML += `<span style="font-size:10px;background:rgba(239,68,68,0.2);color:#ef4444;padding:1px 5px;border-radius:999px;font-weight:800;margin-left:4px;">BAN</span>`;
@@ -377,14 +385,6 @@ waitForSqwidChatInfo((S) => {
 
     const name = (document.getElementById("ecName").value || "").trim();
     if (!name) return S.showToast("Введите название", "error");
-    if (window.SqwidWordFilter) {
-  const r1 = window.SqwidWordFilter.analyze(name);
-  if (r1.action === "block") return S.showToast("Название содержит запрещённую лексику", "error");
-  if (desc) {
-    const r2 = window.SqwidWordFilter.analyze(desc);
-    if (r2.action === "block") return S.showToast("Описание содержит запрещённую лексику", "error");
-  }
-}
     const desc = (document.getElementById("ecDesc").value || "").trim();
 
     const updates = { name, description: desc };

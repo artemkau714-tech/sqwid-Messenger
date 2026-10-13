@@ -1,5 +1,6 @@
 /* ============================================================
    profileNN.js — профиль собеседника (соцсети Sqwid+)
+   + кликабельная SVG-галочка верификации
    ============================================================ */
 
 console.log("🚀 profileNN.js загружен, жду Sqwid...");
@@ -50,6 +51,10 @@ waitForSqwidNN((S) => {
     const d = document.createElement("div");
     d.textContent = t == null ? "" : t;
     return d.innerHTML;
+  }
+
+  function verifiedIcon(size = 16) {
+    return `<span class="verified-tappable" data-verified-open="1" style="margin-left:4px;"><svg width="${size}" height="${size}"><use href="#ico-verified"/></svg></span>`;
   }
 
   /* ============================================================
@@ -200,7 +205,7 @@ waitForSqwidNN((S) => {
     if (nameEl) {
       let nameHTML = escH(u.name || u.email || "Пользователь");
       if (u.verified && !banned) {
-        nameHTML += ` <img src="verify.PNG" style="width:16px;height:16px;vertical-align:middle;margin-left:4px;">`;
+        nameHTML += verifiedIcon(16);
       }
       if (banned) {
         nameHTML += ` <span style="color:#ef4444;font-size:12px;font-weight:700;margin-left:6px;">ЗАБЛОКИРОВАН</span>`;
