@@ -76,9 +76,9 @@ waitForSqwidGames((S) => {
   }
 
   function updateBalanceUI() {
-    const el = document.getElementById("gamesBalance");
-    if (el) el.textContent = "🪙 " + (myData.coins || 0) + " SQ";
-  }
+  const el = document.getElementById("gamesBalance");
+  if (el) el.innerHTML = window.Sqwid.coinIcon(14) + (myData.coins || 0) + " SQ";
+}
 
   /* ============================================================
      ОТКРЫТИЕ ЭКРАНА

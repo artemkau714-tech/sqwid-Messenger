@@ -143,7 +143,7 @@ waitForSqwidProfile((S) => {
     }
 
     // Баланс — как есть, без форматирования
-    if (coinsEl) coinsEl.textContent = "🪙 " + (myData.coins || 0) + " SQ";
+    if (coinsEl) coinsEl.innerHTML = window.Sqwid.coinIcon(16) + (myData.coins || 0) + " SQ";
 
     // Плашка Sqwid+
     renderPlusBadge(plus);

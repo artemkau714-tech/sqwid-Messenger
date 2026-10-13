@@ -141,8 +141,7 @@ waitForSqwidSettings((S) => {
     }
 
     const balEl = document.getElementById("settingsBalance");
-    if (balEl) balEl.textContent = "🪙 " + (myData.coins || 0) + " SQ";
-
+    if (balEl) balEl.innerHTML = window.Sqwid.coinIcon(14) + (myData.coins || 0) + " SQ";
     let cur = "light";
     try { cur = localStorage.getItem("sqwid_theme") || "light"; } catch (e) {}
     const light = document.getElementById("themeLight");

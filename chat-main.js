@@ -2,6 +2,7 @@
    chat-main.js — ФИНАЛЬНАЯ версия
    Бот Sqwid Fire + pet_invite + хуки onChatOpen/onChatClose
    + фильтр запрещённых слов (word-filter.js)
+   + кастомная SVG-монетка SQ
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -93,6 +94,9 @@ function svgLetter(text) {
 function verifiedIcon(flag) {
   return flag ? `<img src="verify.PNG" style="width:14px;height:14px;vertical-align:middle;margin-left:4px;">` : "";
 }
+function coinIcon(size = 14) {
+  return `<svg width="${size}" height="${size}" style="vertical-align:middle;margin-right:4px;display:inline-block;"><use href="#ico-coin"/></svg>`;
+}
 function isRealMessage(m) {
   if (!m || typeof m !== "object") return false;
   if (m.text || m.photo || m.voice) return true;
@@ -117,9 +121,10 @@ function showScreen(id) {
       "screen-choose-members", "screen-chat-info", "screen-edit-chat",
       "screen-chat-members", "screen-owner", "screen-report-view",
       "screen-search-messages", "screen-gallery", "screen-viewer",
-      "screen-banned", "screen-games"
+      "screen-banned", "screen-games", "screen-payment-stub"
     ].includes(id);
     if (nav) nav.style.display = hideNav ? "none" : "flex";
+    document.body.classList.toggle("on-chat", id === "screen-messages");
   } catch (e) {}
 }
 
@@ -240,9 +245,6 @@ function loadChatBackground() {
   } catch (e) {}
 }
 
-/* ============================================================
-   ФИЛЬТР СЛОВ — ОБЁРТКА
-   ============================================================ */
 function checkFilter(text) {
   if (!window.SqwidWordFilter) return { action: "allow" };
   return window.SqwidWordFilter.analyze(text);
@@ -271,6 +273,7 @@ onAuthStateChanged(auth, async (user) => {
     openChat: (id) => openChat(id),
     showScreen: (id) => showScreen(id),
     svgAvatar: (t) => svgLetter(t),
+    coinIcon: (size) => coinIcon(size),
     showAlert, showConfirm, showPrompt, showToast,
     openAddMembersToChat: (id) => openAddMembersToChat(id),
     setChatBackground: (n) => setChatBackground(n),
@@ -306,9 +309,6 @@ onAuthStateChanged(auth, async (user) => {
   });
 });
 
-/* ============================================================
-   SKELETON-ЗАГРУЗКА ЧАТОВ
-   ============================================================ */
 function showChatSkeletons(list) {
   if (!list) return;
   list.innerHTML = "";
@@ -520,7 +520,6 @@ async function openChat(chatId) {
     showScreen("screen-messages");
     loadChatBackground();
 
-    // ХУК: сообщаем sqwidpet.js что чат открыт
     if (window.Sqwid && window.Sqwid.onChatOpen) {
       try { window.Sqwid.onChatOpen(chatId); } catch (e) {}
     }
@@ -554,7 +553,6 @@ async function openChat(chatId) {
         });
         box.scrollTop = box.scrollHeight;
 
-        // Помечаем входящие как прочитанные
         const readUpdates = {};
         let hasReadUpdates = false;
         for (const m of arr) {
@@ -598,17 +596,11 @@ function renderMessage(msg, chatId) {
   div.className = "msg " + (isOwn ? "own" : "other");
   div.dataset.msgId = msg.id || "";
 
-  // Помечаем flagged сообщения
-  if (msg.flagged) {
-    div.dataset.flagged = "1";
-  }
+  if (msg.flagged) div.dataset.flagged = "1";
 
   const isPinned = currentChatData && currentChatData.pinned && currentChatData.pinned.messageId === msg.id;
   if (isPinned) div.classList.add("msg-pinned");
 
-  /* ============================================================
-     ПРИВЕТСТВИЕ БОТА С КНОПКОЙ СТАРТ
-     ============================================================ */
   if (msg.type === "bot_greeting") {
     div.innerHTML = `
       <div class="msg-bot-greeting" style="min-width:220px;">
@@ -626,9 +618,6 @@ function renderMessage(msg, chatId) {
     return;
   }
 
-  /* ============================================================
-     ПРИГЛАШЕНИЕ В SQWID PET (кнопки видит только получатель)
-     ============================================================ */
   if (msg.type === "pet_invite" && msg.petInvite) {
     const inv = msg.petInvite;
     const status = inv.status;
@@ -668,9 +657,6 @@ function renderMessage(msg, chatId) {
     return;
   }
 
-  /* ============================================================
-     ОБЫЧНЫЕ СООБЩЕНИЯ
-     ============================================================ */
   const isGroup = currentChatData && currentChatData.type !== "private";
   let senderHTML = "";
   if (!isOwn && isGroup && msg.sender) {
@@ -1056,9 +1042,6 @@ async function sendMessage() {
     return;
   }
 
-  /* ============================================================
-     ФИЛЬТР ЗАПРЕЩЁННЫХ СЛОВ
-     ============================================================ */
   let pendingFlag = null;
   if (window.SqwidWordFilter) {
     const res = window.SqwidWordFilter.analyze(text);
@@ -1181,7 +1164,6 @@ if (btnSendPhoto) btnSendPhoto.addEventListener("click", async () => {
   const dataUrl = document.getElementById("photoPreviewImg").src;
   const caption = document.getElementById("photoCaption").value.trim();
 
-  /* ФИЛЬТР ПОДПИСИ */
   let pendingFlag = null;
   if (caption && window.SqwidWordFilter) {
     const res = window.SqwidWordFilter.analyze(caption);
@@ -1221,9 +1203,6 @@ if (btnSendPhoto) btnSendPhoto.addEventListener("click", async () => {
   document.getElementById("photoPreviewImg").src = "";
 });
 
-/* ============================================================
-   НАВИГАЦИЯ + ХУК onChatClose
-   ============================================================ */
 const btnBack = document.getElementById("btnBack");
 if (btnBack) btnBack.addEventListener("click", () => {
   if (unsubMessages) { unsubMessages(); unsubMessages = null; }
@@ -1466,7 +1445,6 @@ if (btnNextCH) btnNextCH.addEventListener("click", async () => {
   const name = (document.getElementById("chName").value || "").trim();
   if (!name) return showToast("Введите название канала", "error");
 
-  /* ФИЛЬТР НАЗВАНИЯ КАНАЛА */
   if (window.SqwidWordFilter) {
     const res = window.SqwidWordFilter.analyze(name);
     if (res.action === "block") return showToast("Название канала содержит запрещённые слова", "error");
@@ -1694,7 +1672,6 @@ async function createGroup() {
   const name = (document.getElementById("cgName").value || "").trim();
   if (!name) return showToast("Введите название группы", "error");
 
-  /* ФИЛЬТР НАЗВАНИЯ ГРУППЫ */
   if (window.SqwidWordFilter) {
     const res = window.SqwidWordFilter.analyze(name);
     if (res.action === "block") return showToast("Название группы содержит запрещённые слова", "error");
@@ -1724,7 +1701,6 @@ async function createChannel() {
   const name = (document.getElementById("chName").value || "").trim();
   if (!name) return showToast("Введите название канала", "error");
 
-  /* ФИЛЬТР НАЗВАНИЯ КАНАЛА */
   if (window.SqwidWordFilter) {
     const res = window.SqwidWordFilter.analyze(name);
     if (res.action === "block") return showToast("Название канала содержит запрещённые слова", "error");

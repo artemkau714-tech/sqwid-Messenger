@@ -78,9 +78,9 @@ waitForSqwidShop((S) => {
   });
 
   function updateBalance() {
-    const el = document.getElementById("shopBalance");
-    if (el) el.textContent = (myData.coins || 0) + " SQ";
-  }
+  const el = document.getElementById("shopBalance");
+  if (el) el.innerHTML = window.Sqwid.coinIcon(12) + (myData.coins || 0) + " SQ";
+}
 
   /* ============================================================
      ОТКРЫТИЕ / ЗАКРЫТИЕ
