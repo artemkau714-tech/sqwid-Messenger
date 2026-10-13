@@ -5220,3 +5220,159 @@ body[data-theme="girl"] .settings-link-row:hover {
 body[data-theme="girl"] .settings-link-row svg {
   color: #ec4899;
 }
+/* ============================================
+   ДИСКЛЕЙМЕР В ИГРАХ
+   ============================================ */
+.games-disclaimer {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.08));
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-md, 16px);
+  padding: 0.9rem 1rem;
+  margin: 1.25rem 0;
+  animation: fadeSlideUp 0.5s var(--ease-out-soft, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  animation-delay: 0.2s;
+}
+
+.games-disclaimer-icon {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d97706;
+}
+.games-disclaimer-icon svg {
+  stroke: currentColor;
+}
+
+.games-disclaimer-text {
+  flex: 1;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #92400e;
+  font-weight: 500;
+}
+.games-disclaimer-text b {
+  font-weight: 800;
+  color: #78350f;
+}
+
+/* Тёмная тема */
+body[data-theme="dark"] .games-disclaimer {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1));
+  border-color: rgba(245, 158, 11, 0.35);
+}
+body[data-theme="dark"] .games-disclaimer-icon {
+  background: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+}
+body[data-theme="dark"] .games-disclaimer-text {
+  color: #fcd34d;
+}
+body[data-theme="dark"] .games-disclaimer-text b {
+  color: #fde68a;
+}
+
+/* Девчачья тема */
+body[data-theme="girl"] .games-disclaimer {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(168, 85, 247, 0.08));
+  border-color: rgba(236, 72, 153, 0.25);
+}
+body[data-theme="girl"] .games-disclaimer-icon {
+  background: rgba(236, 72, 153, 0.2);
+  color: #ec4899;
+}
+body[data-theme="girl"] .games-disclaimer-text {
+  color: #831843;
+}
+body[data-theme="girl"] .games-disclaimer-text b {
+  color: #4c1d3d;
+}
+/* ============================================
+   МОДАЛКА "ЧТО ДАЁТ SQWID+"
+   ============================================ */
+.plus-info-scroll {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0.25rem 0 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.plus-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.5rem;
+  animation: fadeSlideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background 0.2s ease,
+              border-color 0.2s ease;
+}
+.plus-info-item:hover {
+  background: rgba(249, 115, 22, 0.06);
+  border-color: rgba(249, 115, 22, 0.25);
+  transform: translateY(-1px);
+}
+
+.plus-info-icon {
+  flex-shrink: 0;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 0.7rem;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(249, 115, 22, 0.12));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.plus-info-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.plus-info-body { flex: 1; min-width: 0; }
+.plus-info-title {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.3;
+  margin-bottom: 0.15rem;
+}
+.plus-info-desc {
+  font-size: 0.78rem;
+  color: var(--text-2);
+  line-height: 1.4;
+}
+
+body[data-theme="dark"] .plus-info-item { background: #1a1a1a; border-color: rgba(255, 255, 255, 0.08); }
+body[data-theme="dark"] .plus-info-item:hover { background: rgba(245, 158, 11, 0.12); }
+body[data-theme="dark"] .plus-info-title { color: #fff; }
+body[data-theme="dark"] .plus-info-icon {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(249, 115, 22, 0.2));
+  color: #fbbf24;
+}
+
+body[data-theme="girl"] .plus-info-item { background: #fff5fb; border-color: rgba(236, 72, 153, 0.15); }
+body[data-theme="girl"] .plus-info-item:hover { background: rgba(236, 72, 153, 0.08); }
+body[data-theme="girl"] .plus-info-icon {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(168, 85, 247, 0.12));
+  color: #ec4899;
+  border-color: rgba(236, 72, 153, 0.25);
+}

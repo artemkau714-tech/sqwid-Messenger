@@ -448,7 +448,7 @@
 
       <div style="padding: 1rem 0.5rem 2rem; text-align: center;">
         <div style="font-size: 0.75rem; color: var(--text-3); font-weight: 700;">
-          Sqwid Messenger X PlaVer
+          Sqwid Messenger · v1.0
         </div>
       </div>
     </div>
@@ -484,14 +484,6 @@
         <div class="mp-stat"><div class="mp-stat-value" id="profileStatChats">0</div><div class="mp-stat-label">Чатов</div></div>
         <div class="mp-stat"><div class="mp-stat-value" id="profileStatMessages">0</div><div class="mp-stat-label">Сообщений</div></div>
         <div class="mp-stat"><div class="mp-stat-value" id="profileStatPhotos">0</div><div class="mp-stat-label">Фото</div></div>
-      </div>
-      <div style="padding: 0 1.25rem 0.6rem;">
-        <button class="btn-create" id="btnBuySqwidPlus" style="width:100%;background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-          </svg>
-          <span>Купить Sqwid+</span>
-        </button>
       </div>
       <div style="padding: 0 1.25rem 1.25rem; display:flex; flex-direction:column; gap:0.6rem;">
         <button class="btn-create" id="btnOpenShop" style="width:100%;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;">
@@ -998,7 +990,23 @@
       </div>
       <div class="games-section-title">Ежедневные квесты</div>
       <div id="gamesQuests" class="games-quests"></div>
-      <div class="games-hint">Все награды — за навык и активность. Лимит выигрыша: 100 000 SQ в день (Sqwid+ без лимита).</div>
+      <div class="games-disclaimer">
+  <div class="games-disclaimer-icon">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+  </div>
+  <div class="games-disclaimer-text">
+    <b>Сквидики — это игровая валюта.</b><br>
+    Она зарабатывается в играх и тратится только внутри Sqwid.
+    Обменять её на реальные деньги, вывести или передать третьим лицам <b>невозможно</b>.
+    Сквидики не являются электронными деньгами или платёжным средством.
+  </div>
+</div>
+
+<div class="games-hint">Лимит выигрыша: 100 000 SQ в день (Sqwid+ без лимита).</div>
     </div>
   </div>
 
@@ -1154,7 +1162,18 @@
       <button class="menu-row cancel" id="btnTopUpCancel" style="margin-top:0.75rem;">Отмена</button>
     </div>
   </div>
-
+<div id="modal-plus-info" class="modal">
+  <div class="modal-content" style="padding-bottom:1rem;">
+    <h2 style="display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="#f59e0b">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+      Что даёт Sqwid+
+    </h2>
+    <div class="plus-info-scroll" id="plusInfoList"></div>
+    <button class="menu-row cancel" id="btnPlusInfoClose" style="margin-top:0.75rem;">Закрыть</button>
+  </div>
+</div>
   <div id="modal-create" class="modal"><div class="modal-content">
     <button class="menu-row" id="btnCreatePrivate">Создать личный чат</button>
     <button class="menu-row" id="btnCreateGroup">Создать группу</button>
