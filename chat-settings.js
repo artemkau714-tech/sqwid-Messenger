@@ -542,6 +542,33 @@ if (bio && window.SqwidWordFilter) {
   if (document.getElementById("screen-settings")?.classList.contains("active")) {
     renderLangPicker();
   }
+/* ============================================================
+   КОПИРОВАНИЕ ПОЧТЫ ПОДДЕРЖКИ
+   ============================================================ */
+const SUPPORT_EMAIL = "sqwid.support@gmail.com";
 
+document.addEventListener("click", function (e) {
+  const el = e.target.closest("#btnCopySupportEmail");
+  if (!el) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  try {
+    const tmp = document.createElement("textarea");
+    tmp.value = SUPPORT_EMAIL;
+    tmp.style.position = "fixed";
+    tmp.style.top = "0";
+    tmp.style.left = "0";
+    tmp.style.opacity = "0";
+    document.body.appendChild(tmp);
+    tmp.focus();
+    tmp.select();
+    document.execCommand("copy");
+    document.body.removeChild(tmp);
+    S.showToast("Почта скопирована", "ok", 2000);
+  } catch (err) {
+    S.showAlert("Скопируй вручную:\n\n" + SUPPORT_EMAIL, "Поддержка");
+  }
+}, true);
   console.log("✅ chat-settings.js готов");
 });

@@ -5148,3 +5148,75 @@ body[data-theme="girl"] .payment-summary-type,
 body[data-theme="girl"] .payment-summary-price {
   color: #ec4899;
 }
+/* ============================================
+   ССЫЛКИ В НАСТРОЙКАХ (документы, поддержка)
+   ============================================ */
+.settings-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 0.9rem;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 0.94rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  transition: transform 0.15s var(--spring, cubic-bezier(0.34, 1.56, 0.64, 1)),
+              background 0.2s ease,
+              border-color 0.2s ease;
+}
+.settings-link-row:last-child {
+  margin-bottom: 0;
+}
+.settings-link-row:hover {
+  background: rgba(249, 115, 22, 0.08);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.settings-link-row:active {
+  transform: scale(0.98);
+  background: rgba(249, 115, 22, 0.12);
+}
+.settings-link-text {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.35;
+}
+.settings-link-row svg {
+  flex-shrink: 0;
+  color: var(--accent);
+  stroke: currentColor;
+  opacity: 0.85;
+}
+
+/* Тёмная тема */
+body[data-theme="dark"] .settings-link-row {
+  background: #1a1a1a;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+body[data-theme="dark"] .settings-link-row:hover {
+  background: rgba(249, 115, 22, 0.15);
+}
+body[data-theme="dark"] .settings-link-text span {
+  color: #a1a1aa !important;
+}
+
+/* Девчачья тема */
+body[data-theme="girl"] .settings-link-row {
+  background: #fff5fb;
+  border-color: rgba(236, 72, 153, 0.15);
+  color: #4c1d3d;
+}
+body[data-theme="girl"] .settings-link-row:hover {
+  background: rgba(236, 72, 153, 0.1);
+  border-color: #ec4899;
+}
+body[data-theme="girl"] .settings-link-row svg {
+  color: #ec4899;
+}
