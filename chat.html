@@ -137,6 +137,19 @@
     <symbol id="ico-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
     </symbol>
+    <symbol id="ico-verified" viewBox="0 0 24 24">
+      <defs>
+        <linearGradient id="verifiedGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#60a5fa"/>
+          <stop offset="100%" stop-color="#2563eb"/>
+        </linearGradient>
+      </defs>
+      <path d="M12 1.5l2.4 2.4 3.4-.6 1.2 3.2 3.2 1.2-.6 3.4 2.4 2.4-2.4 2.4.6 3.4-3.2 1.2-1.2 3.2-3.4-.6L12 22.5l-2.4-2.4-3.4.6-1.2-3.2-3.2-1.2.6-3.4L1.5 12l2.4-2.4-.6-3.4 3.2-1.2 1.2-3.2 3.4.6z"
+            fill="url(#verifiedGrad)" stroke="#fff" stroke-width="0.8" stroke-linejoin="round"/>
+      <polyline points="7,12 11,16 17,8"
+                fill="none" stroke="#fff" stroke-width="2.4"
+                stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
     <symbol id="ico-coin" viewBox="0 0 24 24">
       <defs>
         <linearGradient id="coinGrad" x1="0" y1="0" x2="1" y2="1">
@@ -155,19 +168,6 @@
       <circle cx="12" cy="12" r="11" fill="url(#coinShine)" opacity="0.6"/>
       <text x="12" y="15.5" text-anchor="middle" font-family="'Inter', -apple-system, sans-serif" font-size="8" font-weight="900" fill="#7c2d12" letter-spacing="-0.5">SQ</text>
     </symbol>
-    <symbol id="ico-verified" viewBox="0 0 24 24">
-  <defs>
-    <linearGradient id="verifiedGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#60a5fa"/>
-      <stop offset="100%" stop-color="#2563eb"/>
-    </linearGradient>
-  </defs>
-  <path d="M12 1.5l2.4 2.4 3.4-.6 1.2 3.2 3.2 1.2-.6 3.4 2.4 2.4-2.4 2.4.6 3.4-3.2 1.2-1.2 3.2-3.4-.6L12 22.5l-2.4-2.4-3.4.6-1.2-3.2-3.2-1.2.6-3.4L1.5 12l2.4-2.4-.6-3.4 3.2-1.2 1.2-3.2 3.4.6z"
-        fill="url(#verifiedGrad)" stroke="#2563eb" stroke-width="0.8" stroke-linejoin="round"/>
-  <polyline points="7,12 11,16 17,8"
-            fill="none" stroke="#60a5fa" stroke-width="2.4"
-            stroke-linecap="round" stroke-linejoin="round"/>
-</symbol>
   </svg>
 
   <div id="screen-chats" class="screen active">
@@ -444,24 +444,24 @@
       </div>
 
       <div class="settings-section">
-  <div class="settings-section-title">Поддержка</div>
-  <div class="settings-card">
-    <div id="btnCopySupportEmail" class="settings-link-row" style="cursor:pointer;" role="button">
-      <span class="settings-link-text">
-        <b>Поддержка</b><br>
-        <span style="font-size:0.82rem;color:var(--text-2);font-weight:600;">sqwid.support@gmail.com</span>
-      </span>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;">
-        <rect x="9" y="9" width="13" height="13" rx="2"/>
-        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-      </svg>
-    </div>
-  </div>
-</div>
+        <div class="settings-section-title">Поддержка</div>
+        <div class="settings-card">
+          <div id="btnCopySupportEmail" class="settings-link-row" style="cursor:pointer;" role="button">
+            <span class="settings-link-text">
+              <b>Поддержка</b><br>
+              <span style="font-size:0.82rem;color:var(--text-2);font-weight:600;">sqwid.support@gmail.com</span>
+            </span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </div>
+        </div>
+      </div>
 
       <div style="padding: 1rem 0.5rem 2rem; text-align: center;">
         <div style="font-size: 0.75rem; color: var(--text-3); font-weight: 700;">
-          Sqwid Messenger · PlaVER
+          Sqwid Messenger · v1.0
         </div>
       </div>
     </div>
@@ -485,12 +485,6 @@
           <div class="mp-coins" id="profileCoins">
             <svg width="16" height="16" style="vertical-align:middle;margin-right:4px;display:inline-block;"><use href="#ico-coin"/></svg>0 SQ
           </div>
-          <button class="mp-coins-plus" id="btnOpenTopUp" aria-label="Пополнить">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </button>
         </div>
       </div>
       <div class="mp-stats" style="padding: 0 1.25rem 1.25rem;">
@@ -498,6 +492,16 @@
         <div class="mp-stat"><div class="mp-stat-value" id="profileStatMessages">0</div><div class="mp-stat-label">Сообщений</div></div>
         <div class="mp-stat"><div class="mp-stat-value" id="profileStatPhotos">0</div><div class="mp-stat-label">Фото</div></div>
       </div>
+
+      <div style="padding: 0 1.25rem 0.6rem;">
+        <button class="btn-create" id="btnBuyPremium" style="width:100%;background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px;">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          Купить Premium
+        </button>
+      </div>
+
       <div style="padding: 0 1.25rem 1.25rem; display:flex; flex-direction:column; gap:0.6rem;">
         <button class="btn-create" id="btnOpenShop" style="width:100%;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
@@ -1003,23 +1007,24 @@
       </div>
       <div class="games-section-title">Ежедневные квесты</div>
       <div id="gamesQuests" class="games-quests"></div>
-      <div class="games-disclaimer">
-  <div class="games-disclaimer-icon">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="10"/>
-      <line x1="12" y1="8" x2="12" y2="12"/>
-      <line x1="12" y1="16" x2="12.01" y2="16"/>
-    </svg>
-  </div>
-  <div class="games-disclaimer-text">
-    <b>Сквидики — это игровая валюта.</b><br>
-    Она зарабатывается в играх и тратится только внутри Sqwid.
-    Обменять её на реальные деньги, вывести или передать третьим лицам <b>невозможно</b>.
-    Сквидики не являются электронными деньгами или платёжным средством.
-  </div>
-</div>
 
-<div class="games-hint">Лимит выигрыша: 100 000 SQ в день (Sqwid+ без лимита).</div>
+      <div class="games-disclaimer">
+        <div class="games-disclaimer-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div class="games-disclaimer-text">
+          <b>Сквидики — это игровая валюта.</b><br>
+          Она зарабатывается в играх и тратится только внутри Sqwid.
+          Обменять её на реальные деньги, вывести или передать третьим лицам <b>невозможно</b>.
+          Сквидики не являются электронными деньгами или платёжным средством.
+        </div>
+      </div>
+
+      <div class="games-hint">Лимит выигрыша: 100 000 SQ в день (Sqwid+ без лимита).</div>
     </div>
   </div>
 
@@ -1170,40 +1175,48 @@
 
   <div id="modal-topup" class="modal">
     <div class="modal-content" style="padding-bottom:0.5rem;">
-      <h2>Пополнить</h2>
+      <h2 style="display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#f59e0b">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        Sqwid+ Premium
+      </h2>
       <div id="topupScroll" class="topup-scroll"></div>
       <button class="menu-row cancel" id="btnTopUpCancel" style="margin-top:0.75rem;">Отмена</button>
     </div>
   </div>
-<div id="modal-plus-info" class="modal">
-  <div class="modal-content" style="padding-bottom:1rem;">
-    <h2 style="display:flex;align-items:center;justify-content:center;gap:0.5rem;">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="#f59e0b">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-      </svg>
-      Что даёт Sqwid+
-    </h2>
-    <div class="plus-info-scroll" id="plusInfoList"></div>
-    <button class="menu-row cancel" id="btnPlusInfoClose" style="margin-top:0.75rem;">Закрыть</button>
+
+  <div id="modal-plus-info" class="modal">
+    <div class="modal-content" style="padding-bottom:1rem;">
+      <h2 style="display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#f59e0b">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        Что даёт Sqwid+
+      </h2>
+      <div class="plus-info-scroll" id="plusInfoList"></div>
+      <button class="menu-row cancel" id="btnPlusInfoClose" style="margin-top:0.75rem;">Закрыть</button>
+    </div>
   </div>
-</div>
+
   <div id="modal-verified" class="modal">
-  <div class="modal-content" style="text-align:center;padding:1.5rem 1.25rem 1.25rem;">
-    <div class="verified-modal-icon">
-      <svg viewBox="0 0 24 24">
-        <use href="#ico-verified"/>
-      </svg>
+    <div class="modal-content" style="text-align:center;padding:1.5rem 1.25rem 1.25rem;">
+      <div class="verified-modal-icon">
+        <svg viewBox="0 0 24 24">
+          <use href="#ico-verified"/>
+        </svg>
+      </div>
+      <h2 class="verified-modal-title">Верифицированный аккаунт</h2>
+      <div class="verified-modal-subtitle">Оригинал</div>
+      <div class="verified-modal-desc">
+        Этот аккаунт официально подтверждён администрацией Sqwid.
+        Галочка означает, что перед вами настоящий профиль,
+        а не подделка или копия.
+      </div>
+      <button class="btn-create" id="btnVerifiedModalClose" style="width:100%;margin-top:1rem;">Понятно</button>
     </div>
-    <h2 class="verified-modal-title">Верифицированный аккаунт</h2>
-    <div class="verified-modal-subtitle">Оригинал</div>
-    <div class="verified-modal-desc">
-      Этот аккаунт официально подтверждён администрацией Sqwid.
-      Галочка означает, что перед вами настоящий профиль,
-      а не подделка или копия.
-    </div>
-    <button class="btn-create" id="btnVerifiedModalClose" style="width:100%;margin-top:1rem;">Понятно</button>
   </div>
-</div>
+
   <div id="modal-create" class="modal"><div class="modal-content">
     <button class="menu-row" id="btnCreatePrivate">Создать личный чат</button>
     <button class="menu-row" id="btnCreateGroup">Создать группу</button>

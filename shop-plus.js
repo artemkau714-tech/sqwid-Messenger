@@ -2,6 +2,7 @@
    shop-plus.js — Покупка Sqwid+ Premium
    Без пополнения баланса: только прямая покупка подписки
    + Модалка "Что даёт Sqwid+"
+   + Кнопка "Купить Premium" в профиле (без кнопки "+")
    ============================================================ */
 
 console.log("🚀 shop-plus.js загружен, жду Sqwid...");
@@ -47,7 +48,7 @@ waitForSqwidShopPlus((S) => {
   });
 
   /* ============================================================
-     ОТКРЫТИЕ МЕНЮ (по кнопке "+" рядом с балансом)
+     ОТКРЫТИЕ МОДАЛКИ
      ============================================================ */
   function openTopUp() {
     const modal = document.getElementById("modal-topup");
@@ -63,23 +64,12 @@ waitForSqwidShopPlus((S) => {
   window.Sqwid.openTopUp = openTopUp;
 
   /* ============================================================
-     РЕНДЕР МЕНЮ ПОПОЛНЕНИЯ
+     РЕНДЕР МОДАЛКИ
      ============================================================ */
   function renderTopUpMenu() {
     const box = document.getElementById("topupScroll");
     if (!box) return;
     box.innerHTML = "";
-
-    /* ---- Заголовок PREMIUM ---- */
-    const premiumTitle = document.createElement("div");
-    premiumTitle.className = "topup-section-title";
-    premiumTitle.innerHTML = `
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b" style="vertical-align:middle;margin-right:6px;">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-      </svg>
-      Sqwid+ Premium
-    `;
-    box.appendChild(premiumTitle);
 
     /* ---- Кнопка "Что даёт Sqwid+?" ---- */
     const infoBtn = document.createElement("button");
@@ -324,22 +314,17 @@ waitForSqwidShopPlus((S) => {
   }
 
   /* ============================================================
-     ПРИВЯЗКА КНОПКИ "+" РЯДОМ С БАЛАНСОМ
+     ПРИВЯЗКА КНОПКИ "КУПИТЬ PREMIUM"
      ============================================================ */
-  function bindPlusButton() {
-    const btn = document.getElementById("btnOpenTopUp");
+  function bindBuyPremiumButton() {
+    const btn = document.getElementById("btnBuyPremium");
     if (!btn || btn.dataset.bound) return;
     btn.dataset.bound = "1";
     btn.addEventListener("click", () => openTopUp());
   }
 
-  bindPlusButton();
-  const bindInterval = setInterval(() => {
-    bindPlusButton();
-    if (document.getElementById("btnOpenTopUp")?.dataset.bound) {
-      clearInterval(bindInterval);
-    }
-  }, 1000);
+  bindBuyPremiumButton();
+  setInterval(bindBuyPremiumButton, 1000);
 
   console.log("✅ shop-plus.js готов");
 });
