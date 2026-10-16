@@ -12,8 +12,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Sqwid">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+  <link rel="apple-touch-icon" href="/icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon.png">
 
   <link rel="stylesheet" href="chat.css">
 </head>
@@ -273,14 +273,177 @@
     </div>
   </div>
 
+  <!-- ============ ГЛАВНЫЙ ЭКРАН НАСТРОЕК ============ -->
   <div id="screen-settings" class="screen">
     <header class="top-bar">
       <button class="top-new-btn" id="btnBackSettings"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
       <div class="top-title" style="flex:1;" data-i18n="settings.title">Настройки</div>
     </header>
+    <div class="settings-body settings-list-body">
+
+      <div class="settings-item" data-open="screen-settings-account">
+        <div class="settings-item-icon" style="background:linear-gradient(135deg,#3b82f6,#2563eb);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="settings-item-body">
+          <div class="settings-item-title">Аккаунт</div>
+          <div class="settings-item-sub" id="settingsAccountSub">Имя, @username, о себе</div>
+        </div>
+        <svg class="settings-item-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <div class="settings-item" data-open="screen-settings-chats">
+        <div class="settings-item-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        </div>
+        <div class="settings-item-body">
+          <div class="settings-item-title">Настройки чатов</div>
+          <div class="settings-item-sub">Тема, фон сообщений</div>
+        </div>
+        <svg class="settings-item-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <!-- Сквидики -->
+      <div class="settings-item" data-open="screen-settings-coins">
+        <div class="settings-item-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" stroke="none">
+            <circle cx="12" cy="12" r="10" opacity="0.35"/>
+            <circle cx="12" cy="12" r="7"/>
+          </svg>
+        </div>
+        <div class="settings-item-body">
+          <div class="settings-item-title">Сквидики</div>
+          <div class="settings-item-sub" id="settingsCoinsSub">Игровая валюта</div>
+        </div>
+        <div class="settings-item-value" id="settingsCoinsValue">0</div>
+        <svg class="settings-item-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <div class="settings-item" data-open="screen-settings-privacy">
+        <div class="settings-item-icon" style="background:linear-gradient(135deg,#10b981,#059669);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="settings-item-body">
+          <div class="settings-item-title">Конфиденциальность</div>
+          <div class="settings-item-sub">Скрытие email, статус, юзернейм</div>
+        </div>
+        <svg class="settings-item-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <div class="settings-item" data-open="screen-settings-notify">
+        <div class="settings-item-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        <div class="settings-item-body">
+          <div class="settings-item-title">Уведомления</div>
+          <div class="settings-item-sub">Звуки, вибрация</div>
+        </div>
+        <svg class="settings-item-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <div class="settings-item" data-open="screen-settings-storage">
+        <div class="settings-item-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        </div>
+        <div class="settings-item-body">
+          <div class="settings-item-title">Данные и память</div>
+          <div class="settings-item-sub" id="settingsStorageSub">Кэш, медиа, очистка</div>
+        </div>
+        <svg class="settings-item-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <div class="settings-item" data-open="screen-settings-folders">
+        <div class="settings-item-icon" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="settings-item-body">
+          <div class="settings-item-title">Папки с чатами</div>
+          <div class="settings-item-sub" id="settingsFoldersSub">Фильтры в списке чатов</div>
+        </div>
+        <svg class="settings-item-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <div class="settings-item" data-open="screen-settings-lang">
+        <div class="settings-item-icon" style="background:linear-gradient(135deg,#ec4899,#db2777);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <div class="settings-item-body">
+          <div class="settings-item-title" data-i18n="settings.language">Язык</div>
+          <div class="settings-item-sub" id="settingsLangSub">Русский</div>
+        </div>
+        <svg class="settings-item-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <!-- Развлечения -->
+      <div class="settings-item" data-open="screen-settings-fun">
+        <div class="settings-item-icon" style="background:linear-gradient(135deg,#ec4899,#8b5cf6);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+        </div>
+        <div class="settings-item-body">
+          <div class="settings-item-title">Развлечения</div>
+          <div class="settings-item-sub">Магазин, QR, игры, Premium</div>
+        </div>
+        <svg class="settings-item-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <div class="settings-item" data-open="screen-settings-plus">
+        <div class="settings-item-icon" style="background:linear-gradient(135deg,#f59e0b,#ec4899);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <div class="settings-item-body">
+          <div class="settings-item-title">Sqwid+</div>
+          <div class="settings-item-sub" id="settingsPlusSub">Подписка и бонусы</div>
+        </div>
+        <svg class="settings-item-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <div class="settings-item" data-open="screen-settings-security">
+        <div class="settings-item-icon" style="background:linear-gradient(135deg,#64748b,#475569);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="settings-item-body">
+          <div class="settings-item-title">Безопасность</div>
+          <div class="settings-item-sub" id="settingsSecuritySub">PIN, 2FA</div>
+        </div>
+        <svg class="settings-item-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <div class="settings-item" data-open="screen-settings-docs">
+        <div class="settings-item-icon" style="background:linear-gradient(135deg,#94a3b8,#64748b);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="settings-item-body">
+          <div class="settings-item-title">Документы и поддержка</div>
+          <div class="settings-item-sub">Соглашение, политика, помощь</div>
+        </div>
+        <svg class="settings-item-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <button class="settings-logout-btn" id="settingsLogout">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Выйти из аккаунта
+      </button>
+
+      <div style="padding: 1rem 0.5rem 2rem; text-align: center;">
+        <div style="font-size: 0.75rem; color: var(--text-3); font-weight: 700;">
+          Sqwid Messenger · v1.0
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ПОДЭКРАН: АККАУНТ ============ -->
+  <div id="screen-settings-account" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn settings-back-btn"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+      <div class="top-title" style="flex:1;">Аккаунт</div>
+    </header>
     <div class="settings-body">
       <div class="settings-section">
-        <div class="settings-section-title">Профиль</div>
         <div class="settings-card">
           <div class="settings-avatar-wrap">
             <img id="settingsPhoto" class="settings-photo" alt="">
@@ -293,7 +456,7 @@
           <div class="settings-field">
             <label>Юзернейм (@username)</label>
             <input id="settingsUsername" maxlength="20" placeholder="username">
-            <div class="settings-hint">Латиница, цифры и _ . От 3 до 20 символов.</div>
+            <div class="settings-hint">Латиница, цифры и _. От 3 до 20 символов.</div>
           </div>
           <div class="settings-field">
             <label>Описание</label>
@@ -333,7 +496,17 @@
               <button class="nick-emoji-btn" data-emoji="⚡">⚡</button>
             </div>
           </div>
-          <button class="btn-create" id="settingsSaveProfile" style="width:100%;margin-top:0.5rem;">Сохранить профиль</button>
+          <div class="settings-info-row">
+            <span>Email</span>
+            <span id="settingsEmail" style="color:var(--text-2);">—</span>
+          </div>
+          <div class="settings-info-row">
+            <span>Баланс</span>
+            <span id="settingsBalance" style="color:#f59e0b;">0 SQ</span>
+          </div>
+          <button class="btn-secondary" id="settingsChangeEmail" style="width:100%;margin-top:0.6rem;">Сменить email</button>
+          <button class="btn-secondary" id="settingsChangePassword" style="width:100%;margin-top:0.5rem;">Сменить пароль</button>
+          <button class="btn-create" id="settingsSaveProfile" style="width:100%;margin-top:0.6rem;">Сохранить профиль</button>
         </div>
       </div>
 
@@ -354,7 +527,305 @@
           <button class="btn-create" id="settingsSavePlus" style="width:100%;">Сохранить</button>
         </div>
       </div>
+    </div>
+  </div>
 
+  <!-- ============ ПОДЭКРАН: НАСТРОЙКИ ЧАТОВ ============ -->
+  <div id="screen-settings-chats" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn settings-back-btn"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+      <div class="top-title" style="flex:1;">Настройки чатов</div>
+    </header>
+    <div class="settings-body">
+      <div class="settings-section">
+        <div class="settings-section-title">Тема оформления</div>
+        <div class="settings-card">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
+            <button id="themeLight" class="theme-btn active" type="button">
+              <div class="theme-btn-icon">☀️</div>
+              <div class="theme-btn-label">Светлая</div>
+            </button>
+            <button id="themeDark" class="theme-btn" type="button">
+              <div class="theme-btn-icon">🌙</div>
+              <div class="theme-btn-label">Тёмная</div>
+            </button>
+            <button id="themeGirl" class="theme-btn" type="button">
+              <div class="theme-btn-icon">🌸</div>
+              <div class="theme-btn-label">Девчачья</div>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Фон сообщений</div>
+        <div class="settings-card">
+          <div id="bgPicker" class="bg-picker"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ПОДЭКРАН: СКВИДИКИ ============ -->
+  <div id="screen-settings-coins" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn settings-back-btn"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+      <div class="top-title" style="flex:1;">Сквидики</div>
+      <div id="coinsTopBalance" style="font-size:0.82rem;padding:0.4rem 0.75rem;border-radius:999px;background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:800;display:inline-flex;align-items:center;gap:4px;">
+        <svg width="12" height="12"><use href="#ico-coin"/></svg>0 SQ
+      </div>
+    </header>
+    <div class="settings-body">
+
+      <div class="settings-section">
+        <div class="settings-card" style="text-align:center;padding:1.5rem 1rem;">
+          <div style="width:80px;height:80px;margin:0 auto 0.8rem;border-radius:50%;background:linear-gradient(135deg,#fcd34d,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(245,158,11,0.35);">
+            <span style="font-size:2.2rem;font-weight:900;color:#7c2d12;letter-spacing:-0.1rem;">SQ</span>
+          </div>
+          <div id="coinsBigBalance" style="font-size:2rem;font-weight:900;color:var(--text);">0 SQ</div>
+          <div style="font-size:0.85rem;color:var(--text-2);margin-top:0.3rem;">Игровая валюта Sqwid</div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Как заработать</div>
+        <div class="settings-card">
+          <div class="settings-info-row" style="border-top:none;margin-top:0;">
+            <span>🎮 Игры</span>
+            <span style="color:var(--accent);font-weight:700;">до 100 000 SQ / день</span>
+          </div>
+          <div class="settings-info-row">
+            <span>🎯 Ежедневные квесты</span>
+            <span style="color:var(--accent);font-weight:700;">+250 SQ</span>
+          </div>
+          <div class="settings-info-row">
+            <span>⭐ Бонус Sqwid+</span>
+            <span style="color:var(--accent);font-weight:700;">+50 SQ / день</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Как потратить</div>
+        <div class="settings-card">
+          <button class="btn-create" id="coinsOpenShop" style="width:100%;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+            Открыть магазин
+          </button>
+          <button class="btn-create" id="coinsOpenGames" style="width:100%;margin-top:0.5rem;">
+            🎮 Играть в Sqwid Games
+          </button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-card">
+          <div class="settings-hint">
+            Сквидики — игровая валюта. Зарабатывается в играх и квестах, тратится только внутри Sqwid. Обменять на реальные деньги нельзя.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ПОДЭКРАН: РАЗВЛЕЧЕНИЯ ============ -->
+  <div id="screen-settings-fun" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn settings-back-btn"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+      <div class="top-title" style="flex:1;">Развлечения</div>
+    </header>
+    <div class="settings-body">
+
+      <div class="settings-section">
+        <div class="settings-section-title">Магазин</div>
+        <div class="settings-card">
+          <button class="btn-create" id="funOpenShop" style="width:100%;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+            Магазин Sqwid
+          </button>
+          <button class="btn-create" id="funOpenPremium" style="width:100%;margin-top:0.5rem;background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px;">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            Купить Premium
+          </button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Игры</div>
+        <div class="settings-card">
+          <button class="btn-create" id="funOpenGames" style="width:100%;">
+            🎮 Sqwid Games
+          </button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Поделиться</div>
+        <div class="settings-card">
+          <button class="btn-create" id="funOpenQr" style="width:100%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+              <path d="M14 14h3v3h-3z"/><path d="M18 18h3v3h-3z"/>
+            </svg>
+            Мой QR-код
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ПОДЭКРАН: КОНФИДЕНЦИАЛЬНОСТЬ ============ -->
+  <div id="screen-settings-privacy" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn settings-back-btn"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+      <div class="top-title" style="flex:1;">Конфиденциальность</div>
+    </header>
+    <div class="settings-body">
+      <div class="settings-section">
+        <div class="settings-card">
+          <label class="settings-toggle-row"><input type="checkbox" id="settingsHideEmail"><span>Скрывать email</span></label>
+          <label class="settings-toggle-row" style="margin-top:0.5rem;"><input type="checkbox" id="settingsHideOnline"><span>Скрывать статус «в сети»</span></label>
+          <label class="settings-toggle-row" style="margin-top:0.5rem;"><input type="checkbox" id="settingsShowUsername"><span>Показывать юзернейм другим</span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ПОДЭКРАН: УВЕДОМЛЕНИЯ ============ -->
+  <div id="screen-settings-notify" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn settings-back-btn"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+      <div class="top-title" style="flex:1;">Уведомления</div>
+    </header>
+    <div class="settings-body">
+      <div class="settings-section">
+        <div class="settings-section-title">Разрешение</div>
+        <div class="settings-card">
+          <div class="settings-info-row" style="border-top:none;margin-top:0;">
+            <span>Статус</span>
+            <span id="notifyPermStatus" style="color:var(--text-2);">—</span>
+          </div>
+          <button class="btn-create" id="btnNotifyRequest" style="width:100%;margin-top:0.6rem;">Запросить разрешение</button>
+          <button class="btn-secondary" id="btnNotifyTest" style="width:100%;margin-top:0.5rem;">Тест уведомления</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Звуки и вибрация</div>
+        <div class="settings-card">
+          <label class="settings-toggle-row"><input type="checkbox" id="settingsNotifySound"><span>Звук при новом сообщении</span></label>
+          <label class="settings-toggle-row" style="margin-top:0.5rem;"><input type="checkbox" id="settingsNotifyVibrate"><span>Вибрация при новом сообщении</span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ПОДЭКРАН: ДАННЫЕ И ПАМЯТЬ ============ -->
+  <div id="screen-settings-storage" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn settings-back-btn"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+      <div class="top-title" style="flex:1;">Данные и память</div>
+    </header>
+    <div class="settings-body">
+      <div class="settings-section">
+        <div class="settings-section-title">Использование</div>
+        <div class="settings-card">
+          <div class="settings-info-row" style="border-top:none;margin-top:0;">
+            <span>Кэш приложения</span>
+            <span id="storageCacheSize" style="color:var(--accent);font-weight:800;">—</span>
+          </div>
+          <div class="settings-info-row">
+            <span>Локальные данные</span>
+            <span id="storageLocalSize" style="color:var(--accent);font-weight:800;">—</span>
+          </div>
+          <div class="settings-info-row">
+            <span>Свободно на устройстве</span>
+            <span id="storageQuota" style="color:var(--text-2);font-weight:700;">—</span>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Очистка</div>
+        <div class="settings-card">
+          <button class="btn-secondary" id="btnClearCache" style="width:100%;">Очистить кэш приложения</button>
+          <button class="btn-secondary" id="btnClearMedia" style="width:100%;margin-top:0.5rem;">Очистить кэш фото</button>
+          <button class="btn-danger" id="btnResetAll" style="width:100%;margin-top:0.5rem;">Сбросить все настройки</button>
+          <div class="settings-hint" style="margin-top:0.6rem;">При сбросе выйдет из аккаунта и удалит локальные настройки (тема, папки, язык).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ПОДЭКРАН: ПАПКИ ============ -->
+  <div id="screen-settings-folders" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn settings-back-btn"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+      <div class="top-title" style="flex:1;">Папки с чатами</div>
+    </header>
+    <div class="settings-body">
+      <div class="settings-section">
+        <div class="settings-section-title">Активная папка</div>
+        <div class="settings-card">
+          <div id="foldersPicker" class="folders-picker"></div>
+          <div class="settings-hint" style="margin-top:0.6rem;">Папка определяет, какие чаты показываются на главном экране.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ПОДЭКРАН: ЯЗЫК ============ -->
+  <div id="screen-settings-lang" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn settings-back-btn"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+      <div class="top-title" style="flex:1;" data-i18n="settings.language">Язык</div>
+    </header>
+    <div class="settings-body">
+      <div class="settings-section">
+        <div class="settings-card">
+          <div id="langPicker" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ПОДЭКРАН: SQWID+ ============ -->
+  <div id="screen-settings-plus" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn settings-back-btn"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+      <div class="top-title" style="flex:1;">Sqwid+</div>
+    </header>
+    <div class="settings-body">
+      <div class="settings-section">
+        <div class="settings-card" style="text-align:center;padding:1.5rem 1rem;">
+          <div style="font-size:3rem;margin-bottom:0.5rem;">⭐</div>
+          <div style="font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:0.4rem;">Sqwid+ Premium</div>
+          <div style="font-size:0.85rem;color:var(--text-2);margin-bottom:1rem;line-height:1.5;">
+            Увеличенные лимиты, кастомный ник, фон профиля, бонусы в играх.
+          </div>
+          <div id="settingsPlusStatus" style="font-size:0.9rem;font-weight:800;color:#f59e0b;margin-bottom:1rem;">—</div>
+          <button class="btn-create" id="btnSettingsBuyPlus" style="width:100%;background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;">Купить / продлить</button>
+          <button class="btn-secondary" id="btnSettingsPlusInfo" style="width:100%;margin-top:0.5rem;">Что даёт Sqwid+?</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ПОДЭКРАН: БЕЗОПАСНОСТЬ ============ -->
+  <div id="screen-settings-security" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn settings-back-btn"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+      <div class="top-title" style="flex:1;">Безопасность</div>
+    </header>
+    <div class="settings-body">
       <div class="settings-section">
         <div class="settings-section-title">Двухэтапная аутентификация</div>
         <div class="settings-card">
@@ -366,43 +837,6 @@
           <button class="btn-secondary" id="btn2FADisable" style="width:100%;margin-top:0.5rem;color:#ef4444;display:none;">Отключить 2FA</button>
         </div>
       </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">Тема</div>
-        <div class="settings-card">
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
-            <button id="themeLight" class="theme-btn active" type="button">
-              <div class="theme-btn-icon">☀️</div>
-              <div class="theme-btn-label" data-i18n="theme.light">Светлая</div>
-            </button>
-            <button id="themeDark" class="theme-btn" type="button">
-              <div class="theme-btn-icon">🌙</div>
-              <div class="theme-btn-label" data-i18n="theme.dark">Тёмная</div>
-            </button>
-            <button id="themeGirl" class="theme-btn" type="button">
-              <div class="theme-btn-icon">🌸</div>
-              <div class="theme-btn-label" data-i18n="theme.girl">Девчачья</div>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title" data-i18n="settings.language">Язык</div>
-        <div class="settings-card">
-          <div id="langPicker" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;"></div>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">Приватность</div>
-        <div class="settings-card">
-          <label class="settings-toggle-row"><input type="checkbox" id="settingsHideEmail"><span>Скрывать email</span></label>
-          <label class="settings-toggle-row" style="margin-top:0.5rem;"><input type="checkbox" id="settingsHideOnline"><span>Скрывать статус «в сети»</span></label>
-          <label class="settings-toggle-row" style="margin-top:0.5rem;"><input type="checkbox" id="settingsShowUsername"><span>Показывать юзернейм другим</span></label>
-        </div>
-      </div>
-
       <div class="settings-section">
         <div class="settings-section-title">PIN-код</div>
         <div class="settings-card">
@@ -414,125 +848,142 @@
           <button class="btn-secondary" id="settingsPinRemove" style="width:100%;margin-top:0.5rem;color:#ef4444;">Отключить PIN</button>
         </div>
       </div>
-
       <div class="settings-section">
-        <div class="settings-section-title">Аккаунт</div>
-        <div class="settings-card">
-          <div class="settings-info-row" style="border-top:none;margin-top:0;">
-            <span>Email</span>
-            <span id="settingsEmail" style="color:#94a3b8;">—</span>
-          </div>
-          <div class="settings-info-row">
-            <span>Баланс</span>
-            <span id="settingsBalance" style="color:#f59e0b;">0 SQ</span>
-          </div>
-          <button class="btn-secondary" id="settingsChangeEmail" style="width:100%;margin-top:0.6rem;">Сменить email</button>
-          <button class="btn-secondary" id="settingsChangePassword" style="width:100%;margin-top:0.5rem;">Сменить пароль</button>
-          <button class="btn-danger" id="settingsLogout" style="width:100%;margin-top:0.5rem;">Выйти</button>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">Безопасность</div>
         <div class="settings-card">
           <button class="btn-danger" id="settingsLogoutAll" style="width:100%;">Выйти и сбросить PIN-сессию</button>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">Документы</div>
-        <div class="settings-card">
-          <a href="https://telegra.ph/Politika-konfidencialnosti-10-13-70" target="_blank" rel="noopener noreferrer" class="settings-link-row">
-            <span class="settings-link-text">Политика конфиденциальности</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-              <polyline points="15 3 21 3 21 9"/>
-              <line x1="10" y1="14" x2="21" y2="3"/>
-            </svg>
-          </a>
-          <a href="https://telegra.ph/POLZOVATELSKOE-SOGLASHENIE-10-13-61" target="_blank" rel="noopener noreferrer" class="settings-link-row">
-            <span class="settings-link-text">Пользовательское соглашение</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-              <polyline points="15 3 21 3 21 9"/>
-              <line x1="10" y1="14" x2="21" y2="3"/>
-            </svg>
-          </a>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">Поддержка</div>
-        <div class="settings-card">
-          <div id="btnCopySupportEmail" class="settings-link-row" style="cursor:pointer;" role="button">
-            <span class="settings-link-text">
-              <b>Поддержка</b><br>
-              <span style="font-size:0.82rem;color:var(--text-2);font-weight:600;">sqwid.support@gmail.com</span>
-            </span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;">
-              <rect x="9" y="9" width="13" height="13" rx="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      <div style="padding: 1rem 0.5rem 2rem; text-align: center;">
-        <div style="font-size: 0.75rem; color: var(--text-3); font-weight: 700;">
-          Sqwid Messenger · v1.0
         </div>
       </div>
     </div>
   </div>
 
+  <!-- ============ ПОДЭКРАН: ДОКУМЕНТЫ ============ -->
+  <div id="screen-settings-docs" class="screen">
+    <header class="top-bar">
+      <button class="top-new-btn settings-back-btn"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+      <div class="top-title" style="flex:1;">Документы и поддержка</div>
+    </header>
+    <div class="settings-body">
+      <div class="settings-section">
+        <div class="settings-section-title">Документы</div>
+        <div class="settings-card">
+          <a href="https://telegra.ph/Politika-konfidencialnosti-10-13-70" target="_blank" rel="noopener noreferrer" class="settings-link-row">
+            <span class="settings-link-text">Политика конфиденциальности</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+          <a href="https://telegra.ph/POLZOVATELSKOE-SOGLASHENIE-10-13-61" target="_blank" rel="noopener noreferrer" class="settings-link-row">
+            <span class="settings-link-text">Пользовательское соглашение</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Поддержка</div>
+        <div class="settings-card">
+          <div id="btnCopySupportEmail" class="settings-link-row" style="cursor:pointer;" role="button">
+            <span class="settings-link-text">
+              <b>Написать в поддержку</b><br>
+              <span style="font-size:0.82rem;color:var(--text-2);font-weight:600;">sqwid.support@gmail.com</span>
+            </span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ЭКРАН ПРОФИЛЯ (с QR в шапке) ============ -->
   <div id="screen-profile" class="screen">
     <header class="top-bar">
       <button class="top-new-btn" id="btnBurgerFromProfile"><svg width="20" height="20"><use href="#ico-menu"/></svg></button>
       <div class="top-title" style="flex:1;">Профиль</div>
       <button class="top-new-btn" id="btnOpenOwnerPanel" style="display:none;"><svg width="20" height="20"><use href="#ico-crown"/></svg></button>
+      <button class="top-new-btn" id="btnProfileQr" aria-label="QR-код">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
+          <path d="M14 14h3v3h-3z"/><path d="M18 18h3v3h-3z"/>
+        </svg>
+      </button>
       <button class="top-new-btn" id="btnShareProfile"><svg width="18" height="18"><use href="#ico-share"/></svg></button>
     </header>
+
     <div class="profile-scroll" id="profileScroll">
       <div class="profile-top">
-        <div class="profile-ava-wrap"><div class="profile-ava" id="profileAva"><span id="profileAvaLetter">?</span></div></div>
+        <div class="profile-ava-wrap">
+          <div class="profile-ava" id="profileAva"><span id="profileAvaLetter">?</span></div>
+        </div>
         <h2 class="profile-name" id="profileName">Имя</h2>
-        <div class="profile-username" id="profileUsername">@username</div>
+        <div class="profile-username" id="profileUsername"></div>
         <div class="profile-bio" id="profileBio"></div>
+      </div>
 
-        <div class="mp-coins-wrap">
-          <div class="mp-coins" id="profileCoins">
-            <svg width="16" height="16" style="vertical-align:middle;margin-right:4px;display:inline-block;"><use href="#ico-coin"/></svg>0 SQ
+      <!-- 3 кнопки действий -->
+      <div class="profile-actions-row">
+        <button class="profile-action-btn" id="btnProfilePhoto">
+          <div class="profile-action-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
           </div>
+          <div class="profile-action-label">Выбрать фото</div>
+        </button>
+        <button class="profile-action-btn" id="btnEditProfile">
+          <div class="profile-action-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </div>
+          <div class="profile-action-label">Изменить</div>
+        </button>
+        <button class="profile-action-btn" id="btnProfileSettings">
+          <div class="profile-action-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </div>
+          <div class="profile-action-label">Настройки</div>
+        </button>
+      </div>
+
+      <!-- Поля информации -->
+      <div class="profile-info-card">
+        <div class="profile-info-row">
+          <div class="profile-info-value" id="profileEmailValue">—</div>
+          <div class="profile-info-label">Почта</div>
+        </div>
+        <div class="profile-info-row">
+          <div class="profile-info-value" id="profileUsernameValue">@—</div>
+          <div class="profile-info-label">Имя пользователя</div>
+        </div>
+        <div class="profile-info-row">
+          <div class="profile-info-value" id="profileCoinsValue">0 SQ</div>
+          <div class="profile-info-label">Сквидики</div>
         </div>
       </div>
-      <div class="mp-stats" style="padding: 0 1.25rem 1.25rem;">
-        <div class="mp-stat"><div class="mp-stat-value" id="profileStatChats">0</div><div class="mp-stat-label">Чатов</div></div>
-        <div class="mp-stat"><div class="mp-stat-value" id="profileStatMessages">0</div><div class="mp-stat-label">Сообщений</div></div>
-        <div class="mp-stat"><div class="mp-stat-value" id="profileStatPhotos">0</div><div class="mp-stat-label">Фото</div></div>
+
+      <!-- Вкладки -->
+      <div class="profile-tabs-row" id="profileTabsRow">
+        <button class="profile-tab-btn active" data-ptab="groups">Группы</button>
+        <button class="profile-tab-btn" data-ptab="channels">Каналы</button>
       </div>
 
-      <div style="padding: 0 1.25rem 0.6rem;">
-        <button class="btn-create" id="btnBuyPremium" style="width:100%;background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px;">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-          </svg>
-          <span data-i18n="profile.buy_premium">Купить Premium</span>
-        </button>
+      <!-- Содержимое вкладок -->
+      <div class="profile-tab-content" id="profileTabGroups">
+        <div class="profile-groups-list" id="profileGroupsList"></div>
+        <div class="profile-empty" id="profileGroupsEmpty" style="display:none;">Пока нет групп</div>
+      </div>
+      <div class="profile-tab-content" id="profileTabChannels" style="display:none;">
+        <div class="profile-groups-list" id="profileChannelsList"></div>
+        <div class="profile-empty" id="profileChannelsEmpty" style="display:none;">Пока нет каналов</div>
       </div>
 
-      <div style="padding: 0 1.25rem 1.25rem; display:flex; flex-direction:column; gap:0.6rem;">
-        <button class="btn-create" id="btnOpenShop" style="width:100%;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-          <span data-i18n="profile.shop">Магазин</span>
-        </button>
-        <button class="btn-create" id="btnOpenQr" style="width:100%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/><path d="M18 18h3v3h-3z"/></svg>
-          <span data-i18n="profile.qr">Мой QR-код</span>
-        </button>
-        <button class="btn-create" id="btnOpenGames" style="width:100%;" data-i18n="profile.games">Sqwid Games</button>
-        <button class="btn-create" id="btnEditProfile" style="width:100%;" data-i18n="profile.edit">Редактировать профиль</button>
-      </div>
+      <div style="height:6rem;"></div>
     </div>
+
+    <input type="file" id="profileAvatarInput" accept="image/*" style="display:none;">
   </div>
 
   <div id="screen-shop" class="screen">

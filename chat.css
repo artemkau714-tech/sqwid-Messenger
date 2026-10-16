@@ -5983,3 +5983,282 @@ body[data-theme="girl"] .typing-dots span {
   cursor: pointer;
   padding: 0 4px;
 }
+/* ============================================
+   НАСТРОЙКИ — список разделов (как в Telegram)
+   ============================================ */
+.settings-list-body {
+  padding-top: 0.6rem;
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.settings-item:active {
+  background: rgba(15, 23, 42, 0.05);
+}
+body[data-theme="dark"] .settings-item:active {
+  background: rgba(255, 255, 255, 0.05);
+}
+body[data-theme="girl"] .settings-item:active {
+  background: rgba(236, 72, 153, 0.08);
+}
+
+.settings-item-icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+.settings-item-icon svg {
+  display: block;
+}
+
+.settings-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-item-title {
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.settings-item-sub {
+  font-size: 0.78rem;
+  color: var(--text-3);
+  margin-top: 0.15rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-item-arrow {
+  color: var(--text-3);
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.settings-logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: calc(100% - 2rem);
+  margin: 1rem 1rem 0.5rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--danger);
+  font-family: inherit;
+  font-size: 0.94rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s var(--spring), background 0.2s ease;
+}
+.settings-logout-btn:active {
+  transform: scale(0.97);
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* Тёмная тема */
+body[data-theme="dark"] .settings-item-title { color: #fff; }
+body[data-theme="dark"] .settings-item-sub { color: #71717a; }
+body[data-theme="dark"] .settings-item-arrow { color: #52525b; }
+
+/* Девчачья тема */
+body[data-theme="girl"] .settings-item-title { color: #4c1d3d; }
+body[data-theme="girl"] .settings-item-sub { color: #c084a8; }
+
+/* Пикер фона сообщений */
+.bg-picker {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+.bg-picker-item {
+  aspect-ratio: 1;
+  border-radius: 0.75rem;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s var(--spring), border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.bg-picker-item:active { transform: scale(0.95); }
+.bg-picker-item.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+}
+
+/* Пикер папок */
+.folders-picker {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+.folder-picker-btn {
+  padding: 0.75rem 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s var(--spring), background 0.2s ease, border-color 0.2s ease;
+}
+.folder-picker-btn:active { transform: scale(0.96); }
+.folder-picker-btn.active {
+  background: var(--grad-1);
+  color: #fff;
+  border-color: transparent;
+}
+/* Строка настроек с числом и стрелкой (как «Звёзды Telegram») */
+.settings-item-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-right: 0.4rem;
+  flex-shrink: 0;
+}
+body[data-theme="dark"] .settings-item-value { color: #fb923c; }
+body[data-theme="girl"] .settings-item-value { color: #ec4899; }
+/* ============================================
+   ПРОФИЛЬ (стиль Telegram)
+   ============================================ */
+.profile-actions-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  padding: 0 1rem 1rem;
+}
+.profile-action-btn {
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 0.4rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.15s var(--spring), background 0.2s ease;
+}
+.profile-action-btn:active {
+  transform: scale(0.96);
+  background: rgba(249, 115, 22, 0.06);
+}
+.profile-action-icon {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 0.65rem;
+  background: var(--grad-1);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.profile-action-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.profile-info-card {
+  margin: 0 1rem 1rem;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.25rem 0;
+}
+.profile-info-row {
+  padding: 0.7rem 1rem;
+}
+.profile-info-row + .profile-info-row {
+  border-top: 1px solid var(--border);
+}
+.profile-info-value {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.15rem;
+  word-break: break-word;
+}
+.profile-info-label {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  font-weight: 600;
+}
+
+.profile-tabs-row {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0 1rem 0.75rem;
+}
+.profile-tab-btn {
+  flex: 1;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.6rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: transform 0.15s var(--spring), background 0.2s ease, color 0.2s ease;
+}
+.profile-tab-btn:active { transform: scale(0.96); }
+.profile-tab-btn.active {
+  background: var(--grad-1);
+  color: #fff;
+  border-color: transparent;
+}
+
+.profile-tab-content {
+  padding: 0 1rem;
+}
+
+/* Тёмная тема */
+body[data-theme="dark"] .profile-action-btn,
+body[data-theme="dark"] .profile-info-card,
+body[data-theme="dark"] .profile-tab-btn {
+  background: #1a1a1a;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body[data-theme="dark"] .profile-action-label,
+body[data-theme="dark"] .profile-info-value { color: #fff; }
+body[data-theme="dark"] .profile-info-label { color: #71717a; }
+body[data-theme="dark"] .profile-tab-btn { color: #a1a1aa; }
+
+/* Девчачья тема */
+body[data-theme="girl"] .profile-action-btn,
+body[data-theme="girl"] .profile-info-card,
+body[data-theme="girl"] .profile-tab-btn {
+  background: #fff5fb;
+  border-color: rgba(236, 72, 153, 0.15);
+}
+body[data-theme="girl"] .profile-info-value { color: #4c1d3d; }
+body[data-theme="girl"] .profile-info-label { color: #c084a8; }
+body[data-theme="girl"] .profile-tab-btn.active {
+  background: linear-gradient(135deg, #ec4899, #a855f7);
+}

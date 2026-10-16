@@ -1,6 +1,7 @@
 /* ============================================================
    chat-settings.js — настройки
    Профиль, приватность, PIN, аккаунт, темы, Sqwid+, кастомизация ника
+   + новая навигация по разделам с подэкранами
    ============================================================ */
 
 console.log("🚀 chat-settings.js загружен, жду Sqwid...");
@@ -55,6 +56,32 @@ waitForSqwidSettings((S) => {
   }
 
   /* ============================================================
+     ХЕЛПЕРЫ
+     ============================================================ */
+  function setVal(id, v) {
+    const el = document.getElementById(id);
+    if (el) el.value = v;
+  }
+  function setCheck(id, v) {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!v;
+  }
+  function setText(id, v) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = v;
+  }
+  function show(id, on) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = on ? "block" : "none";
+  }
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + " Б";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " КБ";
+    if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(2) + " МБ";
+    return (bytes / 1024 / 1024 / 1024).toFixed(2) + " ГБ";
+  }
+
+  /* ============================================================
      ТЕМА
      ============================================================ */
   function applyTheme(theme) {
@@ -87,6 +114,11 @@ waitForSqwidSettings((S) => {
     myData = snap.val() || {};
     const screen = document.getElementById("screen-settings");
     if (screen && screen.classList.contains("active")) renderSettings();
+    updateAccountSub();
+    updateLangSub();
+    updatePlusSub();
+    updateSecuritySub();
+    updateCoinsInfo();
   });
 
   /* ============================================================
@@ -184,15 +216,6 @@ waitForSqwidSettings((S) => {
         });
       }
     }
-  }
-
-  function setVal(id, v) {
-    const el = document.getElementById(id);
-    if (el) el.value = v;
-  }
-  function setCheck(id, v) {
-    const el = document.getElementById(id);
-    if (el) el.checked = !!v;
   }
 
   /* ============================================================
@@ -352,15 +375,9 @@ waitForSqwidSettings((S) => {
       const instagram = sanitizeUrl(rawIg);
       const youtube = sanitizeUrl(rawYt);
 
-      if (rawTg && !telegram) {
-        return S.showAlert("Telegram: ссылка должна начинаться с http:// или https://", "Ошибка");
-      }
-      if (rawIg && !instagram) {
-        return S.showAlert("Instagram: ссылка должна начинаться с http:// или https://", "Ошибка");
-      }
-      if (rawYt && !youtube) {
-        return S.showAlert("YouTube: ссылка должна начинаться с http:// или https://", "Ошибка");
-      }
+      if (rawTg && !telegram) return S.showAlert("Telegram: ссылка должна начинаться с http:// или https://", "Ошибка");
+      if (rawIg && !instagram) return S.showAlert("Instagram: ссылка должна начинаться с http:// или https://", "Ошибка");
+      if (rawYt && !youtube) return S.showAlert("YouTube: ссылка должна начинаться с http:// или https://", "Ошибка");
 
       try {
         await update(ref(db, "users/" + currentUser.uid), {
@@ -449,7 +466,7 @@ waitForSqwidSettings((S) => {
     try {
       const { verifyBeforeUpdateEmail } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
       await verifyBeforeUpdateEmail(currentUser, newEmail);
-      S.showAlert("Письмо отправлено на " + newEmail + "\n\nОткройте ссылку в письме.", "Готово");
+      S.showAlert("Письмо отправлено на " + newEmail, "Готово");
     } catch (e) {
       if (e.code === "auth/requires-recent-login") S.showAlert("Слишком давно входили. Выйдите и войдите заново.", "Ошибка");
       else S.showAlert("Ошибка: " + (e.message || e.code), "Ошибка");
@@ -502,7 +519,7 @@ waitForSqwidSettings((S) => {
     if (!box) return;
     if (!window.SqwidI18n) return;
 
-    const { LANGUAGE_NAMES, LANGUAGE_FLAGS, getLanguage, setLanguage } = window.SqwidI18n;
+    const { LANGUAGE_NAMES, LANGUAGE_FLAGS, getLanguage } = window.SqwidI18n;
     const currentLang = getLanguage();
     const ALL_LANGS = ["ru", "en", "es", "de", "fr", "it", "pt", "zh", "ja", "ar"];
 
@@ -522,22 +539,418 @@ waitForSqwidSettings((S) => {
           await window.SqwidI18n.setLanguage(code);
         }
         renderLangPicker();
+        updateLangSub();
         S.showToast("Сохранено", "ok");
       });
       box.appendChild(btn);
     });
   }
 
-  const origNavBtns = document.querySelectorAll('.nav-btn[data-screen="screen-settings"]');
-  origNavBtns.forEach(b => {
-    b.addEventListener("click", () => {
-      setTimeout(renderLangPicker, 100);
+  /* ============================================================
+     ПОДПИСИ В ГЛАВНОМ СПИСКЕ НАСТРОЕК
+     ============================================================ */
+  function updateAccountSub() {
+    const el = document.getElementById("settingsAccountSub");
+    if (!el) return;
+    const name = myData.name || "без имени";
+    const un = myData.username ? "@" + myData.username : "без @username";
+    el.textContent = name + " · " + un;
+  }
+
+  function updateLangSub() {
+    const el = document.getElementById("settingsLangSub");
+    if (!el) return;
+    if (!window.SqwidI18n) return;
+    const lang = window.SqwidI18n.getLanguage();
+    const names = window.SqwidI18n.LANGUAGE_NAMES || {};
+    el.textContent = names[lang] || lang.toUpperCase();
+  }
+
+  function updatePlusSub() {
+    const el = document.getElementById("settingsPlusSub");
+    if (!el) return;
+    if (isPlus()) {
+      const d = new Date(myData.plusUntil);
+      el.textContent = "Активен до " + d.toLocaleDateString("ru-RU");
+    } else {
+      el.textContent = "Не активен";
+    }
+  }
+
+  function updateSecuritySub() {
+    const el = document.getElementById("settingsSecuritySub");
+    if (!el) return;
+    const parts = [];
+    if (myData.pin) parts.push("PIN");
+    if (myData.twoFA && myData.twoFA.enabled) parts.push("2FA");
+    el.textContent = parts.length ? parts.join(" · ") : "PIN, 2FA";
+  }
+
+  function updateCoinsInfo() {
+    const coins = myData.coins || 0;
+    const bigEl = document.getElementById("coinsBigBalance");
+    if (bigEl) bigEl.textContent = coins.toLocaleString("ru-RU") + " SQ";
+
+    const topEl = document.getElementById("coinsTopBalance");
+    if (topEl) {
+      topEl.innerHTML = (window.Sqwid.coinIcon ? window.Sqwid.coinIcon(12) : "") + " " + coins.toLocaleString("ru-RU") + " SQ";
+    }
+
+    const valEl = document.getElementById("settingsCoinsValue");
+    if (valEl) valEl.textContent = coins.toLocaleString("ru-RU");
+
+    const subEl = document.getElementById("settingsCoinsSub");
+    if (subEl) subEl.textContent = coins > 0 ? "Баланс" : "Игровая валюта";
+  }
+
+  /* ============================================================
+     УВЕДОМЛЕНИЯ
+     ============================================================ */
+  async function updateNotifyInfo() {
+    const statusEl = document.getElementById("notifyPermStatus");
+    if (statusEl) {
+      if (!("Notification" in window)) {
+        statusEl.textContent = "Не поддерживается";
+      } else {
+        const p = Notification.permission;
+        statusEl.textContent = p === "granted" ? "Разрешено" :
+                               p === "denied" ? "Запрещено" : "Не запрошено";
+        statusEl.style.color = p === "granted" ? "#10b981" :
+                               p === "denied" ? "#ef4444" : "var(--text-2)";
+      }
+    }
+    const snd = document.getElementById("settingsNotifySound");
+    if (snd && window.Sqwid.notifications) snd.checked = window.Sqwid.notifications.getSound();
+    const vib = document.getElementById("settingsNotifyVibrate");
+    if (vib && window.Sqwid.notifications) vib.checked = window.Sqwid.notifications.getVibrate();
+  }
+
+  const btnNotifyRequest = document.getElementById("btnNotifyRequest");
+  if (btnNotifyRequest) {
+    btnNotifyRequest.addEventListener("click", async () => {
+      if (window.Sqwid.notifications) {
+        const p = await window.Sqwid.notifications.request();
+        updateNotifyInfo();
+        if (p === "granted") S.showToast("Уведомления разрешены", "ok");
+      }
     });
+  }
+
+  const btnNotifyTest = document.getElementById("btnNotifyTest");
+  if (btnNotifyTest) {
+    btnNotifyTest.addEventListener("click", () => {
+      if (window.Sqwid.notifications) window.Sqwid.notifications.test();
+    });
+  }
+
+  const settingsNotifySound = document.getElementById("settingsNotifySound");
+  if (settingsNotifySound) {
+    settingsNotifySound.addEventListener("change", () => {
+      if (window.Sqwid.notifications) window.Sqwid.notifications.setSound(settingsNotifySound.checked);
+    });
+  }
+
+  const settingsNotifyVibrate = document.getElementById("settingsNotifyVibrate");
+  if (settingsNotifyVibrate) {
+    settingsNotifyVibrate.addEventListener("change", () => {
+      if (window.Sqwid.notifications) window.Sqwid.notifications.setVibrate(settingsNotifyVibrate.checked);
+    });
+  }
+
+  /* ============================================================
+     SQWID+ (подэкран)
+     ============================================================ */
+  function updatePlusInfo() {
+    const el = document.getElementById("settingsPlusStatus");
+    if (!el) return;
+    if (isPlus()) {
+      const d = new Date(myData.plusUntil);
+      el.textContent = "⭐ Активен до " + d.toLocaleDateString("ru-RU");
+      el.style.color = "#10b981";
+    } else {
+      el.textContent = "Не активен";
+      el.style.color = "var(--text-3)";
+    }
+  }
+
+  const btnSettingsBuyPlus = document.getElementById("btnSettingsBuyPlus");
+  if (btnSettingsBuyPlus) {
+    btnSettingsBuyPlus.addEventListener("click", () => {
+      if (window.Sqwid.openTopUp) window.Sqwid.openTopUp();
+    });
+  }
+
+  const btnSettingsPlusInfo = document.getElementById("btnSettingsPlusInfo");
+  if (btnSettingsPlusInfo) {
+    btnSettingsPlusInfo.addEventListener("click", () => {
+      if (window.Sqwid.openPlusInfo) window.Sqwid.openPlusInfo();
+    });
+  }
+
+  /* ============================================================
+     ФОН СООБЩЕНИЙ
+     ============================================================ */
+  const BGS = ["diamonds", "dots", "waves", "grid", "stars"];
+  const BGS_PLUS = ["plus-gold", "plus-space", "plus-waves"];
+
+  function renderBgPicker() {
+    const box = document.getElementById("bgPicker");
+    if (!box) return;
+    box.innerHTML = "";
+    const all = isPlus() ? BGS.concat(BGS_PLUS) : BGS;
+    const current = localStorage.getItem("sqwid_chat_bg_" + currentUser.uid) || "diamonds";
+
+    all.forEach(bg => {
+      const item = document.createElement("div");
+      item.className = "bg-picker-item" + (bg === current ? " active" : "");
+      item.style.background = bgPreviewStyle(bg);
+      item.dataset.bg = bg;
+      item.addEventListener("click", () => {
+        localStorage.setItem("sqwid_chat_bg_" + currentUser.uid, bg);
+        if (window.Sqwid.setChatBackground) window.Sqwid.setChatBackground(bg);
+        renderBgPicker();
+        S.showToast("Фон применён", "ok");
+      });
+      box.appendChild(item);
+    });
+  }
+
+  function bgPreviewStyle(bg) {
+    const map = {
+      diamonds: "linear-gradient(45deg, #f97316 25%, transparent 25%, transparent 75%, #f97316 75%), #fef5ec",
+      dots: "radial-gradient(circle, rgba(249,115,22,0.5) 1.5px, transparent 1.5px) 0 0 / 12px 12px, #fff7ed",
+      waves: "repeating-linear-gradient(45deg, rgba(245,158,11,0.3) 0, rgba(245,158,11,0.3) 1px, transparent 1px, transparent 10px), #fef3e7",
+      grid: "linear-gradient(rgba(251,146,60,0.3) 1px, transparent 1px) 0 0 / 100% 12px, #fff7ed",
+      stars: "radial-gradient(circle, rgba(245,158,11,0.5) 1px, transparent 1.5px) 0 0 / 20px 20px, #fffbeb",
+      "plus-gold": "linear-gradient(135deg, #f59e0b, #ffd966)",
+      "plus-space": "radial-gradient(circle at 50% 50%, #1e1b4b, #000)",
+      "plus-waves": "repeating-linear-gradient(90deg, rgba(249,115,22,0.5), rgba(236,72,153,0.5) 20px, rgba(139,92,246,0.5) 40px)"
+    };
+    return map[bg] || "#eee";
+  }
+
+  /* ============================================================
+     ПАПКИ
+     ============================================================ */
+  const FOLDERS = [
+    { id: "all", name: "Все" },
+    { id: "private", name: "Личные" },
+    { id: "group", name: "Группы" },
+    { id: "channel", name: "Каналы" },
+    { id: "unread", name: "Непрочитанные" }
+  ];
+
+  function renderFoldersPicker() {
+    const box = document.getElementById("foldersPicker");
+    if (!box) return;
+    box.innerHTML = "";
+    const current = localStorage.getItem("sqwid_folder") || "all";
+    FOLDERS.forEach(f => {
+      const btn = document.createElement("button");
+      btn.className = "folder-picker-btn" + (f.id === current ? " active" : "");
+      btn.textContent = f.name;
+      btn.addEventListener("click", () => {
+        localStorage.setItem("sqwid_folder", f.id);
+        if (window.Sqwid.refreshChatList) window.Sqwid.refreshChatList();
+        renderFoldersPicker();
+        S.showToast("Папка: " + f.name, "ok");
+      });
+      box.appendChild(btn);
+    });
+  }
+
+  /* ============================================================
+     ДАННЫЕ И ПАМЯТЬ
+     ============================================================ */
+  async function updateStorageInfo() {
+    try {
+      if (navigator.storage && navigator.storage.estimate) {
+        const est = await navigator.storage.estimate();
+        const used = est.usage || 0;
+        const quota = est.quota || 0;
+        setText("storageCacheSize", formatBytes(used));
+        setText("storageQuota", formatBytes(quota - used) + " свободно");
+      } else {
+        setText("storageCacheSize", "не поддерживается");
+        setText("storageQuota", "—");
+      }
+    } catch (e) {
+      setText("storageCacheSize", "—");
+      setText("storageQuota", "—");
+    }
+
+    try {
+      let total = 0;
+      for (const k in localStorage) {
+        if (Object.prototype.hasOwnProperty.call(localStorage, k)) {
+          total += (k.length + (localStorage[k] || "").length) * 2;
+        }
+      }
+      setText("storageLocalSize", formatBytes(total));
+    } catch (e) {
+      setText("storageLocalSize", "—");
+    }
+  }
+
+  /* ---------- Очистка ---------- */
+  const btnClearCache = document.getElementById("btnClearCache");
+  if (btnClearCache) {
+    btnClearCache.addEventListener("click", async () => {
+      const ok = await S.showConfirm("Очистить кэш приложения? Это не удалит ваши сообщения.", "Очистка");
+      if (!ok) return;
+      try {
+        if (window.caches) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        const keep = ["sqwid_theme", "sqwid_lang"];
+        const saved = {};
+        keep.forEach(k => { saved[k] = localStorage.getItem(k); });
+        localStorage.clear();
+        keep.forEach(k => { if (saved[k] !== null) localStorage.setItem(k, saved[k]); });
+        S.showToast("Кэш очищен", "ok");
+        setTimeout(updateStorageInfo, 300);
+      } catch (e) {
+        S.showToast("Ошибка: " + e.message, "error");
+      }
+    });
+  }
+
+  const btnClearMedia = document.getElementById("btnClearMedia");
+  if (btnClearMedia) {
+    btnClearMedia.addEventListener("click", async () => {
+      const ok = await S.showConfirm("Очистить кэш фото?", "Очистка медиа");
+      if (!ok) return;
+      try {
+        if (window.caches) {
+          const keys = await caches.keys();
+          const mediaKeys = keys.filter(k => k.includes("media") || k.includes("image"));
+          await Promise.all(mediaKeys.map(k => caches.delete(k)));
+        }
+        S.showToast("Кэш фото очищен", "ok");
+        setTimeout(updateStorageInfo, 300);
+      } catch (e) {
+        S.showToast("Ошибка: " + e.message, "error");
+      }
+    });
+  }
+
+  const btnResetAll = document.getElementById("btnResetAll");
+  if (btnResetAll) {
+    btnResetAll.addEventListener("click", async () => {
+      const ok = await S.showConfirm("Сбросить ВСЕ настройки и выйти?", "Сброс");
+      if (!ok) return;
+      try {
+        localStorage.clear();
+        if (window.caches) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+      } catch (e) {}
+      try { if (S.signOut) await S.signOut(S.auth); } catch (e) {}
+      window.location.href = "index.html";
+    });
+  }
+
+  /* ============================================================
+     ПОДДЕРЖКА
+     ============================================================ */
+  const btnCopySupportEmail = document.getElementById("btnCopySupportEmail");
+  if (btnCopySupportEmail) {
+    btnCopySupportEmail.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText("sqwid.support@gmail.com");
+        S.showToast("Email скопирован", "ok");
+      } catch (e) {
+        S.showAlert("Email поддержки:\nsqwid.support@gmail.com", "Поддержка");
+      }
+    });
+  }
+
+  /* ============================================================
+     СКВИДИКИ — кнопки внутри подэкрана
+     ============================================================ */
+  const coinsOpenShop = document.getElementById("coinsOpenShop");
+  if (coinsOpenShop) {
+    coinsOpenShop.addEventListener("click", () => {
+      if (window.Sqwid.openShop) window.Sqwid.openShop();
+    });
+  }
+  const coinsOpenGames = document.getElementById("coinsOpenGames");
+  if (coinsOpenGames) {
+    coinsOpenGames.addEventListener("click", () => {
+      if (window.Sqwid.openGames) window.Sqwid.openGames();
+    });
+  }
+
+  /* ============================================================
+     РАЗВЛЕЧЕНИЯ — кнопки внутри подэкрана
+     ============================================================ */
+  const funOpenShop = document.getElementById("funOpenShop");
+  if (funOpenShop) funOpenShop.addEventListener("click", () => {
+    if (window.Sqwid.openShop) window.Sqwid.openShop();
+  });
+  const funOpenPremium = document.getElementById("funOpenPremium");
+  if (funOpenPremium) funOpenPremium.addEventListener("click", () => {
+    if (window.Sqwid.openTopUp) window.Sqwid.openTopUp();
+  });
+  const funOpenGames = document.getElementById("funOpenGames");
+  if (funOpenGames) funOpenGames.addEventListener("click", () => {
+    if (window.Sqwid.openGames) window.Sqwid.openGames();
+  });
+  const funOpenQr = document.getElementById("funOpenQr");
+  if (funOpenQr) funOpenQr.addEventListener("click", () => {
+    if (window.Sqwid.openQr) window.Sqwid.openQr();
   });
 
-  if (document.getElementById("screen-settings")?.classList.contains("active")) {
-    renderLangPicker();
-  }
+  /* ============================================================
+     НАВИГАЦИЯ ПО РАЗДЕЛАМ (делегирование — работает всегда)
+     ============================================================ */
+  document.addEventListener("click", (e) => {
+    const item = e.target.closest(".settings-item[data-open]");
+    if (item) {
+      const target = item.dataset.open;
+      if (window.Sqwid && window.Sqwid.showScreen) {
+        window.Sqwid.showScreen(target);
+        if (target === "screen-settings-storage") updateStorageInfo();
+        if (target === "screen-settings-notify") updateNotifyInfo();
+        if (target === "screen-settings-plus") updatePlusInfo();
+        if (target === "screen-settings-lang") renderLangPicker();
+        if (target === "screen-settings-chats") renderBgPicker();
+        if (target === "screen-settings-folders") renderFoldersPicker();
+        if (target === "screen-settings-account") renderSettings();
+        if (target === "screen-settings-coins") updateCoinsInfo();
+      }
+      return;
+    }
+
+    const back = e.target.closest(".settings-back-btn");
+    if (back) {
+      if (window.Sqwid && window.Sqwid.showScreen) {
+        window.Sqwid.showScreen("screen-settings");
+      }
+    }
+  });
+
+  /* ============================================================
+     ОБНОВИТЬ ПОДПИСИ ПРИ СТАРТЕ
+     ============================================================ */
+  updateAccountSub();
+  updateLangSub();
+  updatePlusSub();
+  updateSecuritySub();
+  updateCoinsInfo();
+
+  /* Периодически обновляем подписи на случай изменений */
+  setInterval(() => {
+    if (document.getElementById("screen-settings")?.classList.contains("active")) {
+      updateAccountSub();
+      updateLangSub();
+      updatePlusSub();
+      updateSecuritySub();
+      updateCoinsInfo();
+    }
+  }, 3000);
 
   console.log("✅ chat-settings.js готов");
 });
