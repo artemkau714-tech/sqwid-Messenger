@@ -193,7 +193,15 @@
     <header class="chat-bar">
       <button class="chat-back" id="btnBack" aria-label="Назад"><svg width="22" height="22"><use href="#ico-back"/></svg></button>
       <div class="chat-ava" id="chatBarAva" style="cursor:pointer;"><img id="chatAva" src="" alt="" style="display:none;"></div>
-      <div class="chat-name" id="chatName" style="cursor:pointer;">Чат</div>
+      <div class="chat-name-wrap">
+        <div class="chat-name" id="chatName" style="cursor:pointer;">Чат</div>
+        <div class="typing-indicator" id="typingIndicator" style="display:none;">
+          <span class="typing-label" id="typingLabel">печатает</span>
+          <span class="typing-dots">
+            <span></span><span></span><span></span>
+          </span>
+        </div>
+      </div>
       <button class="chat-menu-btn" id="btnCallAudio" aria-label="Аудиозвонок" style="display:none;"><svg width="22" height="22"><use href="#ico-phone"/></svg></button>
       <button class="chat-menu-btn" id="btnCallVideo" aria-label="Видеозвонок" style="display:none;"><svg width="22" height="22"><use href="#ico-video"/></svg></button>
       <button class="chat-menu-btn" id="btnChatMenu" aria-label="Меню"><svg width="22" height="22"><use href="#ico-menu"/></svg></button>
@@ -355,15 +363,15 @@
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
             <button id="themeLight" class="theme-btn active" type="button">
               <div class="theme-btn-icon">☀️</div>
-              <div class="theme-btn-label">Светлая</div>
+              <div class="theme-btn-label" data-i18n="theme.light">Светлая</div>
             </button>
             <button id="themeDark" class="theme-btn" type="button">
               <div class="theme-btn-icon">🌙</div>
-              <div class="theme-btn-label">Тёмная</div>
+              <div class="theme-btn-label" data-i18n="theme.dark">Тёмная</div>
             </button>
             <button id="themeGirl" class="theme-btn" type="button">
               <div class="theme-btn-icon">🌸</div>
-              <div class="theme-btn-label">Девчачья</div>
+              <div class="theme-btn-label" data-i18n="theme.girl">Девчачья</div>
             </button>
           </div>
         </div>
@@ -372,7 +380,7 @@
       <div class="settings-section">
         <div class="settings-section-title" data-i18n="settings.language">Язык</div>
         <div class="settings-card">
-          <div id="langPicker" style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;"></div>
+          <div id="langPicker" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;"></div>
         </div>
       </div>
 
@@ -498,21 +506,21 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px;">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
           </svg>
-          Купить Premium
+          <span data-i18n="profile.buy_premium">Купить Premium</span>
         </button>
       </div>
 
       <div style="padding: 0 1.25rem 1.25rem; display:flex; flex-direction:column; gap:0.6rem;">
         <button class="btn-create" id="btnOpenShop" style="width:100%;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-          Магазин
+          <span data-i18n="profile.shop">Магазин</span>
         </button>
         <button class="btn-create" id="btnOpenQr" style="width:100%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/><path d="M18 18h3v3h-3z"/></svg>
-          Мой QR-код
+          <span data-i18n="profile.qr">Мой QR-код</span>
         </button>
-        <button class="btn-create" id="btnOpenGames" style="width:100%;">Sqwid Games</button>
-        <button class="btn-create" id="btnEditProfile" style="width:100%;">Редактировать профиль</button>
+        <button class="btn-create" id="btnOpenGames" style="width:100%;" data-i18n="profile.games">Sqwid Games</button>
+        <button class="btn-create" id="btnEditProfile" style="width:100%;" data-i18n="profile.edit">Редактировать профиль</button>
       </div>
     </div>
   </div>
@@ -520,16 +528,16 @@
   <div id="screen-shop" class="screen">
     <header class="top-bar">
       <button class="top-new-btn" id="btnBackShop"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-title" style="flex:1;">Магазин</div>
+      <div class="top-title" style="flex:1;" data-i18n="shop.title">Магазин</div>
       <div id="shopBalance" style="font-size:0.82rem;padding:0.4rem 0.75rem;border-radius:999px;background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:800;display:inline-flex;align-items:center;gap:4px;">
         <svg width="12" height="12"><use href="#ico-coin"/></svg>0 SQ
       </div>
     </header>
     <div class="shop-tabs">
-      <button class="shop-tab active" data-shop-tab="frames">Рамки</button>
-      <button class="shop-tab" data-shop-tab="backgrounds">Фоны</button>
-      <button class="shop-tab" data-shop-tab="badges">Значки</button>
-      <button class="shop-tab" data-shop-tab="nicks">Ники</button>
+      <button class="shop-tab active" data-shop-tab="frames" data-i18n="shop.frames">Рамки</button>
+      <button class="shop-tab" data-shop-tab="backgrounds" data-i18n="shop.backgrounds">Фоны</button>
+      <button class="shop-tab" data-shop-tab="badges" data-i18n="shop.badges">Значки</button>
+      <button class="shop-tab" data-shop-tab="nicks" data-i18n="shop.nicks">Ники</button>
     </div>
     <div id="shopBody" class="shop-body">
       <div id="shopGrid" class="shop-grid"></div>
@@ -976,7 +984,7 @@
   <div id="screen-games" class="screen">
     <header class="top-bar">
       <button class="top-new-btn" id="btnBackGames"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
-      <div class="top-title" style="flex:1;">Sqwid Games</div>
+      <div class="top-title" style="flex:1;" data-i18n="games.title">Sqwid Games</div>
       <div id="gamesBalance" style="font-size:0.82rem;padding:0.4rem 0.75rem;border-radius:999px;background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:800;display:inline-flex;align-items:center;gap:4px;">
         <svg width="14" height="14"><use href="#ico-coin"/></svg>0 SQ
       </div>
@@ -991,21 +999,21 @@
       <div class="games-grid">
         <button class="games-card" data-game="guess">
           <div class="games-card-icon">🎯</div>
-          <div class="games-card-name">Угадай число</div>
+          <div class="games-card-name" data-i18n="games.guess">Угадай число</div>
           <div class="games-card-desc">1–100 · 5 попыток</div>
         </button>
         <button class="games-card" data-game="slots">
           <div class="games-card-icon">🍒</div>
-          <div class="games-card-name">Слоты</div>
+          <div class="games-card-name" data-i18n="games.slots">Слоты</div>
           <div class="games-card-desc">3 барабана · 50 SQ</div>
         </button>
         <button class="games-card" data-game="crash">
           <div class="games-card-icon">📈</div>
-          <div class="games-card-name">Краш</div>
+          <div class="games-card-name" data-i18n="games.crash">Краш</div>
           <div class="games-card-desc">Ставка от 500 SQ</div>
         </button>
       </div>
-      <div class="games-section-title">Ежедневные квесты</div>
+      <div class="games-section-title" data-i18n="games.quests">Ежедневные квесты</div>
       <div id="gamesQuests" class="games-quests"></div>
 
       <div class="games-disclaimer">
@@ -1016,7 +1024,7 @@
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
         </div>
-        <div class="games-disclaimer-text">
+        <div class="games-disclaimer-text" data-i18n="games.disclaimer">
           <b>Сквидики — это игровая валюта.</b><br>
           Она зарабатывается в играх и тратится только внутри Sqwid.
           Обменять её на реальные деньги, вывести или передать третьим лицам <b>невозможно</b>.
@@ -1179,10 +1187,10 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="#f59e0b">
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
         </svg>
-        Sqwid+ Premium
+        <span data-i18n="gift.premium.title">Sqwid+ Premium</span>
       </h2>
       <div id="topupScroll" class="topup-scroll"></div>
-      <button class="menu-row cancel" id="btnTopUpCancel" style="margin-top:0.75rem;">Отмена</button>
+      <button class="menu-row cancel" id="btnTopUpCancel" style="margin-top:0.75rem;" data-i18n="common.cancel">Отмена</button>
     </div>
   </div>
 
@@ -1192,10 +1200,10 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="#f59e0b">
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
         </svg>
-        Что даёт Sqwid+
+        <span data-i18n="gift.premium.what">Что даёт Sqwid+</span>
       </h2>
       <div class="plus-info-scroll" id="plusInfoList"></div>
-      <button class="menu-row cancel" id="btnPlusInfoClose" style="margin-top:0.75rem;">Закрыть</button>
+      <button class="menu-row cancel" id="btnPlusInfoClose" style="margin-top:0.75rem;" data-i18n="common.close">Закрыть</button>
     </div>
   </div>
 
@@ -1213,7 +1221,7 @@
         Галочка означает, что перед вами настоящий профиль,
         а не подделка или копия.
       </div>
-      <button class="btn-create" id="btnVerifiedModalClose" style="width:100%;margin-top:1rem;">Понятно</button>
+      <button class="btn-create" id="btnVerifiedModalClose" style="width:100%;margin-top:1rem;" data-i18n="common.ok">Понятно</button>
     </div>
   </div>
 
@@ -1221,14 +1229,14 @@
     <button class="menu-row" id="btnCreatePrivate">Создать личный чат</button>
     <button class="menu-row" id="btnCreateGroup">Создать группу</button>
     <button class="menu-row" id="btnCreateChannel">Создать канал</button>
-    <button class="menu-row cancel" id="btnCloseCreate">Отмена</button>
+    <button class="menu-row cancel" id="btnCloseCreate" data-i18n="common.cancel">Отмена</button>
   </div></div>
 
   <div id="modal-private" class="modal"><div class="modal-content">
     <h2>Новый личный чат</h2>
     <div class="settings-field"><input id="privateSearch" placeholder="Поиск по имени или @username"></div>
     <div id="privateResults" class="create-results"></div>
-    <button class="menu-row cancel" id="btnClosePrivate" style="margin-top:0.6rem;">Отмена</button>
+    <button class="menu-row cancel" id="btnClosePrivate" style="margin-top:0.6rem;" data-i18n="common.cancel">Отмена</button>
   </div></div>
 
   <div id="modal-autodelete" class="modal"><div class="modal-content">
@@ -1239,7 +1247,7 @@
     <button class="menu-row" data-ad="86400">24 часа</button>
     <button class="menu-row" data-ad="604800">7 дней</button>
     <button class="menu-row" data-ad="2592000">30 дней</button>
-    <button class="menu-row cancel" id="btnCloseAutoDelete">Отмена</button>
+    <button class="menu-row cancel" id="btnCloseAutoDelete" data-i18n="common.cancel">Отмена</button>
   </div></div>
 
   <div id="modal-autodelete-edit" class="modal"><div class="modal-content">
@@ -1250,7 +1258,7 @@
     <button class="menu-row" data-ad="86400">24 часа</button>
     <button class="menu-row" data-ad="604800">7 дней</button>
     <button class="menu-row" data-ad="2592000">30 дней</button>
-    <button class="menu-row cancel" id="btnCloseAutoDeleteEdit">Отмена</button>
+    <button class="menu-row cancel" id="btnCloseAutoDeleteEdit" data-i18n="common.cancel">Отмена</button>
   </div></div>
 
   <div id="modal-member-actions" class="modal"><div class="modal-content">
@@ -1269,7 +1277,7 @@
     <button class="menu-row" id="btnMaFreeze" style="display:none;color:#3b82f6;">Заморозить</button>
     <button class="menu-row" id="btnMaUnfreeze" style="display:none;color:#10b981;">Разморозить</button>
     <button class="menu-row danger" id="btnMaKick" style="display:none;">Удалить из чата</button>
-    <button class="menu-row cancel" id="btnMaCancel">Отмена</button>
+    <button class="menu-row cancel" id="btnMaCancel" data-i18n="common.cancel">Отмена</button>
   </div></div>
 
   <div id="modal-owner-user" class="modal"><div class="modal-content">
@@ -1289,7 +1297,7 @@
     <button class="menu-row" id="btnOuUnfreeze" style="color:#10b981;display:none;">Разморозить</button>
     <button class="menu-row" id="btnOuMakeModerator" data-owner-only="1" style="color:#8b5cf6;">Назначить модератором</button>
     <button class="menu-row" id="btnOuRemoveModerator" data-owner-only="1" style="color:#ef4444;display:none;">Снять модератора</button>
-    <button class="menu-row cancel" id="btnOuCancel">Отмена</button>
+    <button class="menu-row cancel" id="btnOuCancel" data-i18n="common.cancel">Отмена</button>
   </div></div>
 
   <div id="modal-report" class="modal"><div class="modal-content">
@@ -1311,13 +1319,13 @@
       <textarea id="reportComment" maxlength="300" rows="3" placeholder="Опишите подробнее..."></textarea>
     </div>
     <button class="btn-create" id="btnReportSubmit" style="width:100%;background:linear-gradient(135deg,#ef4444,#dc2626);">Отправить жалобу</button>
-    <button class="btn-secondary" id="btnReportCancel" style="width:100%;margin-top:0.5rem;">Отмена</button>
+    <button class="btn-secondary" id="btnReportCancel" style="width:100%;margin-top:0.5rem;" data-i18n="common.cancel">Отмена</button>
   </div></div>
 
   <div id="modal-chatMenu" class="modal"><div class="modal-content">
     <button class="menu-row" id="btnBlockUser">Заблокировать</button>
     <button class="menu-row danger" id="btnDeleteChat">Удалить чат</button>
-    <button class="menu-row cancel" id="btnCloseChatMenu">Отмена</button>
+    <button class="menu-row cancel" id="btnCloseChatMenu" data-i18n="common.cancel">Отмена</button>
   </div></div>
 
   <div id="modal-msgMenu" class="modal"><div class="modal-content">
@@ -1326,27 +1334,27 @@
     <button class="menu-row" id="btnEditMsg">Изменить</button>
     <button class="menu-row danger" id="btnDeleteMsg">Удалить</button>
     <button class="menu-row danger" id="btnReportMsg">Пожаловаться</button>
-    <button class="menu-row cancel" id="btnCloseMsgMenu">Отмена</button>
+    <button class="menu-row cancel" id="btnCloseMsgMenu" data-i18n="common.cancel">Отмена</button>
   </div></div>
 
   <div id="modal-msgActions" class="modal"><div class="modal-content">
     <button class="menu-row" id="maActionReply">Ответить</button>
     <button class="menu-row" id="maActionCopy">Копировать</button>
     <button class="menu-row" id="maActionDelete" style="color:#ef4444;">Удалить</button>
-    <button class="menu-row cancel" id="maActionCancel">Отмена</button>
+    <button class="menu-row cancel" id="maActionCancel" data-i18n="common.cancel">Отмена</button>
   </div></div>
 
   <div id="modal-react" class="modal"><div class="modal-content react-content">
     <div class="react-grid" id="reactGrid"></div>
-    <button class="menu-row cancel" id="btnCloseReact">Отмена</button>
+    <button class="menu-row cancel" id="btnCloseReact" data-i18n="common.cancel">Отмена</button>
   </div></div>
 
   <div id="modal-prompt" class="modal"><div class="modal-content">
     <h2 id="promptTitle">Введите</h2>
     <input id="promptInput" placeholder="" class="settings-input" style="margin-bottom:0.75rem;">
     <div style="display:flex;gap:0.6rem;margin-top:0.5rem;">
-      <button class="btn-secondary" id="promptCancel" style="flex:1;">Отмена</button>
-      <button class="btn-create" id="promptOk" style="flex:1;">ОК</button>
+      <button class="btn-secondary" id="promptCancel" style="flex:1;" data-i18n="common.cancel">Отмена</button>
+      <button class="btn-create" id="promptOk" style="flex:1;" data-i18n="common.ok">ОК</button>
     </div>
   </div></div>
 
@@ -1354,8 +1362,8 @@
     <h2 id="alertTitle" style="margin:0 0 0.6rem;">Сообщение</h2>
     <div id="alertText" style="color:var(--text-2);font-size:0.94rem;line-height:1.5;margin-bottom:1.1rem;white-space:pre-wrap;word-break:break-word;"></div>
     <div style="display:flex;gap:0.6rem;">
-      <button class="btn-secondary" id="alertCancel" style="flex:1;display:none;">Отмена</button>
-      <button class="btn-create" id="alertOk" style="flex:1;">ОК</button>
+      <button class="btn-secondary" id="alertCancel" style="flex:1;display:none;" data-i18n="common.cancel">Отмена</button>
+      <button class="btn-create" id="alertOk" style="flex:1;" data-i18n="common.ok">ОК</button>
     </div>
   </div></div>
 
@@ -1375,7 +1383,7 @@
         <input class="twofa-code-input" id="twofa6" maxlength="1" inputmode="numeric">
       </div>
       <button class="btn-create" id="btn2FAVerify" style="width:100%;margin-top:0.6rem;">Подтвердить</button>
-      <button class="btn-secondary" id="btn2FACancel" style="width:100%;margin-top:0.5rem;">Отмена</button>
+      <button class="btn-secondary" id="btn2FACancel" style="width:100%;margin-top:0.5rem;" data-i18n="common.cancel">Отмена</button>
     </div>
   </div></div>
 
@@ -1386,7 +1394,7 @@
         <input id="groupInviteSearch" class="settings-input" placeholder="Поиск по имени или @username">
       </div>
       <div id="groupInviteResults" class="create-results" style="max-height:20rem;overflow-y:auto;"></div>
-      <button class="menu-row cancel" id="btnGroupInviteCancel" style="margin-top:0.6rem;">Отмена</button>
+      <button class="menu-row cancel" id="btnGroupInviteCancel" style="margin-top:0.6rem;" data-i18n="common.cancel">Отмена</button>
     </div>
   </div>
 
@@ -1400,7 +1408,7 @@
       <input id="guessInput" type="number" min="1" max="100" placeholder="Число 1–100">
     </div>
     <button class="btn-create" id="btnGuessSubmit" style="width:100%;">Проверить</button>
-    <button class="btn-secondary" id="btnGuessClose" style="width:100%;margin-top:0.5rem;">Закрыть</button>
+    <button class="btn-secondary" id="btnGuessClose" style="width:100%;margin-top:0.5rem;" data-i18n="common.close">Закрыть</button>
   </div></div>
 
   <div id="modal-slots" class="modal"><div class="modal-content" style="text-align:center;padding:1.25rem 1rem 1.5rem;">
@@ -1418,7 +1426,7 @@
       Ставка: <b style="color:#f59e0b;">50 SQ</b> за спин
     </div>
     <button class="btn-create" id="btnSlotsSpin" style="width:100%;">Крутить (50 SQ)</button>
-    <button class="btn-secondary" id="btnSlotsClose" style="width:100%;margin-top:0.5rem;">Закрыть</button>
+    <button class="btn-secondary" id="btnSlotsClose" style="width:100%;margin-top:0.5rem;" data-i18n="common.close">Закрыть</button>
   </div></div>
 
   <div id="modal-crash" class="modal"><div class="modal-content" style="text-align:center;padding:1.25rem 1rem 1.5rem;">
@@ -1460,7 +1468,7 @@
       <div id="crashResultAmount" style="font-size:1.5rem;font-weight:800;margin-bottom:1.25rem;color:#ef4444;">−500 SQ</div>
       <button class="btn-create" id="btnCrashAgain" style="width:100%;">Ещё раз</button>
     </div>
-    <button class="btn-secondary" id="btnCrashClose" style="width:100%;margin-top:0.5rem;">Закрыть</button>
+    <button class="btn-secondary" id="btnCrashClose" style="width:100%;margin-top:0.5rem;" data-i18n="common.close">Закрыть</button>
   </div></div>
 
   <script src="i18n.js"></script>
@@ -1487,5 +1495,10 @@
   <script type="module" src="ux.js"></script>
   <script type="module" src="group-calls.js"></script>
   <script type="module" src="shop-plus.js"></script>
+  <script type="module" src="typing.js"></script>
+  <script type="module" src="notifications.js"></script>     <!-- 🆕 1 -->
+  <script type="module" src="reply.js"></script>              <!-- 🆕 2 -->
+  <script type="module" src="link-preview.js"></script>       <!-- 🆕 10 -->
+  <script type="module" src="send-feedback.js"></script>      <!-- 🆕 11 -->
 </body>
 </html>

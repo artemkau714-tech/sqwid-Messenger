@@ -33,6 +33,19 @@ function showScreen(id) {
   if (el) el.classList.add("active");
 }
 
+/* ---------- СПЛЭШ ---------- */
+let splashHidden = false;
+function hideSplash() {
+  if (splashHidden) return;
+  splashHidden = true;
+  const splash = document.getElementById("sqwidSplash");
+  if (!splash) return;
+  splash.classList.add("hidden");
+  setTimeout(() => {
+    if (splash.parentNode) splash.parentNode.removeChild(splash);
+  }, 500);
+}
+
 /* ---------- Toast ---------- */
 let toastTimer = null;
 function showToast(text, type = "info", duration = 3000) {
@@ -71,10 +84,21 @@ const btnBackToLogin = document.getElementById("btnBackToLogin");
 
 let regAvatarBase64 = null;
 
-/* ---------- Авторизация ---------- */
+/* ---------- Проверка авторизации ---------- */
 onAuthStateChanged(auth, (user) => {
-  if (user) window.location.href = "chat.html";
+  if (user) {
+    /* Залогинен — показываем сплэш и редиректим в чаты */
+    const splash = document.getElementById("sqwidSplash");
+    if (splash) splash.classList.remove("hidden");
+    window.location.href = "chat.html";
+  } else {
+    /* НЕ залогинен — прячем сплэш, показываем форму входа */
+    hideSplash();
+  }
 });
+
+/* ---------- Аварийное скрытие сплэша через 3 секунды ---------- */
+setTimeout(() => hideSplash(), 3000);
 
 /* ---------- Переход в регистрацию ---------- */
 if (btnGoRegister) {
@@ -193,7 +217,7 @@ async function register() {
       createdAt: Date.now()
     });
     regStatus.textContent = "Готово! Заходим...";
-    // onAuthStateChanged перекинет в chat.html
+    /* onAuthStateChanged перекинет в chat.html */
   } catch (err) {
     const msg = translateError(err.code);
     regStatus.textContent = msg;
@@ -224,4 +248,4 @@ function translateError(code) {
   return map[code] || ("Ошибка: " + code);
 }
 
-console.log("index.js загружен");
+console.log("✅ index.js загружен");

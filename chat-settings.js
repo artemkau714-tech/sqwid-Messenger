@@ -141,7 +141,8 @@ waitForSqwidSettings((S) => {
     }
 
     const balEl = document.getElementById("settingsBalance");
-    if (balEl) balEl.innerHTML = window.Sqwid.coinIcon(14) + (myData.coins || 0) + " SQ";
+    if (balEl) balEl.textContent = "🪙 " + (myData.coins || 0) + " SQ";
+
     let cur = "light";
     try { cur = localStorage.getItem("sqwid_theme") || "light"; } catch (e) {}
     const light = document.getElementById("themeLight");
@@ -151,7 +152,6 @@ waitForSqwidSettings((S) => {
     if (dark) dark.classList.toggle("active", cur === "dark");
     if (girl) girl.classList.toggle("active", cur === "girl");
 
-    // Sqwid+ секция
     const plusSection = document.getElementById("settingsPlusSection");
     if (plusSection) {
       const plus = isPlus();
@@ -164,7 +164,6 @@ waitForSqwidSettings((S) => {
       }
     }
 
-    // Кастомизация ника (только Plus)
     const nickCustom = document.getElementById("settingsNickCustom");
     const nickFont = document.getElementById("settingsNickFont");
     const nickEmoji = document.getElementById("settingsNickEmoji");
@@ -236,12 +235,7 @@ waitForSqwidSettings((S) => {
     const name = (document.getElementById("settingsName").value || "").trim();
     const usernameRaw = (document.getElementById("settingsUsername").value || "").trim().toLowerCase();
     const bio = (document.getElementById("settingsBio").value || "").trim();
-if (bio && window.SqwidWordFilter) {
-  const res = window.SqwidWordFilter.analyze(bio);
-  if (res.action === "block") {
-    return S.showAlert("Bio содержит запрещённую лексику", "Ошибка");
-  }
-}
+
     if (!name) return S.showAlert("Введите имя", "Ошибка");
     if (name.length > 30) return S.showAlert("Имя до 30 символов", "Ошибка");
 
@@ -508,29 +502,32 @@ if (bio && window.SqwidWordFilter) {
     if (!box) return;
     if (!window.SqwidI18n) return;
 
-    const { LANGUAGE_NAMES, LANGUAGE_FLAGS, getLanguage, setLanguage, t } = window.SqwidI18n;
+    const { LANGUAGE_NAMES, LANGUAGE_FLAGS, getLanguage, setLanguage } = window.SqwidI18n;
     const currentLang = getLanguage();
+    const ALL_LANGS = ["ru", "en", "es", "de", "fr", "it", "pt", "zh", "ja", "ar"];
 
     box.innerHTML = "";
-    ["ru", "en", "es", "de", "zh"].forEach(code => {
+    ALL_LANGS.forEach(code => {
       const btn = document.createElement("button");
       btn.className = "theme-btn" + (code === currentLang ? " active" : "");
       btn.type = "button";
       btn.dataset.lang = code;
+      btn.dataset.noI18n = "1";
       btn.innerHTML = `
-        <div class="theme-btn-icon">${LANGUAGE_FLAGS[code]}</div>
-        <div class="theme-btn-label">${code.toUpperCase()}</div>
+        <div class="theme-btn-icon">${LANGUAGE_FLAGS[code] || "🌐"}</div>
+        <div class="theme-btn-label">${LANGUAGE_NAMES[code] || code.toUpperCase()}</div>
       `;
-      btn.addEventListener("click", () => {
-        setLanguage(code);
+      btn.addEventListener("click", async () => {
+        if (window.SqwidI18n && window.SqwidI18n.setLanguage) {
+          await window.SqwidI18n.setLanguage(code);
+        }
         renderLangPicker();
-        if (t) S.showToast(t("common.save") || "Сохранено", "ok");
+        S.showToast("Сохранено", "ok");
       });
       box.appendChild(btn);
     });
   }
 
-  // Рендерим при открытии настроек
   const origNavBtns = document.querySelectorAll('.nav-btn[data-screen="screen-settings"]');
   origNavBtns.forEach(b => {
     b.addEventListener("click", () => {
@@ -538,37 +535,9 @@ if (bio && window.SqwidWordFilter) {
     });
   });
 
-  // И сразу, если экран настроек уже активен
   if (document.getElementById("screen-settings")?.classList.contains("active")) {
     renderLangPicker();
   }
-/* ============================================================
-   КОПИРОВАНИЕ ПОЧТЫ ПОДДЕРЖКИ
-   ============================================================ */
-const SUPPORT_EMAIL = "sqwid.support@gmail.com";
 
-document.addEventListener("click", function (e) {
-  const el = e.target.closest("#btnCopySupportEmail");
-  if (!el) return;
-  e.preventDefault();
-  e.stopPropagation();
-
-  try {
-    const tmp = document.createElement("textarea");
-    tmp.value = SUPPORT_EMAIL;
-    tmp.style.position = "fixed";
-    tmp.style.top = "0";
-    tmp.style.left = "0";
-    tmp.style.opacity = "0";
-    document.body.appendChild(tmp);
-    tmp.focus();
-    tmp.select();
-    document.execCommand("copy");
-    document.body.removeChild(tmp);
-    S.showToast("Почта скопирована", "ok", 2000);
-  } catch (err) {
-    S.showAlert("Скопируй вручную:\n\n" + SUPPORT_EMAIL, "Поддержка");
-  }
-}, true);
   console.log("✅ chat-settings.js готов");
 });

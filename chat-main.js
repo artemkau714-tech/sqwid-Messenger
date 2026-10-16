@@ -4,6 +4,9 @@
    + фильтр запрещённых слов (word-filter.js)
    + кастомная SVG-монетка SQ
    + SVG-галочка верификации (без verify.PNG)
+   + индикатор «печатает…» (typing в Firebase)
+   + совместимость с reply.js, send-feedback.js, link-preview.js,
+     notifications.js
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -61,6 +64,13 @@ let cgAutoDelete = 0;
 
 let memberAddMode = false;
 let memberAddChatId = null;
+
+/* --- typing --- */
+let unsubTyping = null;
+let myTypingTimer = null;
+let lastTypingWrite = 0;
+const TYPING_TIMEOUT = 4000;
+const TYPING_THROTTLE = 1200;
 
 const REACTIONS_DEFAULT = ["👍", "❤️", "🔥", "😂", "😮", "😢", "🎉", "👎", "🤔", "💯", "🙏", "😡"];
 const REACTIONS_CHANNEL = ["👍", "❤️", "🔥", "🎉"];
@@ -218,6 +228,75 @@ function showToast(text, type = "info", duration = 2500) {
   } catch (e) {}
 }
 
+/* ============================================================
+   ИНДИКАТОР «ПЕЧАТАЕТ…»
+   ============================================================ */
+function startTyping() {
+  if (!currentChatId) return;
+  const now = Date.now();
+  if (now - lastTypingWrite < TYPING_THROTTLE) {
+    if (myTypingTimer) clearTimeout(myTypingTimer);
+    myTypingTimer = setTimeout(stopTyping, TYPING_TIMEOUT);
+    return;
+  }
+  lastTypingWrite = now;
+  set(ref(db, `typing/${currentChatId}/${currentUser.uid}`), {
+    at: now,
+    name: (currentUserData && currentUserData.name) || "Пользователь"
+  }).catch(() => {});
+
+  if (myTypingTimer) clearTimeout(myTypingTimer);
+  myTypingTimer = setTimeout(stopTyping, TYPING_TIMEOUT);
+}
+
+function stopTyping() {
+  if (myTypingTimer) {
+    clearTimeout(myTypingTimer);
+    myTypingTimer = null;
+  }
+  if (!currentChatId) return;
+  remove(ref(db, `typing/${currentChatId}/${currentUser.uid}`)).catch(() => {});
+}
+
+function subscribeTyping(chatId) {
+  if (unsubTyping) { unsubTyping(); unsubTyping = null; }
+  const el = document.getElementById("typingIndicator");
+  const labelEl = document.getElementById("typingLabel");
+  if (el) el.style.display = "none";
+  if (!chatId) return;
+
+  unsubTyping = onValue(ref(db, `typing/${chatId}`), (snap) => {
+    const data = snap.val() || {};
+    const now = Date.now();
+    const others = [];
+    for (const uid in data) {
+      if (uid === currentUser.uid) continue;
+      const t = (data[uid] && data[uid].at) || 0;
+      if (now - t > TYPING_TIMEOUT + 1500) continue;
+      others.push({ uid, name: (data[uid] && data[uid].name) || "Пользователь" });
+    }
+
+    if (!el || !labelEl) return;
+
+    if (others.length === 0) {
+      el.style.display = "none";
+      return;
+    }
+
+    const isGroup = currentChatData && currentChatData.type !== "private";
+    if (!isGroup) {
+      labelEl.textContent = "печатает";
+    } else if (others.length === 1) {
+      labelEl.textContent = others[0].name + " печатает";
+    } else if (others.length === 2) {
+      labelEl.textContent = others[0].name + " и " + others[1].name + " печатают";
+    } else {
+      labelEl.textContent = others[0].name + " и ещё " + (others.length - 1) + " печатают";
+    }
+    el.style.display = "flex";
+  });
+}
+
 function getReactionList() {
   const isChannel = currentChatData && currentChatData.type === "channel";
   const base = isChannel ? REACTIONS_CHANNEL : REACTIONS_DEFAULT;
@@ -258,6 +337,7 @@ onAuthStateChanged(auth, async (user) => {
     if (unsubMessages) { unsubMessages(); unsubMessages = null; }
     if (unsubUserSelf) { unsubUserSelf(); unsubUserSelf = null; }
     if (unsubUsers) { unsubUsers(); unsubUsers = null; }
+    if (unsubTyping) { unsubTyping(); unsubTyping = null; }
     window.location.replace("index.html");
     return;
   }
@@ -281,7 +361,9 @@ onAuthStateChanged(auth, async (user) => {
     setChatBackground: (n) => setChatBackground(n),
     CHAT_BACKGROUNDS: CHAT_BACKGROUNDS,
     isPlus: () => isPlusUser(),
-    refreshChatList: () => loadChats()
+    refreshChatList: () => loadChats(),
+    startTyping: () => startTyping(),
+    stopTyping: () => stopTyping()
   };
 
   if (unsubUserSelf) unsubUserSelf();
@@ -436,8 +518,17 @@ async function openChat(chatId) {
     currentChatId = chatId;
     currentChatData = chat;
     editingMsgId = null;
+    window._sqwidEditingMsgId = false;
     const cancelBtnReset = document.getElementById("btnCancelEdit");
     if (cancelBtnReset) cancelBtnReset.style.display = "none";
+
+    // Сброс reply из reply.js
+    if (window.Sqwid && window.Sqwid.reply && window.Sqwid.reply.hide) {
+      try { window.Sqwid.reply.hide(); } catch (e) {}
+    }
+
+    // Подписка на индикатор «печатает…»
+    subscribeTyping(chatId);
 
     let displayName = chat.name || "Чат";
     let avatarUrl = "";
@@ -668,6 +759,17 @@ function renderMessage(msg, chatId) {
     senderHTML = `<div class="msg-sender${frozenClass}" style="font-size:11.5px;font-weight:700;color:#f97316;margin-bottom:3px;">${escH(su.name || su.email || "Пользователь")}${verifiedIcon(su.verified)}</div>`;
   }
 
+  /* ---------- REPLY QUOTE ---------- */
+  let replyHTML = "";
+  if (msg.replyTo) {
+    replyHTML = `
+      <div class="msg-reply-quote" data-target-id="${msg.replyTo.id}">
+        <div class="msg-reply-name">${escH(msg.replyTo.senderName || "Пользователь")}</div>
+        <div class="msg-reply-text">${escH(msg.replyTo.preview || "")}</div>
+      </div>
+    `;
+  }
+
   let contentHTML = "";
   if (msg.type === "photo" && msg.photo) {
     contentHTML += `<img class="msg-photo" src="${msg.photo}" alt="">`;
@@ -715,11 +817,19 @@ function renderMessage(msg, chatId) {
     }
   }
 
+  /* ---------- EDIT MARK ---------- */
+  let editedHTML = "";
+  if (msg.editedAt) {
+    editedHTML = `<span class="msg-edited" title="Изменено">изм.</span>`;
+  }
+
   div.innerHTML = `
     ${senderHTML}
+    ${replyHTML}
     ${contentHTML}
     <div class="msg-time">
       ${fmtTime(msg.timestamp || Date.now())}
+      ${editedHTML}
       ${checksHTML}
     </div>
     ${viewsHTML}
@@ -940,6 +1050,7 @@ if (closeMsgMenuBtn) closeMsgMenuBtn.addEventListener("click", () => {
   document.getElementById("modal-msgMenu").classList.remove("active");
   longPressMsg = null;
   editingMsgId = null;
+  window._sqwidEditingMsgId = false;
   window._lastLongPressMsg = null;
   const cb = document.getElementById("btnCancelEdit");
   if (cb) cb.style.display = "none";
@@ -983,6 +1094,7 @@ if (editMsgBtn) editMsgBtn.addEventListener("click", () => {
 
   document.getElementById("msgInput").value = msg.text || "";
   editingMsgId = msg.id;
+  window._sqwidEditingMsgId = true;
   const cb = document.getElementById("btnCancelEdit");
   if (cb) cb.style.display = "block";
   document.getElementById("modal-msgMenu").classList.remove("active");
@@ -1025,6 +1137,7 @@ if (pinMsgBtn) pinMsgBtn.addEventListener("click", async () => {
 const btnCancelEdit = document.getElementById("btnCancelEdit");
 if (btnCancelEdit) btnCancelEdit.addEventListener("click", () => {
   editingMsgId = null;
+  window._sqwidEditingMsgId = false;
   const inp = document.getElementById("msgInput");
   if (inp) inp.value = "";
   btnCancelEdit.style.display = "none";
@@ -1066,6 +1179,7 @@ async function sendMessage() {
     return;
   }
 
+  /* --- РЕЖИМ РЕДАКТИРОВАНИЯ --- */
   if (editingMsgId) {
     try {
       const upd = { text, editedAt: Date.now() };
@@ -1080,12 +1194,14 @@ async function sendMessage() {
       showToast("Ошибка: " + e.message, "error");
     }
     editingMsgId = null;
+    window._sqwidEditingMsgId = false;
     input.value = "";
     const cb = document.getElementById("btnCancelEdit");
     if (cb) cb.style.display = "none";
     return;
   }
 
+  /* --- ОБЫЧНАЯ ОТПРАВКА --- */
   const newRef = push(ref(db, "messages/" + currentChatId));
   const msgPayload = {
     sender: currentUser.uid,
@@ -1099,6 +1215,18 @@ async function sendMessage() {
     msgPayload.flagCategories = pendingFlag.categories;
     msgPayload.flagMatches = pendingFlag.matches;
   }
+
+  /* reply из reply.js */
+  if (window._sqwidReplyTo) {
+    msgPayload.replyTo = {
+      id: window._sqwidReplyTo.id,
+      sender: window._sqwidReplyTo.sender,
+      senderName: window._sqwidReplyTo.senderName,
+      preview: window._sqwidReplyTo.preview,
+      type: window._sqwidReplyTo.type
+    };
+  }
+
   await set(newRef, msgPayload);
 
   await update(ref(db, "chats/" + currentChatId), {
@@ -1115,10 +1243,40 @@ async function sendMessage() {
 
   input.value = "";
 }
+
+/* ============================================================
+   КНОПКА ОТПРАВКИ + ENTER
+   send-feedback.js перехватывает в capture-фазе, так что сюда
+   мы попадём только если он не смог обработать (например,
+   редактирование). Поэтому здесь stopTyping() и вызов sendMessage().
+   ============================================================ */
 const btnSend = document.getElementById("btnSend");
-if (btnSend) btnSend.addEventListener("click", sendMessage);
+if (btnSend) btnSend.addEventListener("click", () => {
+  stopTyping();
+  // Если send-feedback.js уже отправил — флаг стоит
+  if (window._sqwidSendFeedbackActive) return;
+  sendMessage();
+});
+
 const msgInput = document.getElementById("msgInput");
-if (msgInput) msgInput.addEventListener("keydown", e => { if (e.key === "Enter") sendMessage(); });
+if (msgInput) {
+  msgInput.addEventListener("input", () => {
+    const hasText = (msgInput.value || "").trim().length > 0;
+    if (hasText) startTyping();
+    else stopTyping();
+  });
+  msgInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      stopTyping();
+      // Если send-feedback.js уже отправил — флаг стоит
+      if (window._sqwidSendFeedbackActive) return;
+      sendMessage();
+    }
+  });
+  msgInput.addEventListener("blur", () => {
+    stopTyping();
+  });
+}
 
 const btnAttach = document.getElementById("btnAttach");
 if (btnAttach) btnAttach.addEventListener("click", () => document.getElementById("fileInput").click());
@@ -1197,16 +1355,35 @@ if (btnSendPhoto) btnSendPhoto.addEventListener("click", async () => {
     payload.flagCategories = pendingFlag.categories;
     payload.flagMatches = pendingFlag.matches;
   }
+
+  /* reply из reply.js */
+  if (window._sqwidReplyTo) {
+    payload.replyTo = {
+      id: window._sqwidReplyTo.id,
+      sender: window._sqwidReplyTo.sender,
+      senderName: window._sqwidReplyTo.senderName,
+      preview: window._sqwidReplyTo.preview,
+      type: window._sqwidReplyTo.type
+    };
+  }
+
   await set(newRef, payload);
   await update(ref(db, "chats/" + currentChatId), {
     lastMsg: caption || "📷 Фото", lastMsgAt: Date.now(), lastMsgSender: currentUser.uid
   });
+
+  if (window.Sqwid && window.Sqwid.reply && window.Sqwid.reply.hide) {
+    try { window.Sqwid.reply.hide(); } catch (e) {}
+  }
+
   document.getElementById("photoPreview").classList.remove("active");
   document.getElementById("photoPreviewImg").src = "";
 });
 
 const btnBack = document.getElementById("btnBack");
 if (btnBack) btnBack.addEventListener("click", () => {
+  stopTyping();
+  if (unsubTyping) { unsubTyping(); unsubTyping = null; }
   if (unsubMessages) { unsubMessages(); unsubMessages = null; }
   currentChatId = null;
   currentChatData = null;
@@ -1220,6 +1397,8 @@ if (btnBurger) btnBurger.addEventListener("click", () => showScreen("screen-prof
 
 document.querySelectorAll(".nav-btn").forEach(b => {
   b.addEventListener("click", () => {
+    stopTyping();
+    if (unsubTyping) { unsubTyping(); unsubTyping = null; }
     if (b.dataset.screen === "screen-chats") {
       if (unsubMessages) { unsubMessages(); unsubMessages = null; }
       currentChatId = null;
@@ -1780,6 +1959,7 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   });
 }
+
 /* ============================================================
    КЛИК ПО ГАЛОЧКЕ ВЕРИФИКАЦИИ
    ============================================================ */
@@ -1804,4 +1984,5 @@ document.addEventListener("click", (e) => {
     e.target.classList.remove("active");
   }
 });
-console.log("✅ chat-main.js загружен");
+
+console.log("✅ chat-main.js загружен (typing + reply + send-feedback + link-preview совместимый)");

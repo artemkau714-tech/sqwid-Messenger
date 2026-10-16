@@ -1,5 +1,6 @@
 /* ============================================================
-   shop.js — магазин Sqwid (рамки, фоны, значки, ники за SQ)
+   shop.js — магазин Sqwid (рамки, фоны, значки, ники, подарки за SQ)
+   + Вкладка "Подарки" — берёт из window.GIFTS_CATALOG
    ============================================================ */
 
 console.log("🚀 shop.js загружен, жду Sqwid...");
@@ -29,12 +30,12 @@ waitForSqwidShop((S) => {
   let unsubSelf = null;
 
   /* ============================================================
-     ИКОНКИ
+     ИКОНКА МОНЕТКИ
      ============================================================ */
   const COIN_ICON = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;"><circle cx="12" cy="12" r="10" opacity="0.3"/><circle cx="12" cy="12" r="7"/></svg>`;
 
   /* ============================================================
-     КАТАЛОГ ТОВАРОВ
+     КАТАЛОГ ТОВАРОВ (кроме подарков)
      ============================================================ */
   const CATALOG = {
     frames: [
@@ -74,19 +75,26 @@ waitForSqwidShop((S) => {
     myData = snap.val() || {};
     updateBalance();
     const screen = document.getElementById("screen-shop");
-    if (screen && screen.classList.contains("active")) renderShop();
+    if (screen && screen.classList.contains("active")) {
+      if (currentTab === "gifts") renderGiftsTab();
+      else renderShop();
+    }
   });
 
   function updateBalance() {
-  const el = document.getElementById("shopBalance");
-  if (el) el.innerHTML = window.Sqwid.coinIcon(12) + (myData.coins || 0) + " SQ";
-}
+    const el = document.getElementById("shopBalance");
+    if (!el) return;
+    const coins = myData.coins || 0;
+    el.innerHTML = window.Sqwid.coinIcon ? window.Sqwid.coinIcon(12) + coins + " SQ" : coins + " SQ";
+  }
 
   /* ============================================================
      ОТКРЫТИЕ / ЗАКРЫТИЕ
      ============================================================ */
   function openShop() {
     updateBalance();
+    currentTab = "frames";
+    document.querySelectorAll(".shop-tab").forEach(t => t.classList.toggle("active", t.dataset.shopTab === "frames"));
     renderShop();
     S.showScreen("screen-shop");
   }
@@ -105,12 +113,17 @@ waitForSqwidShop((S) => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".shop-tab").forEach(t => t.classList.toggle("active", t === tab));
       currentTab = tab.dataset.shopTab;
-      renderShop();
+
+      if (currentTab === "gifts") {
+        renderGiftsTab();
+      } else {
+        renderShop();
+      }
     });
   });
 
   /* ============================================================
-     РЕНДЕР
+     РЕНДЕР ОБЫЧНОГО МАГАЗИНА
      ============================================================ */
   function renderShop() {
     const grid = document.getElementById("shopGrid");
@@ -198,7 +211,7 @@ waitForSqwidShop((S) => {
   }
 
   /* ============================================================
-     КУПИТЬ
+     КУПИТЬ / ПРИМЕНИТЬ / СНЯТЬ (обычные товары)
      ============================================================ */
   async function buyItem(item) {
     const coins = myData.coins || 0;
@@ -235,9 +248,6 @@ waitForSqwidShop((S) => {
     }
   }
 
-  /* ============================================================
-     ПРИМЕНИТЬ
-     ============================================================ */
   async function equipItem(item) {
     const newEquipped = { ...(myData.shopEquipped || {}) };
     newEquipped[item.type] = item.value;
@@ -251,9 +261,6 @@ waitForSqwidShop((S) => {
     S.showToast("Применено", "ok");
   }
 
-  /* ============================================================
-     СНЯТЬ
-     ============================================================ */
   async function unequipItem(item) {
     const newEquipped = { ...(myData.shopEquipped || {}) };
     delete newEquipped[item.type];
@@ -265,6 +272,85 @@ waitForSqwidShop((S) => {
 
     await update(ref(db, "users/" + currentUser.uid), updates);
     S.showToast("Снято", "ok");
+  }
+
+  /* ============================================================
+     ВКЛАДКА "ПОДАРКИ"
+     ============================================================ */
+  function renderGiftsTab() {
+    const grid = document.getElementById("shopGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+
+    const catalog = window.GIFTS_CATALOG || [];
+
+    if (catalog.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-3);">Подарки загружаются...</div>';
+      return;
+    }
+
+    const owned = myData.giftsOwned || {};
+
+    catalog.forEach(gift => {
+      const isOwned = owned[gift.id];
+      const card = document.createElement("div");
+      card.className = "shop-card gift-shop-card" + (isOwned ? " owned" : "");
+
+      card.innerHTML = `
+        <div class="gift-shop-preview">${gift.svg}</div>
+        <div class="shop-card-name">${gift.name}</div>
+        <div class="gift-shop-desc">${gift.desc || ""}</div>
+        <button class="shop-card-btn ${isOwned ? 'equipped' : 'buy'}" data-gift-id="${gift.id}" ${isOwned ? 'disabled' : ''}>
+          ${isOwned ? '✓ Куплено' : `
+            <svg width="12" height="12"><use href="#ico-coin"/></svg>
+            ${gift.price}
+          `}
+        </button>
+      `;
+
+      if (!isOwned) {
+        const btn = card.querySelector("[data-gift-id]");
+        btn.addEventListener("click", () => buyGiftFromShop(gift));
+      }
+
+      grid.appendChild(card);
+    });
+  }
+
+  async function buyGiftFromShop(gift) {
+    const coins = myData.coins || 0;
+
+    if (coins < gift.price) {
+      S.showToast("Недостаточно SQ. Нужно: " + gift.price, "error");
+      return;
+    }
+
+    const ok = await S.showConfirm("Купить «" + gift.name + "» за " + gift.price + " SQ?", "Покупка");
+    if (!ok) return;
+
+    try {
+      const newOwned = { ...(myData.giftsOwned || {}) };
+      newOwned[gift.id] = { boughtAt: Date.now() };
+
+      await update(ref(db, "users/" + currentUser.uid), {
+        coins: coins - gift.price,
+        giftsOwned: newOwned
+      });
+
+      const botRef = push(ref(db, "botChat/" + currentUser.uid));
+      await set(botRef, {
+        from: "Sqwid Shop",
+        text: `🎁 Куплен подарок: ${gift.name} за ${gift.price} SQ`,
+        timestamp: Date.now(),
+        type: "system",
+        kind: "shop"
+      });
+
+      S.showToast("Куплено: " + gift.name, "ok");
+      setTimeout(renderGiftsTab, 300);
+    } catch (e) {
+      S.showToast("Ошибка: " + e.message, "error");
+    }
   }
 
   console.log("✅ shop.js готов");
