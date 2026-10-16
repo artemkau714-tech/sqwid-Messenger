@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#f97316">
   <title>Sqwid Messenger</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Sqwid">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+
   <link rel="stylesheet" href="chat.css">
 </head>
 <body>
@@ -1490,15 +1500,16 @@
   <script type="module" src="games.js"></script>
   <script type="module" src="sqwidfire.js"></script>
   <script type="module" src="calls.js"></script>
+  <script type="module" src="typing.js"></script>
+  <script type="module" src="notifications.js"></script>
+  <script type="module" src="reply.js"></script>
+  <script type="module" src="link-preview.js"></script>
+  <script type="module" src="send-feedback.js"></script>
+  <script type="module" src="pwa-install.js"></script>
   <script type="module" src="shop.js"></script>
   <script type="module" src="qr-profile.js"></script>
   <script type="module" src="ux.js"></script>
   <script type="module" src="group-calls.js"></script>
   <script type="module" src="shop-plus.js"></script>
-  <script type="module" src="typing.js"></script>
-  <script type="module" src="notifications.js"></script>     <!-- 🆕 1 -->
-  <script type="module" src="reply.js"></script>              <!-- 🆕 2 -->
-  <script type="module" src="link-preview.js"></script>       <!-- 🆕 10 -->
-  <script type="module" src="send-feedback.js"></script>      <!-- 🆕 11 -->
 </body>
 </html>
