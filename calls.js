@@ -754,6 +754,7 @@ window.Sqwid.callState = {
 
   startIncomingListener();
   setInterval(updateCallButtons, 1000);
-
+window.Sqwid.startCall = startCall;
+window.Sqwid.endCall = endCall;
   console.log("✅ calls.js готов");
 });

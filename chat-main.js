@@ -1,12 +1,6 @@
 /* ============================================================
    chat-main.js — ФИНАЛЬНАЯ версия
-   Бот Sqwid Fire + pet_invite + хуки onChatOpen/onChatClose
-   + фильтр запрещённых слов (word-filter.js)
-   + кастомная SVG-монетка SQ
-   + SVG-галочка верификации (без verify.PNG)
-   + индикатор «печатает…» (typing в Firebase)
-   + совместимость с reply.js, send-feedback.js, link-preview.js,
-     notifications.js
+   Умный diff-рендер + Значки/Рамки собеседника + typing
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -71,6 +65,14 @@ let myTypingTimer = null;
 let lastTypingWrite = 0;
 const TYPING_TIMEOUT = 4000;
 const TYPING_THROTTLE = 1200;
+
+/* --- Иконки для значков --- */
+const BADGE_SVG = {
+  star:    `<svg viewBox="0 0 24 24" width="12" height="12" fill="#f59e0b" style="vertical-align:middle;margin-left:4px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  crown:   `<svg viewBox="0 0 24 24" width="12" height="12" fill="#f59e0b" style="vertical-align:middle;margin-left:4px;"><path d="M3 7l4 4 5-7 5 7 4-4v12H3V7z"/></svg>`,
+  fire:    `<svg viewBox="0 0 24 24" width="12" height="12" fill="#f97316" style="vertical-align:middle;margin-left:4px;"><path d="M12 2s4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 1-3s-5 4-5 9a8 8 0 0 0 16 0c0-6-8-14-8-14z"/></svg>`,
+  diamond: `<svg viewBox="0 0 24 24" width="12" height="12" fill="#06b6d4" style="vertical-align:middle;margin-left:4px;"><path d="M6 2l-4 6 10 14L22 8l-4-6z"/></svg>`
+};
 
 const REACTIONS_DEFAULT = ["👍", "❤️", "🔥", "😂", "😮", "😢", "🎉", "👎", "🤔", "💯", "🙏", "😡"];
 const REACTIONS_CHANNEL = ["👍", "❤️", "🔥", "🎉"];
@@ -326,11 +328,6 @@ function loadChatBackground() {
   } catch (e) {}
 }
 
-function checkFilter(text) {
-  if (!window.SqwidWordFilter) return { action: "allow" };
-  return window.SqwidWordFilter.analyze(text);
-}
-
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     if (unsubChats) { unsubChats(); unsubChats = null; }
@@ -387,6 +384,24 @@ onAuthStateChanged(auth, async (user) => {
       userMap = snap.val() || {};
       if (window.Sqwid) window.Sqwid.userMap = userMap;
       loadChats();
+      
+      // Обновляем рамку в открытом чате
+      if (currentChatId && currentChatData) {
+         const otherUid = currentChatData.type === "private" 
+           ? Object.keys(currentChatData.members || {}).find(u => u !== currentUser.uid) 
+           : null;
+         if (otherUid) {
+           const ou = userMap[otherUid] || {};
+           const ava = document.getElementById("chatAva");
+           if (ava) {
+             const frameValue = (ou.shopEquipped && ou.shopEquipped.frame) || ou.avatarFrame;
+             ava.classList.remove("frame-gold", "frame-fire", "frame-rainbow", "frame-plus");
+             if (frameValue) ava.classList.add("frame-" + frameValue);
+             else if (ou.plusUntil && ou.plusUntil > Date.now()) ava.classList.add("frame-plus");
+           }
+         }
+      }
+
       const cm = document.getElementById("screen-choose-members");
       if (cm && cm.classList.contains("active")) renderMembersResults();
     } catch (e) {}
@@ -509,6 +524,135 @@ function loadChats() {
 const searchInputEl = document.getElementById("searchInput");
 if (searchInputEl) searchInputEl.addEventListener("input", loadChats);
 
+/* ============================================================
+   УМНЫЙ РЕНДЕР СООБЩЕНИЙ (без полной перезагрузки)
+   ============================================================ */
+function renderMessagesDiff(box, arr, chatId) {
+  const currentIds = new Set();
+  arr.forEach(m => currentIds.add(m.id));
+
+  // 1. Удаляем из DOM те сообщения, которых больше нет в базе
+  const domMsgs = box.querySelectorAll(".msg[data-msg-id]");
+  domMsgs.forEach(node => {
+    const id = node.dataset.msgId;
+    if (id && !currentIds.has(id) && !id.startsWith("temp_")) {
+      node.classList.add("msg-deleting");
+      setTimeout(() => { if (node.parentNode) node.remove(); }, 300);
+    }
+  });
+
+  // 2. Проходимся по актуальным сообщениям
+  arr.forEach(msg => {
+    if (!msg.id) return;
+
+    let existing = box.querySelector(`.msg[data-msg-id="${msg.id}"]`);
+
+    if (existing) {
+      updateMessageInPlace(existing, msg, chatId);
+    } else {
+      const wasAtBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 150;
+      renderMessage(msg, chatId);
+      
+      if (wasAtBottom || box.children.length === 1) {
+        box.scrollTop = box.scrollHeight;
+      }
+    }
+  });
+}
+
+function updateMessageInPlace(el, msg, chatId) {
+  // 1. Обновляем реакции
+  const reactions = msg.reactions || {};
+  const reactKeys = Object.keys(reactions).filter(e => Object.keys(reactions[e] || {}).length > 0);
+  
+  const oldReactBlock = el.querySelector(".msg-reactions");
+  const oldKeysStr = oldReactBlock ? Array.from(oldReactBlock.querySelectorAll(".reaction-chip[data-emoji]")).map(c => c.dataset.emoji + ":" + c.querySelector("b").textContent).join(",") : "";
+  const newKeysStr = reactKeys.map(e => e + ":" + Object.keys(reactions[e]).length).join(",");
+
+  if (oldKeysStr !== newKeysStr) {
+    if (oldReactBlock) oldReactBlock.remove();
+    
+    if (reactKeys.length > 0) {
+      const reactRow = document.createElement("div");
+      reactRow.className = "msg-reactions";
+      reactKeys.forEach(e => {
+        const cnt = Object.keys(reactions[e]).length;
+        const mine = !!reactions[e][currentUser.uid];
+        const chip = document.createElement("span");
+        chip.className = "reaction-chip" + (mine ? " mine" : "");
+        chip.dataset.emoji = e;
+        chip.innerHTML = `${e} <b>${cnt}</b>`;
+        chip.addEventListener("click", async (ev) => {
+          ev.stopPropagation();
+          await toggleReaction(chatId, msg.id, e);
+        });
+        reactRow.appendChild(chip);
+      });
+      
+      const plusBtn = document.createElement("span");
+      plusBtn.className = "reaction-chip reaction-plus";
+      plusBtn.textContent = "＋";
+      plusBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        longPressMsg = { msg, chatId };
+        openReactPicker();
+      });
+      reactRow.appendChild(plusBtn);
+      
+      const timeEl = el.querySelector(".msg-time");
+      if (timeEl) el.insertBefore(reactRow, timeEl);
+      else el.appendChild(reactRow);
+    }
+  }
+  
+  // 2. Обновляем галочки
+  if (msg.sender === currentUser.uid && currentChatData && currentChatData.type === "private") {
+    const readBy = msg.readBy || {};
+    const partnerUid = Object.keys(currentChatData.members || {}).find(u => u !== currentUser.uid);
+    const isRead = partnerUid && readBy[partnerUid];
+    
+    let oldChecks = el.querySelector(".msg-checks");
+    const domIsRead = oldChecks && oldChecks.classList.contains("read");
+    
+    if (isRead !== domIsRead) {
+      if (oldChecks) oldChecks.remove();
+      const timeEl = el.querySelector(".msg-time");
+      if (timeEl) {
+        if (isRead) {
+          const checks = document.createElement("span");
+          checks.className = "msg-checks read";
+          checks.title = "Прочитано";
+          checks.innerHTML = `<svg width="16" height="11" viewBox="0 0 18 12" fill="none">
+            <polyline points="1,6 5,10 11,2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="7,6 11,10 17,2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>`;
+          timeEl.appendChild(checks);
+        } else {
+          const checks = document.createElement("span");
+          checks.className = "msg-checks";
+          checks.title = "Отправлено";
+          checks.innerHTML = `<svg width="12" height="11" viewBox="0 0 14 12" fill="none">
+            <polyline points="1,6 5,10 11,2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>`;
+          timeEl.appendChild(checks);
+        }
+      }
+    }
+  }
+  
+  // 3. Обновляем edited метку
+  if (msg.editedAt && !el.querySelector(".msg-edited")) {
+    const t = el.querySelector(".msg-time");
+    if (t) {
+      const ed = document.createElement("span");
+      ed.className = "msg-edited";
+      ed.title = "Изменено";
+      ed.textContent = "изм.";
+      t.insertBefore(ed, t.firstChild);
+    }
+  }
+}
+
 async function openChat(chatId) {
   try {
     const snap = await get(ref(db, "chats/" + chatId));
@@ -522,12 +666,10 @@ async function openChat(chatId) {
     const cancelBtnReset = document.getElementById("btnCancelEdit");
     if (cancelBtnReset) cancelBtnReset.style.display = "none";
 
-    // Сброс reply из reply.js
     if (window.Sqwid && window.Sqwid.reply && window.Sqwid.reply.hide) {
       try { window.Sqwid.reply.hide(); } catch (e) {}
     }
 
-    // Подписка на индикатор «печатает…»
     subscribeTyping(chatId);
 
     let displayName = chat.name || "Чат";
@@ -565,6 +707,20 @@ async function openChat(chatId) {
       if (isFrozen) ava.innerHTML = `<span style="font-size:22px;">❄</span>`;
       else ava.innerHTML = avatarUrl ? `<img src="${avatarUrl}">` : escH(displayName.charAt(0).toUpperCase());
       ava.classList.toggle("frozen-ava", isFrozen);
+      
+      // Убираем старые рамки
+      ava.classList.remove("frame-gold", "frame-fire", "frame-rainbow", "frame-plus");
+      
+      // Ставим новую рамку собеседнику (если это приватный чат)
+      if (chat.type === "private" && otherUid) {
+        const ou = userMap[otherUid] || {};
+        const frameValue = (ou.shopEquipped && ou.shopEquipped.frame) || ou.avatarFrame;
+        if (frameValue) {
+          ava.classList.add("frame-" + frameValue);
+        } else if (ou.plusUntil && ou.plusUntil > Date.now()) {
+          ava.classList.add("frame-plus");
+        }
+      }
     }
 
     const inputArea = document.getElementById("inputArea");
@@ -609,7 +765,7 @@ async function openChat(chatId) {
     }
 
     const msgsBox = document.getElementById("messages");
-    if (msgsBox) msgsBox.innerHTML = "";
+    if (msgsBox) msgsBox.innerHTML = ""; // Чистим только при входе в чат
     showScreen("screen-messages");
     loadChatBackground();
 
@@ -619,11 +775,14 @@ async function openChat(chatId) {
 
     if (unsubMessages) unsubMessages();
     const msgsRef = query(ref(db, "messages/" + chatId), orderByChild("timestamp"), limitToLast(200));
+    
+    // Первый рендер флаг
+    let isFirstRender = true;
+
     unsubMessages = onValue(msgsRef, async (snapshot) => {
       try {
         const box = document.getElementById("messages");
         if (!box) return;
-        box.innerHTML = "";
         const all = snapshot.val() || {};
 
         const arr = Object.entries(all)
@@ -641,11 +800,19 @@ async function openChat(chatId) {
             timestamp: m.timestamp
           }));
 
-        arr.forEach(m => {
-          try { renderMessage(m, chatId); } catch (e) {}
-        });
-        box.scrollTop = box.scrollHeight;
+        if (isFirstRender) {
+          // При первом заходе рисуем всё и скроллим вниз
+          arr.forEach(m => {
+            try { renderMessage(m, chatId); } catch (e) {}
+          });
+          box.scrollTop = box.scrollHeight;
+          isFirstRender = false;
+        } else {
+          // При обновлениях используем умный diff
+          renderMessagesDiff(box, arr, chatId);
+        }
 
+        // Отметка "прочитано"
         const readUpdates = {};
         let hasReadUpdates = false;
         for (const m of arr) {
@@ -683,6 +850,9 @@ async function openChat(chatId) {
 function renderMessage(msg, chatId) {
   const box = document.getElementById("messages");
   if (!box) return;
+
+  // Проверка, что такого сообщения еще нет
+  if (msg.id && box.querySelector(`.msg[data-msg-id="${msg.id}"]`)) return;
 
   const isOwn = msg.sender === currentUser.uid;
   const div = document.createElement("div");
@@ -756,10 +926,33 @@ function renderMessage(msg, chatId) {
     const su = userMap[msg.sender] || {};
     const isFrozen = su.frozen === true;
     const frozenClass = isFrozen ? " frozen-name" : "";
-    senderHTML = `<div class="msg-sender${frozenClass}" style="font-size:11.5px;font-weight:700;color:#f97316;margin-bottom:3px;">${escH(su.name || su.email || "Пользователь")}${verifiedIcon(su.verified)}</div>`;
+    
+    // Цвет и шрифт
+    let nameStyle = "font-size:11.5px;font-weight:700;color:#f97316;margin-bottom:3px;";
+    let nameClass = frozenClass;
+    if (su.nickFont === "bold") nameStyle += "font-weight:900;";
+    if (su.nickFont === "italic") nameStyle += "font-style:italic;";
+    
+    let nameColorHTML = escH(su.name || su.email || "Пользователь");
+    if (su.nickColor) {
+       if (su.nickColor.startsWith("linear-gradient")) {
+         nameColorHTML = `<span style="display:inline-block;background:${su.nickColor};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;font-weight:800;">${escH(su.name || su.email || "Пользователь")}</span>`;
+       } else {
+         nameStyle += `color:${su.nickColor};`;
+       }
+    }
+
+    let badgeHTML = "";
+    if (su.shopEquipped && su.shopEquipped.badge && BADGE_SVG[su.shopEquipped.badge]) {
+      badgeHTML = BADGE_SVG[su.shopEquipped.badge];
+    }
+
+    let emojiHTML = "";
+    if (su.nickEmoji) emojiHTML = ` <span class="nick-emoji" style="font-size:12px;">${su.nickEmoji}</span>`;
+
+    senderHTML = `<div class="msg-sender${nameClass}" style="${nameStyle}">${nameColorHTML}${verifiedIcon(su.verified)}${badgeHTML}${emojiHTML}</div>`;
   }
 
-  /* ---------- REPLY QUOTE ---------- */
   let replyHTML = "";
   if (msg.replyTo) {
     replyHTML = `
@@ -817,7 +1010,6 @@ function renderMessage(msg, chatId) {
     }
   }
 
-  /* ---------- EDIT MARK ---------- */
   let editedHTML = "";
   if (msg.editedAt) {
     editedHTML = `<span class="msg-edited" title="Изменено">изм.</span>`;
@@ -1179,7 +1371,6 @@ async function sendMessage() {
     return;
   }
 
-  /* --- РЕЖИМ РЕДАКТИРОВАНИЯ --- */
   if (editingMsgId) {
     try {
       const upd = { text, editedAt: Date.now() };
@@ -1201,7 +1392,6 @@ async function sendMessage() {
     return;
   }
 
-  /* --- ОБЫЧНАЯ ОТПРАВКА --- */
   const newRef = push(ref(db, "messages/" + currentChatId));
   const msgPayload = {
     sender: currentUser.uid,
@@ -1216,7 +1406,6 @@ async function sendMessage() {
     msgPayload.flagMatches = pendingFlag.matches;
   }
 
-  /* reply из reply.js */
   if (window._sqwidReplyTo) {
     msgPayload.replyTo = {
       id: window._sqwidReplyTo.id,
@@ -1244,16 +1433,9 @@ async function sendMessage() {
   input.value = "";
 }
 
-/* ============================================================
-   КНОПКА ОТПРАВКИ + ENTER
-   send-feedback.js перехватывает в capture-фазе, так что сюда
-   мы попадём только если он не смог обработать (например,
-   редактирование). Поэтому здесь stopTyping() и вызов sendMessage().
-   ============================================================ */
 const btnSend = document.getElementById("btnSend");
 if (btnSend) btnSend.addEventListener("click", () => {
   stopTyping();
-  // Если send-feedback.js уже отправил — флаг стоит
   if (window._sqwidSendFeedbackActive) return;
   sendMessage();
 });
@@ -1268,7 +1450,6 @@ if (msgInput) {
   msgInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       stopTyping();
-      // Если send-feedback.js уже отправил — флаг стоит
       if (window._sqwidSendFeedbackActive) return;
       sendMessage();
     }
@@ -1356,7 +1537,6 @@ if (btnSendPhoto) btnSendPhoto.addEventListener("click", async () => {
     payload.flagMatches = pendingFlag.matches;
   }
 
-  /* reply из reply.js */
   if (window._sqwidReplyTo) {
     payload.replyTo = {
       id: window._sqwidReplyTo.id,
@@ -1985,4 +2165,4 @@ document.addEventListener("click", (e) => {
   }
 });
 
-console.log("✅ chat-main.js загружен (typing + reply + send-feedback + link-preview совместимый)");
+console.log("✅ chat-main.js загружен");

@@ -75,8 +75,9 @@ input, textarea, [contenteditable] {
   touch-action: auto;
 }
 .msg, .msg * {
-  user-select: text;
-  -webkit-user-select: text;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important; /* Отключает системное меню iOS (Копировать/Вставить) */
 }
 
 /* ============ ФОНОВЫЕ ПЯТНА ============ */
@@ -6261,4 +6262,386 @@ body[data-theme="girl"] .profile-info-value { color: #4c1d3d; }
 body[data-theme="girl"] .profile-info-label { color: #c084a8; }
 body[data-theme="girl"] .profile-tab-btn.active {
   background: linear-gradient(135deg, #ec4899, #a855f7);
+}
+/* Оверлей для фона профиля, чтобы текст читался */
+.profile-scroll.has-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15,23,42,0.3) 0%, rgba(15,23,42,0.85) 60%, rgba(15,23,42,0.95) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body[data-theme="dark"] .profile-scroll.has-bg::before {
+  background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.9) 60%);
+}
+
+.profile-scroll.has-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Чтобы текст при наличии фона был белым */
+body .profile-scroll.has-bg .profile-name,
+body .profile-scroll.has-bg .profile-username,
+body .profile-scroll.has-bg .profile-bio,
+body .profile-scroll.has-bg .profile-info-value,
+body .profile-scroll.has-bg .profile-info-label {
+  color: #fff !important;
+}
+body .profile-scroll.has-bg .profile-info-label { color: rgba(255,255,255,0.6) !important; }
+/* ============================================
+   ПРОФИЛЬ — Стеклянные карточки (чтобы было видно фон)
+   ============================================ */
+
+/* 1. Кнопки (Выбрать фото / Изменить / Настройки) */
+.profile-action-btn {
+  background: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 2. Карточка с инфой (Почта, Юзернейм, Сквидики) */
+.profile-info-card {
+  background: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Разделители внутри карточки тоже делаем полупрозрачными */
+.profile-info-row + .profile-info-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 3. Кнопки вкладок (Группы / Каналы) */
+.profile-tab-btn {
+  background: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+}
+.profile-tab-btn.active {
+  background: var(--grad-1) !important;
+  border-color: transparent !important;
+}
+
+/* 4. Текст делаем белым и с тенью, чтобы читался на любом фоне */
+body .profile-scroll.has-bg .profile-name,
+body .profile-scroll.has-bg .profile-username,
+body .profile-scroll.has-bg .profile-bio,
+body .profile-scroll.has-bg .profile-info-value,
+body .profile-scroll.has-bg .profile-info-label {
+  color: #ffffff !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 5. Затемняющая шторка на фоне, чтобы белый текст читался ещё лучше */
+.profile-scroll.has-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.7) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+.profile-scroll.has-bg > * {
+  position: relative;
+  z-index: 1;
+}
+.screen {
+  will-change: transform;
+}
+/* Рамки для маленьких аватарок в чате */
+.chat-ava.frame-gold,
+.chat-bar .chat-ava.frame-gold {
+  border: 2px solid #f59e0b !important;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5) !important;
+}
+.chat-ava.frame-fire,
+.chat-bar .chat-ava.frame-fire {
+  border: 2px solid #f97316 !important;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.5) !important;
+}
+.chat-ava.frame-rainbow,
+.chat-bar .chat-ava.frame-rainbow {
+  border: 2px solid transparent !important;
+  background: linear-gradient(#fff, #fff) padding-box, conic-gradient(from 0deg, #ef4444, #f59e0b, #22c55e, #3b82f6, #8b5cf6, #ef4444) border-box !important;
+}
+.chat-ava.frame-plus,
+.chat-bar .chat-ava.frame-plus {
+  border: 2px solid transparent !important;
+  background: linear-gradient(#fff, #fff) padding-box, conic-gradient(from 0deg, #f59e0b, #ec4899, #8b5cf6, #f59e0b) border-box !important;
+}
+
+/* В темной теме рамки тоже нужны */
+body[data-theme="dark"] .chat-ava.frame-rainbow {
+  background: linear-gradient(#1a1a1a, #1a1a1a) padding-box, conic-gradient(from 0deg, #ef4444, #f59e0b, #22c55e, #3b82f6, #8b5cf6, #ef4444) border-box !important;
+}
+body[data-theme="dark"] .chat-ava.frame-plus {
+  background: linear-gradient(#1a1a1a, #1a1a1a) padding-box, conic-gradient(from 0deg, #f59e0b, #ec4899, #8b5cf6, #f59e0b) border-box !important;
+}
+/* Рамки для чужого профиля */
+#screen-user-profile .profile-ava-wrap {
+  width: 8.12rem; 
+  height: 8.12rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+#screen-user-profile .profile-ava-wrap.frame-gold {
+  padding: 4px; border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b, #ffd966, #f59e0b);
+}
+#screen-user-profile .profile-ava-wrap.frame-fire {
+  padding: 4px; border-radius: 50%;
+  background: linear-gradient(135deg, #f97316, #ef4444, #f97316);
+}
+#screen-user-profile .profile-ava-wrap.frame-rainbow {
+  padding: 4px; border-radius: 50%;
+  background: conic-gradient(from 0deg, #ef4444, #f59e0b, #22c55e, #3b82f6, #8b5cf6, #ef4444);
+}
+#screen-user-profile .profile-ava-wrap.frame-plus {
+  padding: 4px; border-radius: 50%;
+  background: conic-gradient(from 0deg, #f59e0b, #ec4899, #8b5cf6, #f59e0b);
+}
+#screen-user-profile .profile-ava-wrap[class*="frame-"] .profile-ava {
+  border: 3px solid #fff;
+}
+
+/* Фон для чужого профиля */
+#screen-user-profile .profile-scroll.has-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15,23,42,0.3) 0%, rgba(15,23,42,0.85) 60%, rgba(15,23,42,0.95) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+#screen-user-profile .profile-scroll.has-bg > * {
+  position: relative;
+  z-index: 1;
+}
+/* Красим кнопку "Пожаловаться" (и другие btn-secondary) */
+.btn-secondary {
+  background: rgba(239, 68, 68, 0.1) !important; /* Светло-красный фон */
+  color: #ef4444 !important; /* Красный текст */
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Эффект при нажатии */
+.btn-secondary:active {
+  background: rgba(239, 68, 68, 0.2) !important;
+  transform: scale(0.97);
+}
+
+/* Чтобы в темной теме тоже было красиво */
+body[data-theme="dark"] .btn-secondary {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+/* ============================================
+   ЧУЖОЙ ПРОФИЛЬ (Стиль Telegram)
+   ============================================ */
+
+/* Сетка с 4 кнопками (Чат, Звук, Звонок, Видео) */
+.up-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 0 1rem;
+  margin-bottom: 1rem;
+}
+.up-action-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  padding: 0.75rem 0.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  font-family: inherit;
+}
+.up-action-btn:active { 
+  background: rgba(255, 255, 255, 0.1); 
+  transform: scale(0.95);
+}
+.up-action-btn svg { 
+  width: 24px; 
+  height: 24px; 
+  color: var(--text); 
+}
+.up-action-btn span { 
+  font-size: 0.72rem; 
+  font-weight: 600; 
+}
+
+/* Адаптация кнопок под светлую тему */
+body[data-theme="light"] .up-action-btn { 
+  background: rgba(0, 0, 0, 0.04); 
+  border-color: rgba(0, 0, 0, 0.04); 
+}
+body[data-theme="light"] .up-action-btn:active { 
+  background: rgba(0, 0, 0, 0.08); 
+}
+
+/* Карточка с информацией (О себе, @username) */
+#screen-user-profile .profile-info-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  margin: 0 1rem 0.5rem;
+  padding: 0.25rem 0;
+  overflow: hidden;
+}
+#screen-user-profile .profile-info-row {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+#screen-user-profile .profile-info-row:last-child { 
+  border-bottom: none; 
+}
+#screen-user-profile .profile-info-value {
+  font-size: 0.95rem;
+  color: var(--text);
+  word-break: break-word;
+  font-weight: 500;
+}
+#screen-user-profile .profile-info-label {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  margin-top: 0.2rem;
+}
+
+/* Адаптация карточки под светлую тему */
+body[data-theme="light"] #screen-user-profile .profile-info-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.05);
+}
+body[data-theme="light"] #screen-user-profile .profile-info-row {
+  border-bottom-color: rgba(0, 0, 0, 0.05);
+}
+/* ====== КНОПКИ В ПРОФИЛЕ ====== */
+.up-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 0 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Делаем кнопки полупрозрачными с белым текстом, чтобы они читались ВСЕГДА */
+.up-action-btn {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 1rem;
+  padding: 0.75rem 0.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  color: #ffffff !important;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  font-family: inherit;
+}
+.up-action-btn:active { 
+  background: rgba(255, 255, 255, 0.25) !important; 
+  transform: scale(0.95);
+}
+.up-action-btn svg { 
+  width: 24px; 
+  height: 24px; 
+  color: #ffffff !important; 
+}
+.up-action-btn span { 
+  font-size: 0.72rem; 
+  font-weight: 600; 
+  color: #ffffff !important;
+}
+
+/* Если фон профиля СВЕТЛЫЙ, кнопки делаем темными */
+#screen-user-profile .profile-scroll:not(.has-bg) .up-action-btn,
+#screen-user-profile .profile-scroll.has-bg[data-bg-light="true"] .up-action-btn {
+  background: rgba(15, 23, 42, 0.08) !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  color: var(--text) !important;
+}
+#screen-user-profile .profile-scroll:not(.has-bg) .up-action-btn svg,
+#screen-user-profile .profile-scroll.has-bg[data-bg-light="true"] .up-action-btn svg {
+  color: var(--text) !important;
+}
+#screen-user-profile .profile-scroll:not(.has-bg) .up-action-btn span,
+#screen-user-profile .profile-scroll.has-bg[data-bg-light="true"] .up-action-btn span {
+  color: var(--text) !important;
+}
+/* ====== КНОПКИ ДЕЙСТВИЙ В ПРОФИЛЕ СОБЕСЕДНИКА ====== */
+.up-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 0 1rem;
+  margin-bottom: 1rem;
+}
+
+.up-action-btn {
+  background: rgba(15, 23, 42, 0.08) !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  border-radius: 1rem;
+  padding: 0.75rem 0.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text) !important;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  font-family: inherit;
+}
+
+.up-action-btn:active { 
+  background: rgba(15, 23, 42, 0.15) !important; 
+  transform: scale(0.95);
+}
+
+.up-action-btn svg { 
+  width: 24px; 
+  height: 24px; 
+  color: var(--text) !important; 
+}
+
+.up-action-btn span { 
+  font-size: 0.72rem; 
+  font-weight: 600; 
+  color: var(--text) !important;
+}
+
+/* Адаптация под тёмную/девчачью тему, чтобы кнопки не сливались */
+body[data-theme="dark"] .up-action-btn,
+body[data-theme="girl"] .up-action-btn {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+body[data-theme="dark"] .up-action-btn svg,
+body[data-theme="girl"] .up-action-btn svg,
+body[data-theme="dark"] .up-action-btn span,
+body[data-theme="girl"] .up-action-btn span {
+  color: #ffffff !important;
+}
+
+body[data-theme="dark"] .up-action-btn:active,
+body[data-theme="girl"] .up-action-btn:active {
+  background: rgba(255, 255, 255, 0.2) !important;
 }

@@ -1,9 +1,11 @@
 /* ============================================================
-   chat-profile.js — экран профиля в стиле Telegram
+   chat-profile.js — экран профиля (с поддержкой фонов и значков)
    + QR-иконка в шапке
    + 3 кнопки: Выбрать фото / Изменить / Настройки
    + поля: Почта, @username, Сквидики
    + вкладки: Группы / Каналы
+   + фон профиля (пресеты из магазина или свой файл)
+   + значок из магазина рядом с ником
    ============================================================ */
 
 console.log("🚀 chat-profile.js загружен, жду Sqwid...");
@@ -31,6 +33,27 @@ waitForSqwidProfile((S) => {
   let myData = {};
   let myChatsData = {};
   let activeTab = "groups";
+
+  /* ============================================================
+     ПРЕСЕТЫ ФОНОВ (синхронизированы с shop.js)
+     ============================================================ */
+  const BG_PRESETS = {
+    sunset: "linear-gradient(135deg, #f97316, #ec4899)",
+    ocean:  "linear-gradient(135deg, #06b6d4, #3b82f6)",
+    night:  "linear-gradient(135deg, #1e1b4b, #312e81)",
+    forest: "linear-gradient(135deg, #10b981, #047857)",
+    space:  "radial-gradient(circle at 50% 30%, #1e1b4b, #000)"
+  };
+
+  /* ============================================================
+     ИКОНКИ ЗНАЧКОВ (синхронизированы с shop.js)
+     ============================================================ */
+  const BADGE_SVG = {
+    star:    `<svg viewBox="0 0 24 24" width="16" height="16" fill="#f59e0b" style="vertical-align:middle;margin-left:4px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+    crown:   `<svg viewBox="0 0 24 24" width="16" height="16" fill="#f59e0b" style="vertical-align:middle;margin-left:4px;"><path d="M3 7l4 4 5-7 5 7 4-4v12H3V7z"/></svg>`,
+    fire:    `<svg viewBox="0 0 24 24" width="16" height="16" fill="#f97316" style="vertical-align:middle;margin-left:4px;"><path d="M12 2s4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 1-3s-5 4-5 9a8 8 0 0 0 16 0c0-6-8-14-8-14z"/></svg>`,
+    diamond: `<svg viewBox="0 0 24 24" width="16" height="16" fill="#06b6d4" style="vertical-align:middle;margin-left:4px;"><path d="M6 2l-4 6 10 14L22 8l-4-6z"/></svg>`
+  };
 
   /* ============================================================
      ХЕЛПЕРЫ
@@ -76,6 +99,7 @@ waitForSqwidProfile((S) => {
       if (myData.nickFont === "mono") fontStyle += "font-family:'JetBrains Mono',monospace;";
       if (myData.nickFont === "script") fontStyle += "font-family:'Caveat',cursive;";
 
+      // Градиент / цвет
       if (myData.nickColor && typeof myData.nickColor === "string" && myData.nickColor.startsWith("linear-gradient")) {
         nameHTML += `<span style="display:inline-block;background:${myData.nickColor};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;font-weight:800;${fontStyle}">${escH(name)}</span>`;
       } else if (myData.nickColor) {
@@ -86,7 +110,14 @@ waitForSqwidProfile((S) => {
         nameHTML += `<span style="${fontStyle}">${escH(name)}</span>`;
       }
 
+      // Значок из магазина (SVG)
+      if (myData.shopEquipped && myData.shopEquipped.badge && BADGE_SVG[myData.shopEquipped.badge]) {
+        nameHTML += BADGE_SVG[myData.shopEquipped.badge];
+      }
+
+      // Emoji из настроек (кастомный ник)
       if (myData.nickEmoji) nameHTML += ` <span class="nick-emoji">${myData.nickEmoji}</span>`;
+
       nameEl.innerHTML = nameHTML;
     }
 
@@ -116,8 +147,37 @@ waitForSqwidProfile((S) => {
     const wrap = document.querySelector("#screen-profile .profile-ava-wrap");
     if (wrap) {
       wrap.classList.remove("frame-gold", "frame-fire", "frame-rainbow", "frame-plus");
-      if (myData.avatarFrame) wrap.classList.add("frame-" + myData.avatarFrame);
-      else if (isPlus()) wrap.classList.add("frame-plus");
+      // Приоритет: shopEquipped.frame > avatarFrame > plus
+      const frameValue = (myData.shopEquipped && myData.shopEquipped.frame) || myData.avatarFrame;
+      if (frameValue) {
+        wrap.classList.add("frame-" + frameValue);
+      } else if (isPlus()) {
+        wrap.classList.add("frame-plus");
+      }
+    }
+
+    /* ---- ФОН ПРОФИЛЯ ---- */
+    const scroll = document.getElementById("profileScroll");
+    if (scroll) {
+      // Приоритет: свой загруженный фон (Sqwid+) > пресет из магазина
+      const equippedBg = myData.shopEquipped && myData.shopEquipped.bg;
+      
+      if (myData.profileBg && isPlus()) {
+        scroll.style.backgroundImage = `url(${myData.profileBg})`;
+        scroll.style.backgroundSize = "cover";
+        scroll.style.backgroundPosition = "center";
+        scroll.style.backgroundRepeat = "no-repeat";
+        scroll.classList.add("has-bg");
+      } else if (equippedBg && BG_PRESETS[equippedBg]) {
+        scroll.style.backgroundImage = BG_PRESETS[equippedBg];
+        scroll.style.backgroundSize = "cover";
+        scroll.style.backgroundPosition = "center";
+        scroll.style.backgroundRepeat = "no-repeat";
+        scroll.classList.add("has-bg");
+      } else {
+        scroll.style.backgroundImage = "";
+        scroll.classList.remove("has-bg");
+      }
     }
 
     /* ---- Поля информации ---- */
@@ -206,7 +266,7 @@ waitForSqwidProfile((S) => {
      КНОПКИ
      ============================================================ */
 
-  /* --- «Выбрать фото» → системный выбор файла --- */
+  /* --- «Выбрать фото» --- */
   const btnPhoto = document.getElementById("btnProfilePhoto");
   const avatarInput = document.getElementById("profileAvatarInput");
   if (btnPhoto && avatarInput) {
@@ -233,7 +293,7 @@ waitForSqwidProfile((S) => {
     });
   }
 
-  /* --- «Изменить» → подэкран «Аккаунт» --- */
+  /* --- «Изменить» --- */
   const btnEdit = document.getElementById("btnEditProfile");
   if (btnEdit) {
     btnEdit.addEventListener("click", () => {
@@ -241,7 +301,7 @@ waitForSqwidProfile((S) => {
     });
   }
 
-  /* --- «Настройки» → главный экран настроек --- */
+  /* --- «Настройки» --- */
   const btnSettings = document.getElementById("btnProfileSettings");
   if (btnSettings) {
     btnSettings.addEventListener("click", () => {

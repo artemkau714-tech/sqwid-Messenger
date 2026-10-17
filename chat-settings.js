@@ -1,7 +1,5 @@
 /* ============================================================
-   chat-settings.js — настройки
-   Профиль, приватность, PIN, аккаунт, темы, Sqwid+, кастомизация ника
-   + новая навигация по разделам с подэкранами
+   chat-settings.js — настройки (с поддержкой масштабирования)
    ============================================================ */
 
 console.log("🚀 chat-settings.js загружен, жду Sqwid...");
@@ -31,54 +29,49 @@ waitForSqwidSettings((S) => {
   let avatarChanged = false;
 
   /* ============================================================
-     ХЕЛПЕР: активен ли Sqwid+
+     МАСШТАБ ИНТЕРФЕЙСА
      ============================================================ */
-  function isPlus() {
-    return myData.plusUntil && myData.plusUntil > Date.now();
+  function applyZoom(percent) {
+    // На Android и ПК zoom работает на ура.
+    // На iOS Safari zoom на body иногда глючит, но для текста и стандартных блоков работает.
+    // Поэтому применяем и zoom, и font-size.
+    const scale = percent / 100;
+    
+    // Применяем zoom к body (масштабирует всё физически)
+    document.body.style.zoom = scale;
+    
+    // На iOS Safari zoom игнорируется, поэтому увеличиваем базовый шрифт.
+    // Но чтобы кнопки и иконки (у которых размеры в px) тоже росли,
+    // мы задаем переменную --zoom-scale, которую используем в CSS.
+    document.documentElement.style.fontSize = (16 * scale) + "px";
+    document.documentElement.style.setProperty('--zoom-scale', scale);
+
+    try { localStorage.setItem("sqwid_zoom", percent); } catch(e) {}
+    
+    // Обновляем UI
+    const subEl = document.getElementById("settingsZoomSub");
+    if (subEl) subEl.textContent = percent + "%";
+    
+    const valEl = document.getElementById("zoomValue");
+    if (valEl) valEl.textContent = percent + "%";
+    
+    const slider = document.getElementById("zoomSlider");
+    if (slider) slider.value = percent;
+
+    const preview = document.getElementById("zoomPreview");
+    if (preview) preview.style.transform = `scale(${scale})`;
   }
 
-  /* ============================================================
-     ВАЛИДАЦИЯ URL
-     ============================================================ */
-  function sanitizeUrl(url) {
-    if (!url || typeof url !== "string") return "";
-    const trimmed = url.trim();
-    if (!trimmed) return "";
-    if (!/^https?:\/\//i.test(trimmed)) return "";
-    try {
-      const u = new URL(trimmed);
-      if (u.protocol !== "http:" && u.protocol !== "https:") return "";
-      if (!u.hostname || !u.hostname.includes(".")) return "";
-      return u.href;
-    } catch (e) {
-      return "";
-    }
-  }
+  // Инициализация при загрузке
+  let savedZoom = 100;
+  try { savedZoom = parseInt(localStorage.getItem("sqwid_zoom")) || 100; } catch(e) {}
+  applyZoom(savedZoom);
 
-  /* ============================================================
-     ХЕЛПЕРЫ
-     ============================================================ */
-  function setVal(id, v) {
-    const el = document.getElementById(id);
-    if (el) el.value = v;
-  }
-  function setCheck(id, v) {
-    const el = document.getElementById(id);
-    if (el) el.checked = !!v;
-  }
-  function setText(id, v) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = v;
-  }
-  function show(id, on) {
-    const el = document.getElementById(id);
-    if (el) el.style.display = on ? "block" : "none";
-  }
-  function formatBytes(bytes) {
-    if (bytes < 1024) return bytes + " Б";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " КБ";
-    if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(2) + " МБ";
-    return (bytes / 1024 / 1024 / 1024).toFixed(2) + " ГБ";
+  const zoomSlider = document.getElementById("zoomSlider");
+  if (zoomSlider) {
+    zoomSlider.addEventListener("input", (e) => {
+      applyZoom(parseInt(e.target.value));
+    });
   }
 
   /* ============================================================
@@ -93,6 +86,7 @@ waitForSqwidSettings((S) => {
       document.body.removeAttribute("data-theme");
     }
     try { localStorage.setItem("sqwid_theme", theme); } catch (e) {}
+    
     const light = document.getElementById("themeLight");
     const dark = document.getElementById("themeDark");
     const girl = document.getElementById("themeGirl");
@@ -195,27 +189,49 @@ waitForSqwidSettings((S) => {
         setVal("settingsSocialYoutube", social.youtube || "");
       }
     }
+  }
 
-    const nickCustom = document.getElementById("settingsNickCustom");
-    const nickFont = document.getElementById("settingsNickFont");
-    const nickEmoji = document.getElementById("settingsNickEmoji");
-    if (nickCustom && nickEmoji) {
-      const plus = isPlus();
-      nickCustom.style.display = plus ? "block" : "none";
-      if (nickFont) nickFont.style.display = plus ? "block" : "none";
-      nickEmoji.style.display = plus ? "block" : "none";
-      if (plus) {
-        document.querySelectorAll(".nick-color-btn").forEach(b => {
-          b.classList.toggle("active", (b.dataset.color || "") === (myData.nickColor || ""));
-        });
-        document.querySelectorAll(".nick-font-btn").forEach(b => {
-          b.classList.toggle("active", (b.dataset.font || "normal") === (myData.nickFont || "normal"));
-        });
-        document.querySelectorAll(".nick-emoji-btn").forEach(b => {
-          b.classList.toggle("active", (b.dataset.emoji || "") === (myData.nickEmoji || ""));
-        });
-      }
+  /* ============================================================
+     ВАЛИДАЦИЯ URL
+     ============================================================ */
+  function sanitizeUrl(url) {
+    if (!url || typeof url !== "string") return "";
+    const trimmed = url.trim();
+    if (!trimmed) return "";
+    if (!/^https?:\/\//i.test(trimmed)) return "";
+    try {
+      const u = new URL(trimmed);
+      if (u.protocol !== "http:" && u.protocol !== "https:") return "";
+      if (!u.hostname || !u.hostname.includes(".")) return "";
+      return u.href;
+    } catch (e) {
+      return "";
     }
+  }
+
+  /* ============================================================
+     ХЕЛПЕРЫ
+     ============================================================ */
+  function isPlus() {
+    return myData.plusUntil && myData.plusUntil > Date.now();
+  }
+  function setVal(id, v) {
+    const el = document.getElementById(id);
+    if (el) el.value = v;
+  }
+  function setCheck(id, v) {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!v;
+  }
+  function setText(id, v) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = v;
+  }
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + " Б";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " КБ";
+    if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(2) + " МБ";
+    return (bytes / 1024 / 1024 / 1024).toFixed(2) + " ГБ";
   }
 
   /* ============================================================
@@ -264,10 +280,7 @@ waitForSqwidSettings((S) => {
 
     const bioLimit = isPlus() ? 300 : 120;
     if (bio.length > bioLimit) {
-      return S.showAlert(
-        `Bio до ${bioLimit} символов${isPlus() ? "" : " (Sqwid+ = 300)"}`,
-        "Ошибка"
-      );
+      return S.showAlert(`Bio до ${bioLimit} символов${isPlus() ? "" : " (Sqwid+ = 300)"}`, "Ошибка");
     }
 
     let username = null;
@@ -303,94 +316,6 @@ waitForSqwidSettings((S) => {
   });
 
   /* ============================================================
-     КАСТОМИЗАЦИЯ НИКА
-     ============================================================ */
-  document.querySelectorAll(".nick-color-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      if (!isPlus()) return S.showAlert("Только для Sqwid+", "Инфо");
-      const color = btn.dataset.color || "";
-      document.querySelectorAll(".nick-color-btn").forEach(b => b.classList.toggle("active", b === btn));
-      await update(ref(db, "users/" + currentUser.uid), { nickColor: color || null });
-      S.showToast("Цвет сохранён", "ok");
-    });
-  });
-
-  document.querySelectorAll(".nick-font-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      if (!isPlus()) return S.showAlert("Только для Sqwid+", "Инфо");
-      const font = btn.dataset.font || "normal";
-      document.querySelectorAll(".nick-font-btn").forEach(b => b.classList.toggle("active", b === btn));
-      await update(ref(db, "users/" + currentUser.uid), { nickFont: font === "normal" ? null : font });
-      S.showToast("Шрифт сохранён", "ok");
-    });
-  });
-
-  document.querySelectorAll(".nick-emoji-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      if (!isPlus()) return S.showAlert("Только для Sqwid+", "Инфо");
-      const emoji = btn.dataset.emoji || "";
-      document.querySelectorAll(".nick-emoji-btn").forEach(b => b.classList.toggle("active", b === btn));
-      await update(ref(db, "users/" + currentUser.uid), { nickEmoji: emoji || null });
-      S.showToast("Значок сохранён", "ok");
-    });
-  });
-
-  /* ============================================================
-     SQWID+ — ФОН ПРОФИЛЯ + СОЦСЕТИ
-     ============================================================ */
-  const btnUploadProfileBg = document.getElementById("btnUploadProfileBg");
-  if (btnUploadProfileBg) {
-    btnUploadProfileBg.addEventListener("click", () => {
-      document.getElementById("settingsProfileBg").click();
-    });
-  }
-
-  const settingsProfileBg = document.getElementById("settingsProfileBg");
-  if (settingsProfileBg) {
-    settingsProfileBg.addEventListener("change", async (e) => {
-      const f = e.target.files[0];
-      if (!f) return;
-      if (f.size > 1024 * 1024) return S.showAlert("Фон до 1 МБ", "Ошибка");
-      const r = new FileReader();
-      r.onload = async (ev) => {
-        try {
-          await update(ref(db, "users/" + currentUser.uid), { profileBg: ev.target.result });
-          S.showAlert("Фон обновлён", "Готово");
-        } catch (err) {
-          S.showAlert("Ошибка: " + err.message, "Ошибка");
-        }
-      };
-      r.readAsDataURL(f);
-    });
-  }
-
-  const btnSavePlus = document.getElementById("settingsSavePlus");
-  if (btnSavePlus) {
-    btnSavePlus.addEventListener("click", async () => {
-      const rawTg = (document.getElementById("settingsSocialTelegram").value || "").trim();
-      const rawIg = (document.getElementById("settingsSocialInstagram").value || "").trim();
-      const rawYt = (document.getElementById("settingsSocialYoutube").value || "").trim();
-
-      const telegram = sanitizeUrl(rawTg);
-      const instagram = sanitizeUrl(rawIg);
-      const youtube = sanitizeUrl(rawYt);
-
-      if (rawTg && !telegram) return S.showAlert("Telegram: ссылка должна начинаться с http:// или https://", "Ошибка");
-      if (rawIg && !instagram) return S.showAlert("Instagram: ссылка должна начинаться с http:// или https://", "Ошибка");
-      if (rawYt && !youtube) return S.showAlert("YouTube: ссылка должна начинаться с http:// или https://", "Ошибка");
-
-      try {
-        await update(ref(db, "users/" + currentUser.uid), {
-          socialLinks: { telegram, instagram, youtube }
-        });
-        S.showAlert("Сохранено", "Готово");
-      } catch (e) {
-        S.showAlert("Ошибка: " + e.message, "Ошибка");
-      }
-    });
-  }
-
-  /* ============================================================
      ПРИВАТНОСТЬ
      ============================================================ */
   bindToggle("settingsHideEmail", "hideEmail");
@@ -416,26 +341,26 @@ waitForSqwidSettings((S) => {
   async function changePin() {
     const currentPin = myData.pin;
     if (currentPin) {
-      const oldPin = await askPrompt("Введите текущий PIN", "PIN");
+      const oldPin = await S.showPrompt("Введите текущий PIN", "PIN", "");
       if (oldPin === null) return;
       if (String(oldPin) !== String(currentPin)) return S.showAlert("Неверный текущий PIN", "Ошибка");
 
-      const newPin = await askPrompt("Введите новый PIN (4 цифры)", "PIN");
+      const newPin = await S.showPrompt("Введите новый PIN (4 цифры)", "PIN", "");
       if (newPin === null) return;
       if (!/^\d{4}$/.test(newPin)) return S.showAlert("PIN — 4 цифры", "Ошибка");
 
-      const newPin2 = await askPrompt("Повторите PIN", "PIN");
+      const newPin2 = await S.showPrompt("Повторите PIN", "PIN", "");
       if (newPin2 === null) return;
       if (newPin !== newPin2) return S.showAlert("PIN не совпадает", "Ошибка");
 
       await update(ref(db, "users/" + currentUser.uid), { pin: newPin });
       S.showAlert("PIN изменён", "Готово");
     } else {
-      const newPin = await askPrompt("Введите новый PIN (4 цифры)", "PIN");
+      const newPin = await S.showPrompt("Введите новый PIN (4 цифры)", "PIN", "");
       if (newPin === null) return;
       if (!/^\d{4}$/.test(newPin)) return S.showAlert("PIN — 4 цифры", "Ошибка");
 
-      const newPin2 = await askPrompt("Повторите PIN", "PIN");
+      const newPin2 = await S.showPrompt("Повторите PIN", "PIN", "");
       if (newPin2 === null) return;
       if (newPin !== newPin2) return S.showAlert("PIN не совпадает", "Ошибка");
 
@@ -446,7 +371,7 @@ waitForSqwidSettings((S) => {
 
   async function removePin() {
     if (!myData.pin) return S.showAlert("PIN не установлен", "Ошибка");
-    const oldPin = await askPrompt("Введите PIN", "PIN");
+    const oldPin = await S.showPrompt("Введите PIN", "PIN", "");
     if (oldPin === null) return;
     if (String(oldPin) !== String(myData.pin)) return S.showAlert("Неверный PIN", "Ошибка");
     const ok = await S.showConfirm("Отключить PIN-код?", "PIN");
@@ -460,7 +385,7 @@ waitForSqwidSettings((S) => {
      ============================================================ */
   const btnEmail = document.getElementById("settingsChangeEmail");
   if (btnEmail) btnEmail.addEventListener("click", async () => {
-    const newEmail = await askPrompt("Новый email", "Email");
+    const newEmail = await S.showPrompt("Новый email", "Email", "");
     if (!newEmail) return;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) return S.showAlert("Неверный формат email", "Ошибка");
     try {
@@ -503,13 +428,6 @@ waitForSqwidSettings((S) => {
     if (S.signOut) await S.signOut(S.auth);
     window.location.href = "index.html";
   });
-
-  /* ============================================================
-     ПРОМПТ
-     ============================================================ */
-  function askPrompt(text, placeholder) {
-    return S.showPrompt(text, placeholder, "");
-  }
 
   /* ============================================================
      ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКОВ
@@ -658,7 +576,7 @@ waitForSqwidSettings((S) => {
   }
 
   /* ============================================================
-     SQWID+ (подэкран)
+     SQWID+
      ============================================================ */
   function updatePlusInfo() {
     const el = document.getElementById("settingsPlusStatus");
@@ -792,7 +710,6 @@ waitForSqwidSettings((S) => {
     }
   }
 
-  /* ---------- Очистка ---------- */
   const btnClearCache = document.getElementById("btnClearCache");
   if (btnClearCache) {
     btnClearCache.addEventListener("click", async () => {
@@ -803,31 +720,12 @@ waitForSqwidSettings((S) => {
           const keys = await caches.keys();
           await Promise.all(keys.map(k => caches.delete(k)));
         }
-        const keep = ["sqwid_theme", "sqwid_lang"];
+        const keep = ["sqwid_theme", "sqwid_lang", "sqwid_zoom"];
         const saved = {};
         keep.forEach(k => { saved[k] = localStorage.getItem(k); });
         localStorage.clear();
         keep.forEach(k => { if (saved[k] !== null) localStorage.setItem(k, saved[k]); });
         S.showToast("Кэш очищен", "ok");
-        setTimeout(updateStorageInfo, 300);
-      } catch (e) {
-        S.showToast("Ошибка: " + e.message, "error");
-      }
-    });
-  }
-
-  const btnClearMedia = document.getElementById("btnClearMedia");
-  if (btnClearMedia) {
-    btnClearMedia.addEventListener("click", async () => {
-      const ok = await S.showConfirm("Очистить кэш фото?", "Очистка медиа");
-      if (!ok) return;
-      try {
-        if (window.caches) {
-          const keys = await caches.keys();
-          const mediaKeys = keys.filter(k => k.includes("media") || k.includes("image"));
-          await Promise.all(mediaKeys.map(k => caches.delete(k)));
-        }
-        S.showToast("Кэш фото очищен", "ok");
         setTimeout(updateStorageInfo, 300);
       } catch (e) {
         S.showToast("Ошибка: " + e.message, "error");
@@ -868,43 +766,7 @@ waitForSqwidSettings((S) => {
   }
 
   /* ============================================================
-     СКВИДИКИ — кнопки внутри подэкрана
-     ============================================================ */
-  const coinsOpenShop = document.getElementById("coinsOpenShop");
-  if (coinsOpenShop) {
-    coinsOpenShop.addEventListener("click", () => {
-      if (window.Sqwid.openShop) window.Sqwid.openShop();
-    });
-  }
-  const coinsOpenGames = document.getElementById("coinsOpenGames");
-  if (coinsOpenGames) {
-    coinsOpenGames.addEventListener("click", () => {
-      if (window.Sqwid.openGames) window.Sqwid.openGames();
-    });
-  }
-
-  /* ============================================================
-     РАЗВЛЕЧЕНИЯ — кнопки внутри подэкрана
-     ============================================================ */
-  const funOpenShop = document.getElementById("funOpenShop");
-  if (funOpenShop) funOpenShop.addEventListener("click", () => {
-    if (window.Sqwid.openShop) window.Sqwid.openShop();
-  });
-  const funOpenPremium = document.getElementById("funOpenPremium");
-  if (funOpenPremium) funOpenPremium.addEventListener("click", () => {
-    if (window.Sqwid.openTopUp) window.Sqwid.openTopUp();
-  });
-  const funOpenGames = document.getElementById("funOpenGames");
-  if (funOpenGames) funOpenGames.addEventListener("click", () => {
-    if (window.Sqwid.openGames) window.Sqwid.openGames();
-  });
-  const funOpenQr = document.getElementById("funOpenQr");
-  if (funOpenQr) funOpenQr.addEventListener("click", () => {
-    if (window.Sqwid.openQr) window.Sqwid.openQr();
-  });
-
-  /* ============================================================
-     НАВИГАЦИЯ ПО РАЗДЕЛАМ (делегирование — работает всегда)
+     НАВИГАЦИЯ ПО РАЗДЕЛАМ (делегирование)
      ============================================================ */
   document.addEventListener("click", (e) => {
     const item = e.target.closest(".settings-item[data-open]");
@@ -932,16 +794,13 @@ waitForSqwidSettings((S) => {
     }
   });
 
-  /* ============================================================
-     ОБНОВИТЬ ПОДПИСИ ПРИ СТАРТЕ
-     ============================================================ */
+  /* Обновляем при старте */
   updateAccountSub();
   updateLangSub();
   updatePlusSub();
   updateSecuritySub();
   updateCoinsInfo();
 
-  /* Периодически обновляем подписи на случай изменений */
   setInterval(() => {
     if (document.getElementById("screen-settings")?.classList.contains("active")) {
       updateAccountSub();
