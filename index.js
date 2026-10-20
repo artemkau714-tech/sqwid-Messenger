@@ -81,6 +81,7 @@ const btnContinue = document.getElementById("btnContinue");
 const regStatus = document.getElementById("regStatus");
 const btnTogglePass = document.getElementById("btnTogglePass");
 const btnBackToLogin = document.getElementById("btnBackToLogin");
+const regAgreeCheckbox = document.getElementById("regAgreeCheckbox");
 
 let regAvatarBase64 = null;
 
@@ -198,6 +199,13 @@ async function register() {
   const email = regEmail.value.trim();
   const password = regPassword.value;
   const name = regName.value.trim();
+
+  // ПРОВЕРКА ЧЕКБОКСА СОГЛАШЕНИЯ
+  if (regAgreeCheckbox && !regAgreeCheckbox.checked) {
+    regStatus.textContent = "Необходимо принять соглашение";
+    showToast("Пожалуйста, примите пользовательское соглашение", "warn");
+    return;
+  }
 
   if (!email) { regStatus.textContent = "Введите email"; return; }
   if (!password || password.length < 6) { regStatus.textContent = "Пароль минимум 6 символов"; return; }

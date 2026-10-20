@@ -30,9 +30,6 @@ waitForSqwidNN((S) => {
   let viewingUserName = "Пользователь";
   let unsubUser = null;
 
-  /* ============================================================
-     ПРЕСЕТЫ И ИКОНКИ
-     ============================================================ */
   const BG_PRESETS = {
     sunset: "linear-gradient(135deg, #f97316, #ec4899)",
     ocean:  "linear-gradient(135deg, #06b6d4, #3b82f6)",
@@ -58,9 +55,6 @@ waitForSqwidNN((S) => {
     return `<span class="verified-tappable" data-verified-open="1" style="margin-left:4px;"><svg width="${size}" height="${size}"><use href="#ico-verified"/></svg></span>`;
   }
 
-  /* ============================================================
-     ОТКРЫТИЕ ЧУЖОГО ПРОФИЛЯ
-     ============================================================ */
   async function openOtherProfile(uid) {
     if (!uid) return;
     if (uid === currentUser.uid) { showScreen("screen-profile"); return; }
@@ -85,14 +79,10 @@ waitForSqwidNN((S) => {
 
   if (window.Sqwid) window.Sqwid.openOtherProfile = openOtherProfile;
 
-  /* ============================================================
-     СТАТУС, РАМКИ, ЗНАЧКИ, ФОН
-     ============================================================ */
   function applyProfileStatus(u, uid) {
     const banned = u.banned === true;
     const frozen = u.frozen === true;
 
-    /* ---- Аватарка и Рамка ---- */
     const avaEl = document.getElementById("upAva");
     if (avaEl) {
       if (banned) {
@@ -118,7 +108,6 @@ waitForSqwidNN((S) => {
       }
     }
 
-    /* ---- Имя и Значки ---- */
     const nameEl = document.getElementById("upName");
     if (nameEl) {
       let nameHTML = escH(u.name || u.email || "Пользователь");
@@ -147,14 +136,12 @@ waitForSqwidNN((S) => {
       else if (frozen) nameEl.classList.add("frozen-name");
     }
 
-    /* ---- Статус "был(а) недавно" ---- */
     const statusText = document.getElementById("upStatusText");
     if (statusText && window.Sqwid && window.Sqwid.getLastSeenText) {
        const t = window.Sqwid.getLastSeenText(uid);
        statusText.textContent = t || "был(а) недавно";
     }
 
-    /* ---- Bio ---- */
     const bioRow = document.getElementById("upBioRow");
     const bioEl = document.getElementById("upBio");
     if (bioRow && bioEl) {
@@ -166,11 +153,9 @@ waitForSqwidNN((S) => {
       }
     }
 
-    /* ---- Username ---- */
     const unEl = document.getElementById("upUsername");
     if (unEl) unEl.textContent = u.username ? "@" + u.username : "@username";
 
-    /* ---- ФОН ПРОФИЛЯ ---- */
     const scroll = document.querySelector("#screen-user-profile .profile-scroll");
     if (scroll) {
       const equippedBg = u.shopEquipped && u.shopEquipped.bg;
@@ -191,9 +176,6 @@ waitForSqwidNN((S) => {
     }
   }
 
-  /* ============================================================
-     ПОДПИСКА НА ЮЗЕРА (В РЕАЛЬНОМ ВРЕМЕНИ)
-     ============================================================ */
   function subscribeUser(uid) {
     if (unsubUser) unsubUser();
     unsubUser = onValue(ref(db, "users/" + uid), (snap) => {
@@ -205,9 +187,6 @@ waitForSqwidNN((S) => {
     });
   }
 
-  /* ============================================================
-     ОТКРЫТИЕ ЧАТА И ЗВОНКИ
-     ============================================================ */
   async function openPrivateChatWith(uid, displayName) {
     if (!uid || uid === currentUser.uid) return;
     const snap = await get(ref(db, "chats"));
@@ -242,12 +221,9 @@ waitForSqwidNN((S) => {
 
   async function startCallFromProfile(type) {
     if (!viewingUid) return;
-    
-    // Ищем существующий личный чат
     const snap = await get(ref(db, "chats"));
     const chats = snap.val() || {};
     let existingChatId = null;
-    
     for (const chatId in chats) {
       const c = chats[chatId];
       if (c.type !== "private") continue;
@@ -258,7 +234,6 @@ waitForSqwidNN((S) => {
       }
     }
 
-    // Если чата нет — создаём
     if (!existingChatId) {
       const newRef = push(ref(db, "chats"));
       await set(newRef, {
@@ -272,12 +247,10 @@ waitForSqwidNN((S) => {
       existingChatId = newRef.key;
     }
 
-    // Открываем чат (чтобы calls.js знал, кому звонить)
     if (window.Sqwid && window.Sqwid.openChat) {
       await window.Sqwid.openChat(existingChatId);
     }
 
-    // Ждём секунду, чтобы чат успел загрузиться, и звоним
     setTimeout(() => {
       if (type === "audio" && window.Sqwid && window.Sqwid.startCall) {
         window.Sqwid.startCall("audio");
@@ -289,9 +262,6 @@ waitForSqwidNN((S) => {
     }, 500);
   }
 
-  /* ============================================================
-     КНОПКИ
-     ============================================================ */
   const btnBack = document.getElementById("btnBackUserProfile");
   if (btnBack) {
     btnBack.addEventListener("click", () => {
@@ -327,13 +297,6 @@ waitForSqwidNN((S) => {
   const btnUpVideo = document.getElementById("btnUpVideo");
   if (btnUpVideo) {
     btnUpVideo.addEventListener("click", () => startCallFromProfile("video"));
-  }
-
-  const btnWrite = document.getElementById("btnUpWrite");
-  if (btnWrite) {
-    btnWrite.onclick = () => {
-      if (viewingUid) openPrivateChatWith(viewingUid, viewingUserName);
-    };
   }
 
   const btnReport = document.getElementById("btnUpReport");

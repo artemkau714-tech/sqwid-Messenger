@@ -231,6 +231,23 @@
       <button class="reply-bar-close" id="btnCancelReply" aria-label="Отменить"><svg width="16" height="16"><use href="#ico-close"/></svg></button>
     </div>
     <div id="messages" class="messages" data-bg="diamonds"></div>
+
+    <!-- ПАНЕЛЬ ЭМОДЗИ -->
+    <div id="emojiPanel" class="emoji-panel">
+      <div class="emoji-tabs">
+  <button class="emoji-tab active" data-tab="smiles">😊</button>
+  <button class="emoji-tab" data-tab="people">🧑</button>
+  <button class="emoji-tab" data-tab="animals">🐶</button>
+  <button class="emoji-tab" data-tab="food">🍔</button>
+  <button class="emoji-tab" data-tab="travel">🚗</button>
+  <button class="emoji-tab" data-tab="activities">⚽</button>
+  <button class="emoji-tab" data-tab="objects">💡</button>
+  <button class="emoji-tab" data-tab="symbols">💖</button>
+</div>
+      <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+    <!-- КОНЕЦ ПАНЕЛИ ЭМОДЗИ -->
+
     <div id="photoPreview" class="photo-preview">
       <img id="photoPreviewImg" alt="">
       <div class="photo-preview-input">
@@ -244,6 +261,16 @@
       <button class="chat-deleted-btn" id="btnDeleteChatFromBanner">Удалить чат</button>
     </div>
     <div class="input-area" id="inputArea">
+      <!-- Кнопка смайлика -->
+      <button class="emoji-toggle-btn" id="btnEmoji" aria-label="Смайлики">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+          <line x1="9" y1="9" x2="9.01" y2="9"/>
+          <line x1="15" y1="9" x2="15.01" y2="9"/>
+        </svg>
+      </button>
+
       <button class="attach-btn" id="btnAttach" aria-label="Прикрепить"><svg width="22" height="22"><use href="#ico-clip"/></svg></button>
       <input id="msgInput" placeholder="Сообщение..." data-i18n-placeholder="chat.input.placeholder">
       <button class="msg-cancel-edit" id="btnCancelEdit" style="display:none;" aria-label="Отменить"><svg width="16" height="16"><use href="#ico-close"/></svg></button>
@@ -310,9 +337,8 @@
         </div>
       </div>
 
-      <!-- Кнопки Написать / Пожаловаться -->
+      <!-- Кнопки Пожаловаться -->
       <div style="padding: 0 1rem; display:flex; flex-direction:column; gap:0.5rem; margin-top: 0.5rem;">
-         <button class="btn-create" id="btnUpWrite" style="width:100%; border-radius: 1rem;">Написать сообщение</button>
          <button class="btn-secondary" id="btnUpReport" style="width:100%; border-radius: 1rem;">Пожаловаться</button>
       </div>
 
@@ -715,53 +741,20 @@
     </div>
   </div>
 
-  <!-- ============ ПОДЭКРАН: РАЗВЛЕЧЕНИЯ ============ -->
+  <!-- ============ ПОДЭКРАН: РАЗВЛЕЧЕНИЯ (ТОЛЬКО РАБОЧИЕ) ============ -->
   <div id="screen-settings-fun" class="screen">
     <header class="top-bar">
       <button class="top-new-btn settings-back-btn"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
       <div class="top-title" style="flex:1;">Развлечения</div>
     </header>
     <div class="settings-body">
-
       <div class="settings-section">
-        <div class="settings-section-title">Магазин</div>
-        <div class="settings-card">
-          <button class="btn-create" id="funOpenShop" style="width:100%;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <path d="M16 10a4 4 0 0 1-8 0"/>
-            </svg>
-            Магазин Sqwid
-          </button>
-          <button class="btn-create" id="funOpenPremium" style="width:100%;margin-top:0.5rem;background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px;">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </svg>
-            Купить Premium
-          </button>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">Игры</div>
         <div class="settings-card">
           <button class="btn-create" id="funOpenGames" style="width:100%;">
             🎮 Sqwid Games
           </button>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">Поделиться</div>
-        <div class="settings-card">
-          <button class="btn-create" id="funOpenQr" style="width:100%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;">
-              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/>
-              <path d="M14 14h3v3h-3z"/><path d="M18 18h3v3h-3z"/>
-            </svg>
-            Мой QR-код
+          <button class="btn-create" id="funOpenShop" style="width:100%;margin-top:0.5rem;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;">
+            🛒 Магазин Sqwid
           </button>
         </div>
       </div>
@@ -2042,5 +2035,7 @@
   <script type="module" src="group-calls.js"></script>
   <script type="module" src="shop-plus.js"></script>
   <script type="module" src="swipe-back.js"></script>
+  <!-- ПОДКЛЮЧАЕМ ПАНЕЛЬ ЭМОДЗИ -->
+  <script type="module" src="emoji.js"></script>
 </body>
 </html>
