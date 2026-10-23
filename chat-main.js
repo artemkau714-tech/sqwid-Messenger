@@ -1281,6 +1281,13 @@ if (editMsgBtn) editMsgBtn.addEventListener("click", () => {
   const canEdit = msg.sender === currentUser.uid || (isChannel && isAdmin);
 
   if (!canEdit) { showToast("Нет прав на редактирование", "error"); return; }
+  if (msg.type === "video_circle" && msg.video) {
+  contentHTML += `
+    <div class="msg-video-circle" onclick="this.querySelector('video').play()">
+      <video src="${msg.video}" playsinline loop></video>
+    </div>
+  `;
+  }
   if (msg.type === "photo") { showToast("Фото не редактируется", "error"); return; }
   if (msg.type === "voice") { showToast("Голосовое не редактируется", "error"); return; }
 

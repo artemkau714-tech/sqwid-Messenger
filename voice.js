@@ -1,8 +1,8 @@
 /* ============================================================
-   voice.js — голосовые сообщения (запись + плеер)
+   voice.js — Голосовые + Видео-кружки + Умная кнопка
    ============================================================ */
 
-console.log("🚀 voice.js загружен, жду Sqwid...");
+console.log("🚀 voice.js загружен (Аудио + Видео)");
 
 function waitForSqwidVoice(cb) {
   let tries = 0;
@@ -24,12 +24,21 @@ waitForSqwidVoice((S) => {
 
   console.log("🔥 voice.js активирован");
 
-  const MAX_DURATION = 120;      // 2 минуты
-  const MAX_SIZE = 500 * 1024;   // 500 КБ
+  // Лимиты
+  const MAX_AUDIO_DURATION = 120; // 2 минуты
+  const MAX_AUDIO_SIZE = 500 * 1024; // 500 КБ
+  const MAX_VIDEO_DURATION = 15; // 15 секунд (чтобы влезть в лимит Firebase)
+  const MAX_VIDEO_SIZE = 500 * 1024; // 500 КБ после сжатия
+
+  // Состояние
+  let isVideoMode = false;
+  let isHolding = false;
+  let holdTimer = null;
+  let isCurrentlyRecording = false;
 
   let mediaRecorder = null;
-  let audioChunks = [];
   let audioStream = null;
+  let audioChunks = [];
   let recordStartTime = 0;
   let recordTimerInterval = null;
   let recordingCancelled = false;
@@ -40,16 +49,17 @@ waitForSqwidVoice((S) => {
   function ensureRecordOverlay() {
     let el = document.getElementById("recordOverlay");
     if (el) return el;
+    
     el = document.createElement("div");
     el.id = "recordOverlay";
     el.className = "record-overlay";
     el.innerHTML = `
-      <div style="width:5rem;height:5rem;border-radius:50%;background:rgba(239,68,68,0.2);display:flex;align-items:center;justify-content:center;">
+      <div id="overlayPreview" style="display:none; width:200px; height:200px; border-radius:50%; overflow:hidden; border:4px solid #ef4444; margin-bottom:20px;">
+        <video id="videoPreview" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+      </div>
+      <div id="overlayMicIcon" style="width:5rem;height:5rem;border-radius:50%;background:rgba(239,68,68,0.2);display:flex;align-items:center;justify-content:center;">
         <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="9" y="2" width="6" height="12" rx="3"/>
-          <path d="M5 10a7 7 0 0 0 14 0"/>
-          <line x1="12" y1="19" x2="12" y2="22"/>
-          <line x1="8" y1="22" x2="16" y2="22"/>
+          <rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>
         </svg>
       </div>
       <div class="record-timer" id="recordTimer">0:00</div>
@@ -60,17 +70,11 @@ waitForSqwidVoice((S) => {
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
-        <button class="record-action-btn record-send" id="btnRecordSend" aria-label="Отправить">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-          </svg>
-        </button>
       </div>
     `;
     document.body.appendChild(el);
 
     document.getElementById("btnRecordCancel").onclick = cancelRecording;
-    document.getElementById("btnRecordSend").onclick = stopRecordingAndSend;
     return el;
   }
 
@@ -78,6 +82,8 @@ waitForSqwidVoice((S) => {
     const el = ensureRecordOverlay();
     el.classList.add("active");
     document.getElementById("recordTimer").textContent = "0:00";
+    document.getElementById("overlayPreview").style.display = isVideoMode ? "block" : "none";
+    document.getElementById("overlayMicIcon").style.display = isVideoMode ? "none" : "flex";
   }
 
   function hideRecordOverlay() {
@@ -109,27 +115,31 @@ waitForSqwidVoice((S) => {
     const chatId = S.getChatId && S.getChatId();
     if (!chatId) return;
 
-    if (!navigator.mediaDevices || !window.MediaRecorder) {
-      S.showToast("Запись не поддерживается браузером", "error");
+    try {
+      const constraints = {
+        audio: true,
+        video: isVideoMode ? { width: 480, height: 480, facingMode: "user" } : false
+      };
+      audioStream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (e) {
+      S.showToast("Нет доступа к " + (isVideoMode ? "камере" : "микрофону"), "error");
       return;
     }
 
-    try {
-      audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (e) {
-      S.showToast("Нет доступа к микрофону", "error");
-      return;
+    if (isVideoMode) {
+      const videoPreview = document.getElementById("videoPreview");
+      if (videoPreview) videoPreview.srcObject = audioStream;
     }
 
     let mime = "";
-    if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) mime = "audio/webm;codecs=opus";
-    else if (MediaRecorder.isTypeSupported("audio/webm")) mime = "audio/webm";
-    else if (MediaRecorder.isTypeSupported("audio/mp4")) mime = "audio/mp4";
+    if (isVideoMode) {
+      mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus") ? "video/webm;codecs=vp8,opus" : "video/webm";
+    } else {
+      mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
+    }
 
     try {
-      mediaRecorder = mime
-        ? new MediaRecorder(audioStream, { mimeType: mime })
-        : new MediaRecorder(audioStream);
+      mediaRecorder = mime ? new MediaRecorder(audioStream, { mimeType: mime }) : new MediaRecorder(audioStream);
     } catch (e) {
       S.showToast("Ошибка инициализации записи", "error");
       stopStream();
@@ -154,30 +164,34 @@ waitForSqwidVoice((S) => {
         return;
       }
 
-      const blob = new Blob(audioChunks, { type: mediaRecorder?.mimeType || "audio/webm" });
+      const blob = new Blob(audioChunks, { type: mediaRecorder?.mimeType || "video/webm" });
       audioChunks = [];
 
-      if (blob.size > MAX_SIZE) {
-        S.showToast("Голосовое слишком большое (макс 500 КБ)", "error", 3000);
-        hideRecordOverlay();
-        return;
+      if (isVideoMode) {
+        if (blob.size > 5 * 1024 * 1024) {
+          S.showToast("Видео слишком большое", "error");
+          hideRecordOverlay();
+          return;
+        }
+        S.showToast("Обрабатываем видео...", "info");
+        await sendVideoMessage(blob, duration);
+      } else {
+        if (blob.size > MAX_AUDIO_SIZE) {
+          S.showToast("Голосовое слишком большое (макс 500 КБ)", "error", 3000);
+          hideRecordOverlay();
+          return;
+        }
+        if (duration < 1) {
+          S.showToast("Слишком коротко", "warn");
+          hideRecordOverlay();
+          return;
+        }
+        await sendVoiceMessage(blob, duration);
       }
-
-      if (duration < 1) {
-        S.showToast("Слишком коротко", "warn");
-        hideRecordOverlay();
-        return;
-      }
-
-      await sendVoiceMessage(blob, duration);
       hideRecordOverlay();
     };
 
     mediaRecorder.start();
-
-    const btn = document.getElementById("btnRecord");
-    if (btn) btn.classList.add("recording");
-
     showRecordOverlay();
 
     recordTimerInterval = setInterval(() => {
@@ -185,8 +199,9 @@ waitForSqwidVoice((S) => {
       const timerEl = document.getElementById("recordTimer");
       if (timerEl) timerEl.textContent = fmtDur(sec);
 
-      if (sec >= MAX_DURATION) {
-        S.showToast("Максимум " + MAX_DURATION + " сек", "warn");
+      const limit = isVideoMode ? MAX_VIDEO_DURATION : MAX_AUDIO_DURATION;
+      if (sec >= limit) {
+        S.showToast("Максимум " + limit + " сек", "warn");
         stopRecordingAndSend();
       }
     }, 250);
@@ -213,8 +228,6 @@ waitForSqwidVoice((S) => {
     mediaRecorder = null;
     stopTimer();
     stopStream();
-    const btn = document.getElementById("btnRecord");
-    if (btn) btn.classList.remove("recording");
     hideRecordOverlay();
   }
 
@@ -223,8 +236,6 @@ waitForSqwidVoice((S) => {
     try { mediaRecorder.stop(); } catch (e) {}
     mediaRecorder = null;
     stopTimer();
-    const btn = document.getElementById("btnRecord");
-    if (btn) btn.classList.remove("recording");
   }
 
   /* ============================================================
@@ -251,7 +262,7 @@ waitForSqwidVoice((S) => {
       return;
     }
 
-    if (dataUrl.length > MAX_SIZE * 1.5) {
+    if (dataUrl.length > MAX_AUDIO_SIZE * 1.5) {
       S.showToast("Голосовое слишком большое", "error");
       return;
     }
@@ -275,23 +286,111 @@ waitForSqwidVoice((S) => {
     S.showToast("Голосовое отправлено", "ok");
   }
 
+  async function sendVideoMessage(blob, duration) {
+    const chatId = S.getChatId && S.getChatId();
+    if (!chatId) return;
+
+    let dataUrl;
+    try {
+      dataUrl = await blobToDataURL(blob);
+    } catch (e) {
+      S.showToast("Ошибка кодирования видео", "error");
+      return;
+    }
+
+    if (dataUrl.length > 650 * 1024) {
+      S.showToast("Видео всё еще слишком большое (лимит 500 КБ)", "error");
+      return;
+    }
+
+    const newRef = push(ref(db, "messages/" + chatId));
+    await set(newRef, {
+      sender: currentUser.uid,
+      type: "video_circle", 
+      video: dataUrl,
+      duration: duration,
+      timestamp: Date.now()
+    });
+
+    await update(ref(db, "chats/" + chatId), {
+      lastMsg: "🎥 Видео-кружок",
+      lastMsgAt: Date.now(),
+      lastMsgSender: currentUser.uid
+    });
+
+    S.showToast("Кружок отправлен!", "ok");
+  }
+
   /* ============================================================
-     ПРИВЯЗКА КНОПКИ
+     УМНАЯ КНОПКА (Клик - смена режима, Зажатие - запись)
      ============================================================ */
+  function updateRecordIcon() {
+    const btn = document.getElementById("btnRecord");
+    if (!btn) return;
+    if (isCurrentlyRecording) return;
+
+    if (isVideoMode) {
+      btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`;
+    } else {
+      btn.innerHTML = `<svg width="22" height="22"><use href="#ico-mic"/></svg>`;
+    }
+  }
+
   function bindRecordBtn() {
     const btn = document.getElementById("btnRecord");
-    if (!btn || btn.dataset.bound) return;
-    btn.dataset.bound = "1";
-    btn.addEventListener("click", startRecording);
+    if (!btn || btn.dataset.toggleBound) return;
+    btn.dataset.toggleBound = "1";
+
+    // Клонируем кнопку, чтобы сбросить старые обработчики
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+
+    newBtn.addEventListener("click", (e) => {
+      if (isHolding || isCurrentlyRecording) return;
+      isVideoMode = !isVideoMode;
+      updateRecordIcon();
+      S.showToast(isVideoMode ? "Режим: Кружок" : "Режим: Голосовое", "info", 1000);
+    });
+
+    const startPress = (e) => {
+      if (e.type === "mousedown" && e.button !== 0) return;
+      isHolding = true;
+      holdTimer = setTimeout(() => {
+        if (!isHolding) return;
+        isCurrentlyRecording = true;
+        startRecording();
+      }, 200);
+    };
+
+    const endPress = () => {
+      clearTimeout(holdTimer);
+      if (!isHolding) return;
+      isHolding = false;
+
+      if (isCurrentlyRecording) {
+        isCurrentlyRecording = false;
+        setTimeout(() => {
+          stopRecordingAndSend();
+        }, 300);
+      }
+    };
+
+    newBtn.addEventListener("mousedown", startPress);
+    newBtn.addEventListener("touchstart", startPress, { passive: true });
+    newBtn.addEventListener("mouseup", endPress);
+    newBtn.addEventListener("mouseleave", () => { if (isHolding) endPress(); });
+    newBtn.addEventListener("touchend", endPress);
+    newBtn.addEventListener("touchcancel", () => { isHolding = false; });
   }
-  bindRecordBtn();
+
+  // Следим за появлением кнопки
   setInterval(() => {
-    const btn = document.getElementById("btnRecord");
-    if (btn && !btn.dataset.bound) bindRecordBtn();
+    bindRecordBtn();
+    updateRecordIcon();
   }, 800);
 
   /* ============================================================
-     РЕНДЕР ГОЛОСОВОГО СООБЩЕНИЯ
+     РЕНДЕР ГОЛОСОВОГО СООБЩЕНИЯ (плеер)
      ============================================================ */
   function renderVoiceContent(msg) {
     const dur = msg.duration || 0;
@@ -314,7 +413,7 @@ waitForSqwidVoice((S) => {
   window.Sqwid.renderVoiceContent = renderVoiceContent;
 
   /* ============================================================
-     ПЛЕЕР (делегирование кликов)
+     ПЛЕЕР АУДИО
      ============================================================ */
   let currentAudio = null;
   let currentBtn = null;
@@ -329,13 +428,11 @@ waitForSqwidVoice((S) => {
       const voiceId = btn.dataset.play;
       if (!voiceId) return;
 
-      // Если играет этот же — пауза
       if (currentAudio && currentVoiceId === voiceId && !currentAudio.paused) {
         currentAudio.pause();
         setPlayIcon(btn, false);
         return;
       }
-      // Если играет другой — стоп
       if (currentAudio) {
         currentAudio.pause();
         if (currentBtn) setPlayIcon(currentBtn, false);
@@ -348,11 +445,9 @@ waitForSqwidVoice((S) => {
       const chatId = S.getChatId && S.getChatId();
       if (!chatId) return;
 
-      // Найдём msg в DOM по data-voice-id
       const msgId = msgWrap.dataset.voiceId;
       if (!msgId) return;
 
-      // Берём голосовое из Firebase
       let voiceData = null;
       try {
         const snap = await get(ref(db, `messages/${chatId}/${msgId}/voice`));
@@ -392,7 +487,6 @@ waitForSqwidVoice((S) => {
       return;
     }
 
-    // Клик по волне — перемотка
     const wave = e.target.closest(".voice-wave");
     if (wave && currentAudio) {
       const rect = wave.getBoundingClientRect();
@@ -438,5 +532,5 @@ waitForSqwidVoice((S) => {
     tick();
   }
 
-  console.log("✅ voice.js готов");
+  console.log("✅ voice.js (Аудио + Видео) готов");
 });
