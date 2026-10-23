@@ -1,8 +1,8 @@
 /* ============================================================
-   voice.js — Голосовые + Видео-кружки + Умная кнопка
+   voice.js — Голосовые + Видео-кружки (со СЖАТИЕМ)
    ============================================================ */
 
-console.log("🚀 voice.js загружен (Аудио + Видео)");
+console.log("🚀 voice.js загружен (Аудио + Видео + Сжатие)");
 
 function waitForSqwidVoice(cb) {
   let tries = 0;
@@ -19,18 +19,15 @@ function waitForSqwidVoice(cb) {
 }
 
 waitForSqwidVoice((S) => {
-  const { db, ref, push, set, update, get, currentUser, userMap } = S;
+  const { db, ref, push, set, update, get, currentUser } = S;
   if (!currentUser) return;
 
   console.log("🔥 voice.js активирован");
 
-  // Лимиты
-  const MAX_AUDIO_DURATION = 120; // 2 минуты
-  const MAX_AUDIO_SIZE = 500 * 1024; // 500 КБ
-  const MAX_VIDEO_DURATION = 15; // 15 секунд (чтобы влезть в лимит Firebase)
-  const MAX_VIDEO_SIZE = 500 * 1024; // 500 КБ после сжатия
+  const MAX_AUDIO_DURATION = 120;
+  const MAX_AUDIO_SIZE = 500 * 1024;
+  const MAX_VIDEO_DURATION = 15;
 
-  // Состояние
   let isVideoMode = false;
   let isHolding = false;
   let holdTimer = null;
@@ -63,7 +60,7 @@ waitForSqwidVoice((S) => {
         </svg>
       </div>
       <div class="record-timer" id="recordTimer">0:00</div>
-      <div class="record-hint">Запись... нажмите ✕ чтобы отменить</div>
+      <div class="record-hint">Запись...</div>
       <div class="record-actions">
         <button class="record-action-btn record-cancel" id="btnRecordCancel" aria-label="Отменить">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
@@ -98,6 +95,58 @@ waitForSqwidVoice((S) => {
   }
 
   /* ============================================================
+     ФУНКЦИЯ СЖАТИЯ ВИДЕО (Canvas)
+     ============================================================ */
+  async function compressVideo(blob) {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement("video");
+      video.src = URL.createObjectURL(blob);
+      video.muted = true;
+      
+      video.onloadedmetadata = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        // Уменьшаем разрешение до 240x240 (для кружка идеально)
+        canvas.width = 240;
+        canvas.height = 240;
+        
+        const stream = canvas.captureStream(24); // 24 fps
+        
+        // Переносим аудио из оригинального видео в новый поток
+        const audioTracks = video.captureStream().getAudioTracks();
+        if (audioTracks.length > 0) {
+          stream.addTrack(audioTracks[0]);
+        }
+        
+        const recorder = new MediaRecorder(stream, {
+          mimeType: MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus") ? "video/webm;codecs=vp8,opus" : "video/webm",
+          videoBitsPerSecond: 200000 // 200 kbps — очень легкое видео
+        });
+        
+        const chunks = [];
+        recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+        recorder.onstop = () => {
+          resolve(new Blob(chunks, { type: "video/webm" }));
+        };
+        
+        recorder.start();
+        video.play();
+        
+        function draw() {
+          if (video.paused || video.ended) {
+            recorder.stop();
+            return;
+          }
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          requestAnimationFrame(draw);
+        }
+        draw();
+      };
+      video.onerror = reject;
+    });
+  }
+
+  /* ============================================================
      ЗАПИСЬ
      ============================================================ */
   async function startRecording() {
@@ -105,10 +154,6 @@ waitForSqwidVoice((S) => {
 
     if (window._currentUserData?.muted === true) {
       S.showToast("🔇 НА ВАС МУТ!!!", "error", 2000);
-      return;
-    }
-    if (window._currentUserData?.banned === true) {
-      S.showToast("🚫 Аккаунт заблокирован", "error", 2000);
       return;
     }
 
@@ -138,13 +183,7 @@ waitForSqwidVoice((S) => {
       mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
     }
 
-    try {
-      mediaRecorder = mime ? new MediaRecorder(audioStream, { mimeType: mime }) : new MediaRecorder(audioStream);
-    } catch (e) {
-      S.showToast("Ошибка инициализации записи", "error");
-      stopStream();
-      return;
-    }
+    mediaRecorder = new MediaRecorder(audioStream, { mimeType: mime });
 
     audioChunks = [];
     recordingCancelled = false;
@@ -164,29 +203,25 @@ waitForSqwidVoice((S) => {
         return;
       }
 
-      const blob = new Blob(audioChunks, { type: mediaRecorder?.mimeType || "video/webm" });
+      const blob = new Blob(audioChunks, { type: mime });
       audioChunks = [];
 
       if (isVideoMode) {
-        if (blob.size > 5 * 1024 * 1024) {
-          S.showToast("Видео слишком большое", "error");
-          hideRecordOverlay();
-          return;
+        S.showToast("Сжимаем видео...", "info");
+        try {
+          const compressedBlob = await compressVideo(blob);
+          await sendVideoMessage(compressedBlob, duration);
+        } catch (err) {
+          S.showToast("Ошибка сжатия видео", "error");
         }
-        S.showToast("Обрабатываем видео...", "info");
-        await sendVideoMessage(blob, duration);
       } else {
         if (blob.size > MAX_AUDIO_SIZE) {
-          S.showToast("Голосовое слишком большое (макс 500 КБ)", "error", 3000);
-          hideRecordOverlay();
-          return;
-        }
-        if (duration < 1) {
+          S.showToast("Голосовое слишком большое", "error");
+        } else if (duration < 1) {
           S.showToast("Слишком коротко", "warn");
-          hideRecordOverlay();
-          return;
+        } else {
+          await sendVoiceMessage(blob, duration);
         }
-        await sendVoiceMessage(blob, duration);
       }
       hideRecordOverlay();
     };
@@ -199,9 +234,7 @@ waitForSqwidVoice((S) => {
       const timerEl = document.getElementById("recordTimer");
       if (timerEl) timerEl.textContent = fmtDur(sec);
 
-      const limit = isVideoMode ? MAX_VIDEO_DURATION : MAX_AUDIO_DURATION;
-      if (sec >= limit) {
-        S.showToast("Максимум " + limit + " сек", "warn");
+      if (sec >= (isVideoMode ? MAX_VIDEO_DURATION : MAX_AUDIO_DURATION)) {
         stopRecordingAndSend();
       }
     }, 250);
@@ -254,19 +287,7 @@ waitForSqwidVoice((S) => {
     const chatId = S.getChatId && S.getChatId();
     if (!chatId) return;
 
-    let dataUrl;
-    try {
-      dataUrl = await blobToDataURL(blob);
-    } catch (e) {
-      S.showToast("Ошибка кодирования аудио", "error");
-      return;
-    }
-
-    if (dataUrl.length > MAX_AUDIO_SIZE * 1.5) {
-      S.showToast("Голосовое слишком большое", "error");
-      return;
-    }
-
+    const dataUrl = await blobToDataURL(blob);
     const newRef = push(ref(db, "messages/" + chatId));
     await set(newRef, {
       sender: currentUser.uid,
@@ -282,7 +303,6 @@ waitForSqwidVoice((S) => {
       lastMsgAt: Date.now(),
       lastMsgSender: currentUser.uid
     });
-
     S.showToast("Голосовое отправлено", "ok");
   }
 
@@ -290,16 +310,11 @@ waitForSqwidVoice((S) => {
     const chatId = S.getChatId && S.getChatId();
     if (!chatId) return;
 
-    let dataUrl;
-    try {
-      dataUrl = await blobToDataURL(blob);
-    } catch (e) {
-      S.showToast("Ошибка кодирования видео", "error");
-      return;
-    }
+    const dataUrl = await blobToDataURL(blob);
 
+    // Проверка после сжатия
     if (dataUrl.length > 650 * 1024) {
-      S.showToast("Видео всё еще слишком большое (лимит 500 КБ)", "error");
+      S.showToast("Видео всё еще больше 500 КБ", "error");
       return;
     }
 
@@ -317,12 +332,11 @@ waitForSqwidVoice((S) => {
       lastMsgAt: Date.now(),
       lastMsgSender: currentUser.uid
     });
-
     S.showToast("Кружок отправлен!", "ok");
   }
 
   /* ============================================================
-     УМНАЯ КНОПКА (Клик - смена режима, Зажатие - запись)
+     УМНАЯ КНОПКА
      ============================================================ */
   function updateRecordIcon() {
     const btn = document.getElementById("btnRecord");
@@ -330,7 +344,7 @@ waitForSqwidVoice((S) => {
     if (isCurrentlyRecording) return;
 
     if (isVideoMode) {
-      btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`;
+      btn.innerHTML = `<svg width="22" height="22"><use href="#ico-video"/></svg>`;
     } else {
       btn.innerHTML = `<svg width="22" height="22"><use href="#ico-mic"/></svg>`;
     }
@@ -341,7 +355,6 @@ waitForSqwidVoice((S) => {
     if (!btn || btn.dataset.toggleBound) return;
     btn.dataset.toggleBound = "1";
 
-    // Клонируем кнопку, чтобы сбросить старые обработчики
     const newBtn = btn.cloneNode(true);
     btn.parentNode.replaceChild(newBtn, btn);
 
@@ -383,14 +396,13 @@ waitForSqwidVoice((S) => {
     newBtn.addEventListener("touchcancel", () => { isHolding = false; });
   }
 
-  // Следим за появлением кнопки
   setInterval(() => {
     bindRecordBtn();
     updateRecordIcon();
   }, 800);
 
   /* ============================================================
-     РЕНДЕР ГОЛОСОВОГО СООБЩЕНИЯ (плеер)
+     РЕНДЕР ГОЛОСОВОГО
      ============================================================ */
   function renderVoiceContent(msg) {
     const dur = msg.duration || 0;
@@ -412,125 +424,5 @@ waitForSqwidVoice((S) => {
   }
   window.Sqwid.renderVoiceContent = renderVoiceContent;
 
-  /* ============================================================
-     ПЛЕЕР АУДИО
-     ============================================================ */
-  let currentAudio = null;
-  let currentBtn = null;
-  let currentVoiceId = null;
-  let rafId = null;
-
-  document.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".voice-play-btn");
-    if (btn) {
-      e.preventDefault();
-      e.stopPropagation();
-      const voiceId = btn.dataset.play;
-      if (!voiceId) return;
-
-      if (currentAudio && currentVoiceId === voiceId && !currentAudio.paused) {
-        currentAudio.pause();
-        setPlayIcon(btn, false);
-        return;
-      }
-      if (currentAudio) {
-        currentAudio.pause();
-        if (currentBtn) setPlayIcon(currentBtn, false);
-        if (rafId) cancelAnimationFrame(rafId);
-      }
-
-      const msgWrap = btn.closest(".msg-voice");
-      if (!msgWrap) return;
-
-      const chatId = S.getChatId && S.getChatId();
-      if (!chatId) return;
-
-      const msgId = msgWrap.dataset.voiceId;
-      if (!msgId) return;
-
-      let voiceData = null;
-      try {
-        const snap = await get(ref(db, `messages/${chatId}/${msgId}/voice`));
-        voiceData = snap.val();
-      } catch (e) {}
-
-      if (!voiceData) {
-        S.showToast("Голосовое не найдено", "error");
-        return;
-      }
-
-      const audio = new Audio(voiceData);
-      currentAudio = audio;
-      currentBtn = btn;
-      currentVoiceId = voiceId;
-
-      audio.onended = () => {
-        setPlayIcon(btn, false);
-        resetWave(msgWrap);
-        currentAudio = null;
-        currentBtn = null;
-        currentVoiceId = null;
-        if (rafId) cancelAnimationFrame(rafId);
-      };
-      audio.onerror = () => {
-        setPlayIcon(btn, false);
-        S.showToast("Ошибка воспроизведения", "error");
-      };
-
-      try {
-        await audio.play();
-        setPlayIcon(btn, true);
-        animateWave(msgWrap, audio);
-      } catch (err) {
-        S.showToast("Не удалось воспроизвести", "error");
-      }
-      return;
-    }
-
-    const wave = e.target.closest(".voice-wave");
-    if (wave && currentAudio) {
-      const rect = wave.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const ratio = Math.max(0, Math.min(1, x / rect.width));
-      if (currentAudio.duration) {
-        currentAudio.currentTime = currentAudio.duration * ratio;
-      }
-    }
-  });
-
-  function setPlayIcon(btn, playing) {
-    if (!btn) return;
-    if (playing) {
-      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
-    } else {
-      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"/></svg>`;
-    }
-  }
-
-  function resetWave(msgWrap) {
-    msgWrap.querySelectorAll(".voice-bar").forEach(b => b.classList.remove("played"));
-  }
-
-  function animateWave(msgWrap, audio) {
-    const bars = msgWrap.querySelectorAll(".voice-bar");
-    const total = bars.length;
-    const tick = () => {
-      if (!audio.duration) {
-        rafId = requestAnimationFrame(tick);
-        return;
-      }
-      const progress = audio.currentTime / audio.duration;
-      const activeCount = Math.floor(progress * total);
-      bars.forEach((b, i) => {
-        if (i < activeCount) b.classList.add("played");
-        else b.classList.remove("played");
-      });
-      if (!audio.paused && !audio.ended) {
-        rafId = requestAnimationFrame(tick);
-      }
-    };
-    tick();
-  }
-
-  console.log("✅ voice.js (Аудио + Видео) готов");
+  console.log("✅ voice.js (со сжатием) готов");
 });
