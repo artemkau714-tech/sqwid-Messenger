@@ -515,7 +515,10 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         Выйти из аккаунта
       </button>
-
+<!-- Кнопка для админов/модеров -->
+<button class="btn-create" id="adminOpenUsernameManager" style="display:none; width:100%; margin-top:0.5rem; background:linear-gradient(135deg, #3b82f6, #2563eb);">
+  🛠 Управление юзернеймами (Админ)
+</button>
       <div style="padding: 1rem 0.5rem 2rem; text-align: center;">
         <div style="font-size: 0.75rem; color: var(--text-3); font-weight: 700;">
           Sqwid Messenger · v1.0
@@ -1023,20 +1026,41 @@
         </button>
       </div>
 
-      <div class="profile-info-card">
-        <div class="profile-info-row">
-          <div class="profile-info-value" id="profileEmailValue">—</div>
-          <div class="profile-info-label">Почта</div>
-        </div>
-        <div class="profile-info-row">
-          <div class="profile-info-value" id="profileUsernameValue">@—</div>
-          <div class="profile-info-label">Имя пользователя</div>
-        </div>
-        <div class="profile-info-row">
-          <div class="profile-info-value" id="profileCoinsValue">0 SQ</div>
-          <div class="profile-info-label">Сквидики</div>
-        </div>
+      <!-- Карточка с юзернеймами (как в Telegram) -->
+<div class="profile-info-card">
+  <!-- Почта -->
+  <div class="profile-info-row">
+    <div class="profile-info-value" id="profileEmailValue">—</div>
+    <div class="profile-info-label">Почта</div>
+  </div>
+
+  <!-- Юзернеймы -->
+  <div class="profile-info-row" id="usernameRow" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+    <div style="flex:1; min-width:0;">
+      <!-- Основной юзернейм -->
+      <div id="profileMainUsername" style="font-size: 1.05rem; font-weight: 700; color: #3b82f6; word-break: break-all;">
+        @username
       </div>
+      <!-- Дополнительные купленные -->
+      <div id="profileExtraUsernames" style="font-size: 0.82rem; color: var(--text-3); font-weight: 500; margin-top: 4px; line-height: 1.35; word-break: break-word;">
+        <!-- Сюда JS вставит "а также @neo, @king" -->
+      </div>
+    </div>
+    <!-- Кнопка QR -->
+    <div style="cursor:pointer; color:var(--text-3); flex-shrink:0; padding-left:8px;" onclick="window.Sqwid.openQr && window.Sqwid.openQr()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        <path d="M14 14h3v3h-3z"/><path d="M18 18h3v3h-3z"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Сквидики -->
+  <div class="profile-info-row">
+    <div class="profile-info-value" id="profileCoinsValue">0 SQ</div>
+    <div class="profile-info-label">Сквидики</div>
+  </div>
+</div>
 
       <div class="profile-tabs-row" id="profileTabsRow">
         <button class="profile-tab-btn active" data-ptab="groups">Группы</button>
@@ -1071,6 +1095,7 @@
       <button class="shop-tab" data-shop-tab="backgrounds" data-i18n="shop.backgrounds">Фоны</button>
       <button class="shop-tab" data-shop-tab="badges" data-i18n="shop.badges">Значки</button>
       <button class="shop-tab" data-shop-tab="nicks" data-i18n="shop.nicks">Ники</button>
+      <button class="shop-tab" data-shop-tab="usernames" data-i18n="shop.usernames">Юзернеймы</button>
     </div>
     <div id="shopBody" class="shop-body">
       <div id="shopGrid" class="shop-grid"></div>
@@ -2003,7 +2028,56 @@
     </div>
     <button class="btn-secondary" id="btnCrashClose" style="width:100%;margin-top:0.5rem;" data-i18n="common.close">Закрыть</button>
   </div></div>
+<!-- ============ ЭКРАН УПРАВЛЕНИЯ ЮЗЕРНЕЙМАМИ (ДЛЯ АДМИНОВ) ============ -->
+<div id="screen-admin-usernames" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackAdminUsernames"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;">Управление юзернеймами</div>
+  </header>
+  <div class="settings-body">
+    
+    <div class="settings-section">
+      <div class="settings-section-title">Добавить в магазин</div>
+      <div class="settings-card">
+        
+        <div class="settings-field">
+          <label>Юзернейм (без @)</label>
+          <input id="adminUnInput" maxlength="20" placeholder="monk" class="settings-input" style="font-family:'JetBrains Mono',monospace;">
+        </div>
+        
+        <div class="settings-field">
+          <label>Цена в Сквидиках (SQ)</label>
+          <input id="adminUnPrice" type="number" min="100" value="10000" class="settings-input">
+        </div>
+        
+        <div class="settings-field">
+          <label>Описание (необязательно)</label>
+          <input id="adminUnDesc" maxlength="50" placeholder="Короткий и стильный" class="settings-input">
+        </div>
 
+        <div class="settings-field">
+          <label>Категория</label>
+          <select id="adminUnCategory" class="settings-select">
+            <option value="short">Короткие (3-4 буквы)</option>
+            <option value="brand">Бренды</option>
+            <option value="emoji">Смайлики</option>
+            <option value="custom">Другие</option>
+          </select>
+        </div>
+
+        <button class="btn-create" id="btnAdminSubmitUsername" style="width:100%;margin-top:0.5rem;">➕ Выставить в магазин</button>
+        
+        <div id="adminUnStatus" style="text-align:center;color:var(--accent);font-weight:700;margin-top:0.75rem;font-size:0.85rem;"></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">Уже в магазине</div>
+      <div id="adminShopList" class="owner-users-list"></div>
+    </div>
+
+  </div>
+</div>
   <script src="i18n.js"></script>
   <script type="module" src="chat-main.js"></script>
   <script type="module" src="moderation.js"></script>

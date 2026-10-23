@@ -32,23 +32,13 @@ waitForSqwidSettings((S) => {
      МАСШТАБ ИНТЕРФЕЙСА
      ============================================================ */
   function applyZoom(percent) {
-    // На Android и ПК zoom работает на ура.
-    // На iOS Safari zoom на body иногда глючит, но для текста и стандартных блоков работает.
-    // Поэтому применяем и zoom, и font-size.
     const scale = percent / 100;
-    
-    // Применяем zoom к body (масштабирует всё физически)
     document.body.style.zoom = scale;
-    
-    // На iOS Safari zoom игнорируется, поэтому увеличиваем базовый шрифт.
-    // Но чтобы кнопки и иконки (у которых размеры в px) тоже росли,
-    // мы задаем переменную --zoom-scale, которую используем в CSS.
     document.documentElement.style.fontSize = (16 * scale) + "px";
     document.documentElement.style.setProperty('--zoom-scale', scale);
 
     try { localStorage.setItem("sqwid_zoom", percent); } catch(e) {}
     
-    // Обновляем UI
     const subEl = document.getElementById("settingsZoomSub");
     if (subEl) subEl.textContent = percent + "%";
     
@@ -62,7 +52,6 @@ waitForSqwidSettings((S) => {
     if (preview) preview.style.transform = `scale(${scale})`;
   }
 
-  // Инициализация при загрузке
   let savedZoom = 100;
   try { savedZoom = parseInt(localStorage.getItem("sqwid_zoom")) || 100; } catch(e) {}
   applyZoom(savedZoom);
@@ -793,6 +782,57 @@ waitForSqwidSettings((S) => {
       }
     }
   });
+
+  /* ============================================================
+     ОБРАБОТЧИКИ КНОПОК "РАЗВЛЕЧЕНИЯ" (МАГАЗИН И ИГРЫ)
+     ============================================================ */
+  
+  // Открыть Игры
+  const funOpenGames = document.getElementById("funOpenGames");
+  if (funOpenGames) {
+    funOpenGames.addEventListener("click", () => {
+      if (window.Sqwid && window.Sqwid.openGames) window.Sqwid.openGames();
+      else {
+        S.showToast("Игры загружаются...", "info");
+        setTimeout(() => { if (window.Sqwid && window.Sqwid.openGames) window.Sqwid.openGames(); }, 500);
+      }
+    });
+  }
+
+  // Открыть Магазин
+  const funOpenShop = document.getElementById("funOpenShop");
+  if (funOpenShop) {
+    funOpenShop.addEventListener("click", () => {
+      if (window.Sqwid && window.Sqwid.openShop) window.Sqwid.openShop();
+      else {
+        S.showToast("Магазин загружается...", "info");
+        setTimeout(() => { if (window.Sqwid && window.Sqwid.openShop) window.Sqwid.openShop(); }, 500);
+      }
+    });
+  }
+
+  // Открыть из экрана Сквидиков
+  const coinsOpenShop = document.getElementById("coinsOpenShop");
+  if (coinsOpenShop) {
+    coinsOpenShop.addEventListener("click", () => {
+      if (window.Sqwid && window.Sqwid.openShop) window.Sqwid.openShop();
+      else {
+        S.showToast("Магазин загружается...", "info");
+        setTimeout(() => { if (window.Sqwid && window.Sqwid.openShop) window.Sqwid.openShop(); }, 500);
+      }
+    });
+  }
+
+  const coinsOpenGames = document.getElementById("coinsOpenGames");
+  if (coinsOpenGames) {
+    coinsOpenGames.addEventListener("click", () => {
+      if (window.Sqwid && window.Sqwid.openGames) window.Sqwid.openGames();
+      else {
+        S.showToast("Игры загружаются...", "info");
+        setTimeout(() => { if (window.Sqwid && window.Sqwid.openGames) window.Sqwid.openGames(); }, 500);
+      }
+    });
+  }
 
   /* Обновляем при старте */
   updateAccountSub();

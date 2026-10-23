@@ -121,11 +121,40 @@ waitForSqwidProfile((S) => {
       nameEl.innerHTML = nameHTML;
     }
 
-    /* ---- @username ---- */
-    const unEl = document.getElementById("profileUsername");
-    if (unEl) {
-      unEl.textContent = myData.username ? "@" + myData.username : "";
-    }
+    /* ---- Юзернеймы (основной + купленные) ---- */
+const mainUnEl = document.getElementById("profileMainUsername");
+const extraUnEl = document.getElementById("profileExtraUsernames");
+
+if (mainUnEl) {
+  if (myData.username) {
+    mainUnEl.textContent = "@" + myData.username;
+    mainUnEl.style.color = "#3b82f6"; // Синий, как в Telegram
+  } else {
+    mainUnEl.textContent = "Установить @username";
+    mainUnEl.style.color = "var(--text-3)";
+    mainUnEl.style.fontSize = "0.95rem";
+    mainUnEl.style.cursor = "pointer";
+    mainUnEl.onclick = () => {
+      if (window.Sqwid && window.Sqwid.showScreen) {
+        window.Sqwid.showScreen("screen-settings-account");
+      }
+    };
+  }
+}
+
+if (extraUnEl) {
+  const purchased = myData.purchasedUsernames || {};
+  const extraList = Object.keys(purchased);
+  
+  if (extraList.length > 0) {
+    // Форматируем: "а также @neo, @king"
+    const formatted = extraList.map(u => `@${u}`).join(", ");
+    extraUnEl.innerHTML = `а также <span style="color: #3b82f6; font-weight: 600;">${formatted}</span>`;
+    extraUnEl.style.display = "block";
+  } else {
+    extraUnEl.style.display = "none";
+  }
+}
 
     /* ---- Bio ---- */
     const bioEl = document.getElementById("profileBio");

@@ -1,6 +1,5 @@
 /* ============================================================
-   shop.js — магазин Sqwid (рамки, фоны, значки, ники, подарки за SQ)
-   + Вкладка "Подарки" — берёт из window.GIFTS_CATALOG
+   shop.js — магазин Sqwid (рамки, фоны, значки, ники, юзернеймы, подарки)
    ============================================================ */
 
 console.log("🚀 shop.js загружен, жду Sqwid...");
@@ -28,6 +27,7 @@ waitForSqwidShop((S) => {
   let myData = {};
   let currentTab = "frames";
   let unsubSelf = null;
+  let shopUsernames = {}; // Хранилище для юзернеймов
 
   /* ============================================================
      ИКОНКА МОНЕТКИ
@@ -35,7 +35,7 @@ waitForSqwidShop((S) => {
   const COIN_ICON = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;"><circle cx="12" cy="12" r="10" opacity="0.3"/><circle cx="12" cy="12" r="7"/></svg>`;
 
   /* ============================================================
-     КАТАЛОГ ТОВАРОВ (кроме подарков)
+     КАТАЛОГ ТОВАРОВ (кроме подарков и юзернеймов)
      ============================================================ */
   const CATALOG = {
     frames: [
@@ -81,6 +81,15 @@ waitForSqwidShop((S) => {
     }
   });
 
+  // Подписка на юзернеймы
+  onValue(ref(db, "usernames_shop"), (snap) => {
+    shopUsernames = snap.val() || {};
+    const screen = document.getElementById("screen-shop");
+    if (screen && screen.classList.contains("active") && currentTab === "usernames") {
+      renderShop();
+    }
+  });
+
   function updateBalance() {
     const el = document.getElementById("shopBalance");
     if (!el) return;
@@ -123,13 +132,77 @@ waitForSqwidShop((S) => {
   });
 
   /* ============================================================
-     РЕНДЕР ОБЫЧНОГО МАГАЗИНА
+     РЕНДЕР МАГАЗИНА
      ============================================================ */
   function renderShop() {
     const grid = document.getElementById("shopGrid");
     if (!grid) return;
     grid.innerHTML = "";
 
+    // ================= ВКЛАДКА ЮЗЕРНЕЙМЫ =================
+    if (currentTab === "usernames") {
+      // Показываем кнопку добавления, если мы админ или модер
+      const isAdmin = window.Sqwid.isAdminOrModerator && window.Sqwid.isAdminOrModerator();
+      
+      const listContainer = document.createElement("div");
+      listContainer.className = "us-shop-list";
+      listContainer.style.gridColumn = "1 / -1";
+
+      if (isAdmin) {
+        const adminBtn = document.createElement("button");
+        adminBtn.className = "btn-create";
+        adminBtn.innerHTML = "➕ Выставить юзернейм на продажу";
+        adminBtn.style.marginBottom = "1rem";
+        adminBtn.style.background = "linear-gradient(135deg, #3b82f6, #2563eb)"; // Синий для админки
+        adminBtn.onclick = () => {
+          document.getElementById("adminUnInput").value = "";
+          document.getElementById("adminUnPrice").value = "10000";
+          document.getElementById("adminUnDesc").value = "";
+          document.getElementById("modal-admin-add-username").classList.add("active");
+        };
+        listContainer.appendChild(adminBtn);
+      }
+
+      const items = Object.values(shopUsernames).sort((a, b) => {
+        if (a.sold !== b.sold) return a.sold ? 1 : -1;
+        return (a.price || 0) - (b.price || 0);
+      });
+
+      if (items.length === 0) {
+        listContainer.innerHTML += '<div class="create-empty" style="text-align:center;padding:2rem;">Пока нет юзернеймов на продаже</div>';
+      } else {
+        items.forEach(item => {
+          const card = document.createElement("div");
+          card.className = "us-card" + (item.sold ? " us-sold" : "");
+
+          const isOwner = item.sold && item.soldTo === currentUser.uid;
+          let btnHTML = "";
+
+          if (item.sold) {
+            btnHTML = `<button class="us-btn us-btn-sold" disabled>${isOwner ? "✓ Куплено" : "Продано"}</button>`;
+          } else {
+            btnHTML = `<button class="us-btn us-btn-buy" data-id="${item.id}">${COIN_ICON} ${(item.price || 0).toLocaleString("ru-RU")} SQ</button>`;
+          }
+
+          card.innerHTML = `
+            <div class="us-card-left">
+              <div class="us-username">@${item.username}</div>
+              ${item.description ? `<div class="us-desc">${item.description}</div>` : ""}
+            </div>
+            ${btnHTML}
+          `;
+
+          if (!item.sold) {
+            card.querySelector("[data-id]").addEventListener("click", () => buyUsername(item.id));
+          }
+          listContainer.appendChild(card);
+        });
+      }
+      grid.appendChild(listContainer);
+      return; // Выходим, чтобы не рендерить стандартные карточки
+    }
+
+    // ================= СТАНДАРТНЫЕ ТОВАРЫ =================
     const items = CATALOG[currentTab] || [];
     const owned = myData.shopOwned || {};
     const equipped = myData.shopEquipped || {};
@@ -174,6 +247,124 @@ waitForSqwidShop((S) => {
         else if (action === "equip") await equipItem(item);
         else if (action === "unequip") await unequipItem(item);
       });
+    });
+  }
+
+  /* ============================================================
+     ПОКУПКА ЮЗЕРНЕЙМА
+     ============================================================ */
+  async function buyUsername(itemId) {
+    const item = shopUsernames[itemId];
+    if (!item || item.sold) return;
+
+    const price = item.price || 0;
+    const myCoins = myData.coins || 0;
+
+    if (myCoins < price) {
+      S.showAlert(`Недостаточно Сквидиков.\nНужно: ${price.toLocaleString("ru-RU")} SQ\nУ тебя: ${myCoins.toLocaleString("ru-RU")} SQ`, "Мало монет");
+      return;
+    }
+
+    const ok = await S.showConfirm(`Купить @${item.username} за ${price.toLocaleString("ru-RU")} SQ?`, "Покупка");
+    if (!ok) return;
+
+    try {
+      const purchased = { ...(myData.purchasedUsernames || {}) };
+      purchased[item.username] = { boughtAt: Date.now() };
+
+      // Списываем баланс и записываем юзернейм в профиль
+      await update(ref(db, "users/" + currentUser.uid), {
+        coins: myCoins - price,
+        purchasedUsernames: purchased
+      });
+
+      // Помечаем как проданный
+      await update(ref(db, "usernames_shop/" + itemId), {
+        sold: true,
+        soldTo: currentUser.uid,
+        soldAt: Date.now()
+      });
+
+      // Уведомление в бот-чат
+      const botRef = push(ref(db, "botChat/" + currentUser.uid));
+      await set(botRef, {
+        from: "Sqwid Username Shop",
+        text: `🏷 Ты купил(а) юзернейм @${item.username}\nОн появится в твоём профиле.\nПотрачено: ${price.toLocaleString("ru-RU")} SQ`,
+        timestamp: Date.now(),
+        type: "system",
+        kind: "username_shop"
+      });
+
+      S.showToast("Юзернейм куплен!", "ok");
+    } catch (e) {
+      S.showToast("Ошибка: " + e.message, "error");
+    }
+  }
+
+  /* ============================================================
+     ДОБАВЛЕНИЕ ЮЗЕРНЕЙМА АДМИНОМ
+     ============================================================ */
+  const btnAdminSubmit = document.getElementById("btnAdminSubmitUsername");
+  if (btnAdminSubmit) {
+    btnAdminSubmit.addEventListener("click", async () => {
+      const unInput = document.getElementById("adminUnInput");
+      const priceInput = document.getElementById("adminUnPrice");
+      const descInput = document.getElementById("adminUnDesc");
+      const catInput = document.getElementById("adminUnCategory");
+
+      const username = unInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
+      const price = parseInt(priceInput.value) || 0;
+      const desc = descInput.value.trim();
+      const category = catInput.value;
+
+      if (username.length < 2 || username.length > 20) {
+        return S.showToast("Юзернейм: 2-20 символов (a-z, 0-9, _)", "error");
+      }
+      if (price < 100) {
+        return S.showToast("Цена должна быть не менее 100 SQ", "error");
+      }
+
+      // Проверка: не занят ли уже пользователем
+      const usersSnap = await get(ref(db, "users"));
+      const users = usersSnap.val() || {};
+      for (const uid in users) {
+        if (users[uid].username && users[uid].username.toLowerCase() === username) {
+          return S.showToast("Этот юзернейм уже занят пользователем!", "error");
+        }
+      }
+
+      // Проверка: нет ли уже в магазине
+      for (const id in shopUsernames) {
+        if (shopUsernames[id].username === username && !shopUsernames[id].sold) {
+          return S.showToast("Этот юзернейм уже есть в магазине!", "error");
+        }
+      }
+
+      try {
+        const newRef = push(ref(db, "usernames_shop"));
+        await set(newRef, {
+          id: newRef.key,
+          username,
+          price,
+          description: desc,
+          category,
+          addedBy: currentUser.uid,
+          addedAt: Date.now(),
+          sold: false
+        });
+        
+        S.showToast("Юзернейм выставлен на продажу", "ok");
+        document.getElementById("modal-admin-add-username").classList.remove("active");
+      } catch(e) {
+        S.showToast("Ошибка: " + e.message, "error");
+      }
+    });
+  }
+
+  const btnAdminCancel = document.getElementById("btnAdminCancelUsername");
+  if (btnAdminCancel) {
+    btnAdminCancel.addEventListener("click", () => {
+      document.getElementById("modal-admin-add-username").classList.remove("active");
     });
   }
 
@@ -352,6 +543,166 @@ waitForSqwidShop((S) => {
       S.showToast("Ошибка: " + e.message, "error");
     }
   }
+/* ============================================================
+   УПРАВЛЕНИЕ ЮЗЕРНЕЙМАМИ (ДЛЯ АДМИНОВ)
+   ============================================================ */
 
+// Проверка на админа
+function isAdmin() {
+  if (!window._currentUserData) return false;
+  return currentUser.email === "artemkau714@gmail.com" || window._currentUserData.role === "moderator";
+}
+
+// Показать кнопку в развлечениях, если админ
+const adminBtn = document.getElementById("adminOpenUsernameManager");
+if (adminBtn) {
+  // Ждем загрузки данных юзера
+  onValue(ref(db, "users/" + currentUser.uid), (snap) => {
+    const data = snap.val() || {};
+    const isMod = data.role === "moderator" || currentUser.email === "artemkau714@gmail.com";
+    if (isMod) {
+      adminBtn.style.display = "block";
+    } else {
+      adminBtn.style.display = "none";
+    }
+  });
+
+  adminBtn.addEventListener("click", () => {
+    renderAdminShopList();
+    S.showScreen("screen-admin-usernames");
+  });
+}
+
+const btnBackAdmin = document.getElementById("btnBackAdminUsernames");
+if (btnBackAdmin) {
+  btnBackAdmin.addEventListener("click", () => S.showScreen("screen-settings-fun"));
+}
+
+// Рендер списка в админке
+function renderAdminShopList() {
+  const list = document.getElementById("adminShopList");
+  if (!list) return;
+  list.innerHTML = "";
+
+  const items = Object.values(shopUsernames).sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+
+  if (items.length === 0) {
+    list.innerHTML = '<div class="create-empty">В магазине пока нет юзернеймов</div>';
+    return;
+  }
+
+  items.forEach(item => {
+    const row = document.createElement("div");
+    row.className = "owner-user-row";
+    const statusColor = item.sold ? "#10b981" : "#f59e0b";
+    const statusText = item.sold ? "ПРОДАН" : "В ПРОДАЖЕ";
+    
+    row.innerHTML = `
+      <div class="owner-user-info" style="flex:1;">
+        <div class="owner-user-name">
+          @${item.username}
+          <span class="owner-user-badge" style="background:${statusColor}22;color:${statusColor};">${statusText}</span>
+        </div>
+        <div class="owner-user-sub">💰 ${(item.price || 0).toLocaleString("ru-RU")} SQ · ${item.category || "custom"}</div>
+      </div>
+      <button class="btn-secondary" data-del-un="${item.id}" style="width:auto;padding:0.4rem 0.75rem;font-size:1rem;color:#ef4444;font-weight:bold;">✕</button>
+    `;
+
+    const delBtn = row.querySelector(`[data-del-un]`);
+    if (delBtn) {
+      delBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const ok = await S.showConfirm(`Удалить @${item.username} из магазина?`, "Удаление");
+        if (!ok) return;
+        await remove(ref(db, "usernames_shop/" + item.id));
+        S.showToast("Удалено", "ok");
+      });
+    }
+
+    list.appendChild(row);
+  });
+}
+// Обработчик добавления (ИСПРАВЛЕННЫЙ - точная проверка через get)
+const btnSubmitAdmin = document.getElementById("btnAdminSubmitUsername");
+if (btnSubmitAdmin) {
+  btnSubmitAdmin.addEventListener("click", async () => {
+    const unInput = document.getElementById("adminUnInput");
+    const priceInput = document.getElementById("adminUnPrice");
+    const descInput = document.getElementById("adminUnDesc");
+    const catInput = document.getElementById("adminUnCategory");
+    const statusEl = document.getElementById("adminUnStatus");
+
+    const username = unInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
+    const price = parseInt(priceInput.value) || 0;
+    const desc = descInput.value.trim();
+    const category = catInput.value;
+
+    if (username.length < 2 || username.length > 20) {
+      return S.showToast("Юзернейм: 2-20 символов (a-z, 0-9, _)", "error");
+    }
+    if (price < 100) {
+      return S.showToast("Цена должна быть не менее 100 SQ", "error");
+    }
+
+    if (statusEl) {
+      statusEl.textContent = "Проверяем...";
+      statusEl.style.color = "var(--accent)";
+    }
+
+    try {
+      // 1. ПРЯМОЙ ЗАПРОС В БАЗУ (игнорируем кеш)
+      const freshShopSnap = await get(ref(db, "usernames_shop"));
+      const freshShop = freshShopSnap.val() || {};
+
+      // Проверяем, нет ли уже в магазине (среди тех, что НЕ проданы)
+      for (const id in freshShop) {
+        if (freshShop[id].username === username && freshShop[id].sold !== true) {
+          if (statusEl) statusEl.textContent = "";
+          return S.showToast("Этот юзернейм уже есть в магазине!", "error");
+        }
+      }
+
+      // 2. ПРОВЕРКА, НЕ ЗАНЯТ ЛИ ПОЛЬЗОВАТЕЛЕМ
+      const usersSnap = await get(ref(db, "users"));
+      const users = usersSnap.val() || {};
+      for (const uid in users) {
+        if (users[uid].username && users[uid].username.toLowerCase() === username) {
+          if (statusEl) statusEl.textContent = "";
+          return S.showToast("Этот юзернейм уже занят пользователем!", "error");
+        }
+      }
+
+      // 3. ДОБАВЛЯЕМ
+      const newRef = push(ref(db, "usernames_shop"));
+      await set(newRef, {
+        id: newRef.key,
+        username: username,
+        price: price,
+        description: desc,
+        category: category,
+        addedBy: currentUser.uid,
+        addedAt: Date.now(),
+        sold: false // Жестко ставим false
+      });
+      
+      unInput.value = "";
+      descInput.value = "";
+      if (statusEl) {
+        statusEl.textContent = "✅ Юзернейм добавлен!";
+        statusEl.style.color = "#10b981";
+        setTimeout(() => { statusEl.textContent = ""; }, 3000);
+      }
+
+      // Обновляем список внизу экрана админа
+      renderAdminShopList();
+      S.showToast("Юзернейм выставлен в магазин", "ok");
+
+    } catch(e) {
+      if (statusEl) statusEl.textContent = "";
+      // Если вылезает ошибка (например, с classList), показываем ее в тосте
+      S.showToast("Ошибка: " + e.message, "error");
+    }
+  });
+}
   console.log("✅ shop.js готов");
 });

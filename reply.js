@@ -1,6 +1,5 @@
 /* ============================================================
-   reply.js — правильные ответы на сообщения (reply)
-   Заменяет костыль из ux.js
+   reply.js — правильные ответы на сообщения (reply) + АНИМАЦИИ
    ============================================================ */
 
 console.log("🚀 reply.js загружен, жду Sqwid...");
@@ -28,7 +27,7 @@ waitForSqwidReply((S) => {
   let replyToMsg = null;
 
   /* ============================================================
-     REPLY BAR
+     REPLY BAR (С АНИМАЦИЕЙ)
      ============================================================ */
   function showReplyBar(msg) {
     if (!msg) return;
@@ -53,10 +52,19 @@ waitForSqwidReply((S) => {
 
     if (nameEl) nameEl.textContent = authorName;
     if (textEl) textEl.textContent = preview;
+    
+    // Анимация появления (пружина)
     bar.style.display = "flex";
+    bar.style.animation = "none";
+    void bar.offsetWidth; // Триггер рефлоу
+    bar.style.animation = "replyBarSpring 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both";
 
     const input = document.getElementById("msgInput");
-    if (input) input.focus();
+    if (input) {
+      input.focus();
+      // Легкий скролл к инпуту, чтобы было видно панель
+      input.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
 
     // Экспортируем в window — чтобы sendMessage в chat-main.js видел
     window._sqwidReplyTo = {
@@ -72,7 +80,14 @@ waitForSqwidReply((S) => {
     replyToMsg = null;
     window._sqwidReplyTo = null;
     const bar = document.getElementById("replyBar");
-    if (bar) bar.style.display = "none";
+    if (bar) {
+      // Анимация исчезновения
+      bar.style.animation = "replyBarHide 0.2s ease-in forwards";
+      setTimeout(() => {
+        bar.style.display = "none";
+        bar.style.animation = "";
+      }, 200);
+    }
   }
 
   // Экспорт для других модулей
@@ -84,10 +99,17 @@ waitForSqwidReply((S) => {
   };
 
   const btnCancelReply = document.getElementById("btnCancelReply");
-  if (btnCancelReply) btnCancelReply.addEventListener("click", hideReplyBar);
+  if (btnCancelReply) {
+    btnCancelReply.addEventListener("click", () => {
+      // Анимация вращения крестика
+      const svg = btnCancelReply.querySelector("svg");
+      if (svg) svg.style.animation = "rotateCross 0.3s ease-in both";
+      hideReplyBar();
+    });
+  }
 
   /* ============================================================
-     СВАЙП ВПРАВО — REPLY, ВЛЕВО — УДАЛИТЬ
+     СВАЙП ВПРАВО — REPLY, ВЛЕВО — УДАЛИТЬ (С АНИМАЦИЕЙ)
      ============================================================ */
   let swipeState = { el: null, startX: 0, startY: 0, dx: 0, active: false, locked: false };
 
@@ -104,6 +126,7 @@ waitForSqwidReply((S) => {
       locked: false
     };
     msg.style.transition = "none";
+    msg.style.zIndex = "10"; // Поднимаем над другими
   }, { passive: true });
 
   document.addEventListener("touchmove", (e) => {
@@ -116,13 +139,24 @@ waitForSqwidReply((S) => {
     if (!swipeState.locked && Math.abs(dy) > Math.abs(dx) + 8) {
       swipeState.locked = true;
       swipeState.el.style.transform = "";
+      swipeState.el.style.boxShadow = "";
+      swipeState.el.style.zIndex = "";
       return;
     }
     if (swipeState.locked) return;
 
     swipeState.dx = dx;
     const clamped = Math.max(-90, Math.min(90, dx));
-    swipeState.el.style.transform = `translateX(${clamped}px)`;
+    
+    // Наклоняем сообщение (эффект как в iOS)
+    const tilt = clamped * 0.05; 
+    
+    swipeState.el.style.transform = `translateX(${clamped}px) rotate(${tilt}deg)`;
+    
+    // Добавляем тень при свайпе
+    if (Math.abs(clamped) > 10) {
+      swipeState.el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.15)";
+    }
 
     // Индикация
     if (clamped > 20) {
@@ -142,12 +176,16 @@ waitForSqwidReply((S) => {
 
     const el = swipeState.el;
     const dx = swipeState.dx;
-    el.style.transition = "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease";
+    
+    // Возвращаем плавность (пружинка при отпускании)
+    el.style.transition = "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, box-shadow 0.2s ease";
     el.style.transform = "";
     el.style.background = "";
+    el.style.boxShadow = "";
+    el.style.zIndex = "";
 
-    if (!swipeState.locked && dx > 50) {
-      // Свайп вправо → reply
+    if (!swipeState.locked && dx > 60) {
+      // СВАЙП ВПРАВО → REPLY
       const msgId = el.dataset.msgId;
       const chatId = S.getChatId && S.getChatId();
       if (msgId && chatId) {
@@ -157,8 +195,8 @@ waitForSqwidReply((S) => {
         });
       }
       if (navigator.vibrate) navigator.vibrate(15);
-    } else if (!swipeState.locked && dx < -50) {
-      // Свайп влево → удалить (только своё)
+    } else if (!swipeState.locked && dx < -60) {
+      // СВАЙП ВЛЕВО → УДАЛИТЬ (только своё)
       const msgId = el.dataset.msgId;
       const chatId = S.getChatId && S.getChatId();
       if (!msgId || !chatId) {
@@ -174,7 +212,9 @@ waitForSqwidReply((S) => {
         }
         const ok = await S.showConfirm("Удалить сообщение?", "Удаление");
         if (!ok) return;
-        el.classList.add("msg-deleting");
+        
+        // Анимация удаления
+        el.style.animation = "msgOut 0.3s ease-in forwards";
         setTimeout(() => {
           S.remove(ref(db, `messages/${chatId}/${msgId}`));
         }, 250);
@@ -200,15 +240,18 @@ waitForSqwidReply((S) => {
       S.showToast("Сообщение не загружено", "info");
       return;
     }
+    
     target.scrollIntoView({ behavior: "smooth", block: "center" });
-    target.style.transition = "background 0.6s ease";
-    target.style.background = "rgba(249,115,22,0.35)";
-    setTimeout(() => { target.style.background = ""; }, 1800);
+    
+    // Анимация пульсации (добавляем класс и убираем)
+    target.classList.add("highlight-target");
+    setTimeout(() => { 
+      target.classList.remove("highlight-target"); 
+    }, 1500);
   });
 
   /* ============================================================
      ПАТЧ ОТРИСОВКИ СООБЩЕНИЙ — ДОБАВЛЯЕМ ЦИТАТУ REPLY
-     MutationObserver следит за новыми .msg
      ============================================================ */
   function patchMessage(el, msgData) {
     if (!msgData || !msgData.replyTo) return;
@@ -217,11 +260,25 @@ waitForSqwidReply((S) => {
     const quote = document.createElement("div");
     quote.className = "msg-reply-quote";
     quote.dataset.targetId = msgData.replyTo.id;
+    
+    // Начальное состояние для анимации
+    quote.style.opacity = "0";
+    quote.style.transform = "translateY(-10px) scale(0.95)";
+    quote.style.maxHeight = "0";
+    
     quote.innerHTML = `
       <div class="msg-reply-name">${escapeHtml(msgData.replyTo.senderName || "Пользователь")}</div>
       <div class="msg-reply-text">${escapeHtml(msgData.replyTo.preview || "")}</div>
     `;
     el.insertBefore(quote, el.firstChild);
+
+    // Запускаем анимацию появления цитаты
+    setTimeout(() => {
+      quote.style.transition = "all 0.4s cubic-bezier(0.22, 1, 0.36, 1)";
+      quote.style.opacity = "1";
+      quote.style.transform = "translateY(0) scale(1)";
+      quote.style.maxHeight = "100px";
+    }, 50);
   }
 
   function escapeHtml(t) {
@@ -229,8 +286,6 @@ waitForSqwidReply((S) => {
     d.textContent = t == null ? "" : t;
     return d.innerHTML;
   }
-
-  const pendingPatches = new Map();
 
   const observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
@@ -242,7 +297,6 @@ waitForSqwidReply((S) => {
         if (node.dataset.replyPatched) continue;
         node.dataset.replyPatched = "1";
 
-        // Подтягиваем msg из Firebase асинхронно
         const chatId = S.getChatId && S.getChatId();
         if (!chatId) continue;
         get(ref(db, "messages/" + chatId + "/" + msgId)).then(snap => {
@@ -263,5 +317,5 @@ waitForSqwidReply((S) => {
 
   setInterval(startObserver, 500);
 
-  console.log("✅ reply.js готов");
+  console.log("✅ reply.js готов (с анимациями)");
 });

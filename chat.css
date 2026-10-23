@@ -6830,3 +6830,553 @@ body[data-theme="dark"] .emoji-tabs { background: rgba(30,30,30,0.5); }
     width: calc(100% - 3rem) !important;
   }
 }
+/* ============================================
+   ГЛОБАЛЬНЫЕ АНИМАЦИИ И МИКРО-ВЗАИМОДЕЙСТВИЯ
+   ============================================ */
+
+/* 1. Плавное появление экранов (уже есть, но усилим) */
+.screen.active {
+  animation: screenFadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes screenFadeIn {
+  from { opacity: 0; transform: translateY(15px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 2. Эффект нажатия (Ripple/Tap) для всех интерактивных элементов */
+button, .chat-list li, .menu-row, .settings-item, .folder-chip, .chat-info-action, .nav-btn {
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              background-color 0.2s ease, 
+              opacity 0.2s ease !important;
+}
+
+button:active, 
+.chat-list li:active, 
+.menu-row:active, 
+.settings-item:active, 
+.folder-chip:active, 
+.chat-info-action:active, 
+.nav-btn:active {
+  transform: scale(0.96) !important;
+}
+
+/* 3. Появление сообщений (пружинка) */
+.msg {
+  animation: msgPopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes msgPopIn {
+  0% { opacity: 0; transform: translateY(15px) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Сдвиг своих и чужих сообщений */
+.msg.own { transform-origin: right bottom; }
+.msg.other { transform-origin: left bottom; }
+
+/* 4. Модальные окна (выезд снизу с пружинкой) */
+.modal.active .modal-content {
+  animation: modalSpringUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes modalSpringUp {
+  0% { transform: translateY(100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* 5. Меню и списки (каскадное появление) */
+.menu-row, .settings-item, .chat-list li {
+  animation: listItemSlide 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.menu-row:nth-child(1), .settings-item:nth-child(1), .chat-list li:nth-child(1) { animation-delay: 0.03s; }
+.menu-row:nth-child(2), .settings-item:nth-child(2), .chat-list li:nth-child(2) { animation-delay: 0.06s; }
+.menu-row:nth-child(3), .settings-item:nth-child(3), .chat-list li:nth-child(3) { animation-delay: 0.09s; }
+.menu-row:nth-child(4), .settings-item:nth-child(4), .chat-list li:nth-child(4) { animation-delay: 0.12s; }
+.menu-row:nth-child(5), .settings-item:nth-child(5), .chat-list li:nth-child(5) { animation-delay: 0.15s; }
+
+@keyframes listItemSlide {
+  0% { opacity: 0; transform: translateX(-15px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+/* 6. Пульсация кнопки отправки, когда есть текст */
+.input-area.has-text .send-plane {
+  animation: sendPulse 2s ease-in-out infinite !important;
+}
+@keyframes sendPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); }
+}
+
+/* 7. Анимация при переключении вкладок (Папки, Настройки) */
+.folder-chip.active, .settings-tab.active, .profile-tab-btn.active {
+  animation: tabPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+@keyframes tabPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* 8. Плавное появление иконок при наведении (для ПК) */
+@media (hover: hover) {
+  .chat-back:hover, .chat-menu-btn:hover, .top-new-btn:hover {
+    background: rgba(249, 115, 22, 0.1) !important;
+    transform: scale(1.05) !important;
+  }
+  .msg:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.1);
+  }
+}
+
+/* 9. Анимация переключения тем (плавное изменение цветов) */
+body, .top-bar, .chat-bar, .input-area, .bottom-nav, .msg, .chat-list li, .modal-content {
+  transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease !important;
+}
+
+/* 10. Анимация появления панели эмодзи */
+.emoji-panel.active {
+  animation: emojiPanelSlide 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes emojiPanelSlide {
+  0% { transform: translateY(100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.emoji-btn:active {
+  transform: scale(1.3) !important;
+  transition: transform 0.1s ease !important;
+}
+
+/* 11. Легкое покачивание для аватарок при наведении */
+.chat-ava img, .profile-ava img {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.chat-list li:hover .chat-ava img,
+.profile-top:hover .profile-ava img {
+  transform: scale(1.08);
+}
+
+/* 12. Анимация счетчика непрочитанных */
+.folder-chip-badge {
+  animation: badgeBounce 2s ease-in-out infinite;
+}
+@keyframes badgeBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+/* ============================================
+   АНИМАЦИИ ДЛЯ REPLY (ОТВЕТОВ НА СООБЩЕНИЯ)
+   ============================================ */
+
+/* 1. Плавное появление панели ответа над вводом (выезд снизу) */
+.reply-bar[style*="display: flex"] {
+  display: flex !important;
+  animation: replyBarSpring 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes replyBarSpring {
+  0% { 
+    opacity: 0; 
+    transform: translateY(100%) scale(0.95); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
+}
+
+/* Пульсация левой полоски при появлении */
+.reply-bar::before {
+  animation: lineSlideIn 0.4s ease-out both;
+}
+
+@keyframes lineSlideIn {
+  0% { transform: scaleY(0); }
+  100% { transform: scaleY(1); }
+}
+
+/* 2. Анимация при клике на сообщение (свайп вправо для ответа) */
+.msg:active {
+  transition: transform 0.1s ease !important;
+}
+
+/* Свайп-эффект для самой цитаты внутри сообщения */
+.msg-reply-quote {
+  transition: all 0.2s ease !important;
+}
+
+.msg-reply-quote:active {
+  transform: scale(0.97) !important;
+  background: rgba(249, 115, 22, 0.15) !important;
+}
+
+/* 3. Появление цитаты внутри нового сообщения */
+.msg .msg-reply-quote {
+  animation: quoteFadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 0.1s; /* Появляется чуть позже самого сообщения */
+}
+
+@keyframes quoteFadeIn {
+  0% { 
+    opacity: 0; 
+    transform: translateY(-10px) scale(0.95); 
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+    max-height: 100px;
+    /* Возвращаем паддинги и маргины, которые были в оригинале */
+    padding: 0.45rem 0.65rem 0.45rem 0.75rem;
+    margin-bottom: 0.4rem;
+  }
+}
+
+/* 4. Анимация при закрытии панели ответа (крестик) */
+.reply-bar-close:active svg {
+  animation: rotateCross 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes rotateCross {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(90deg) scale(1.2); }
+  100% { transform: rotate(90deg) scale(0); opacity: 0; }
+}
+
+/* 5. Подсветка сообщения, к которому перешли по клику на цитату */
+.msg.highlight-target {
+  animation: highlightPulse 1.5s ease-out both;
+}
+
+@keyframes highlightPulse {
+  0% { 
+    background-color: rgba(249, 115, 22, 0.5) !important; 
+    transform: scale(1.02);
+  }
+  50% { 
+    background-color: rgba(249, 115, 22, 0.2) !important; 
+    transform: scale(1);
+  }
+  100% { 
+    background-color: transparent !important; 
+  }
+}
+
+/* 6. Индикация свайпа (визуальная подсказка при начале движения) */
+.msg[style*="translateX"] {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+/* 7. Анимация для кнопки "Ответить" в меню сообщения */
+#btnReactMsg, #btnPinMsg, #btnEditMsg, #btnDeleteMsg, #btnReportMsg {
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-row:active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.3);
+  animation: rippleEffect 0.4s ease-out;
+}
+
+@keyframes rippleEffect {
+  from { transform: scale(0); opacity: 1; }
+  to { transform: scale(2); opacity: 0; }
+}
+/* ============================================
+   ГЛОБАЛЬНАЯ АНИМАЦИОННАЯ СИСТЕМА (ULTIMATE)
+   ============================================ */
+
+/* 1. Плавное появление ВСЕХ элементов при открытии */
+.screen.active > * {
+  animation: globalSlideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Каскадное появление элементов (чтобы не вылетали все разом) */
+.screen.active > *:nth-child(1) { animation-delay: 0.02s; }
+.screen.active > *:nth-child(2) { animation-delay: 0.06s; }
+.screen.active > *:nth-child(3) { animation-delay: 0.10s; }
+.screen.active > *:nth-child(4) { animation-delay: 0.14s; }
+.screen.active > *:nth-child(n+5) { animation-delay: 0.18s; }
+
+@keyframes globalSlideUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* 2. Пружинистое нажатие на ЛЮБУЮ кнопку или ссылку */
+button, a, .settings-item, .menu-row, .chat-list li, .folder-chip, 
+.shop-tab, .create-result, .owner-tab, .owner-filter, .emoji-btn, 
+.emoji-tab, .quick-reply-btn, .theme-btn, .nick-color-btn, 
+.nick-emoji-btn, .nick-font-btn, .payment-method-btn, .topup-product,
+.crash-quick, .games-card, .quest-btn, .chat-info-action {
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              box-shadow 0.2s ease, 
+              background-color 0.2s ease !important;
+}
+
+button:active, a:active, .settings-item:active, .menu-row:active, 
+.chat-list li:active, .folder-chip:active, .shop-tab:active, 
+.create-result:active, .owner-tab:active, .owner-filter:active, 
+.emoji-btn:active, .quick-reply-btn:active, .theme-btn:active, 
+.nick-color-btn:active, .nick-emoji-btn:active, .nick-font-btn:active, 
+.payment-method-btn:active, .topup-product:active, .crash-quick:active,
+.games-card:active, .quest-btn:active {
+  transform: scale(0.93) !important; /* Жесткое сжатие при нажатии */
+}
+
+/* 3. Плавное появление ВСЕХ модальных окон (всплытие снизу) */
+.modal.active .modal-content {
+  animation: ultimateModalIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+}
+@keyframes ultimateModalIn {
+  0% { opacity: 0; transform: translateY(100%) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Затемнение фона модалки */
+.modal.active {
+  animation: ultimateBgIn 0.3s ease-out both !important;
+}
+@keyframes ultimateBgIn {
+  0% { opacity: 0; backdrop-filter: blur(0px); }
+  100% { opacity: 1; backdrop-filter: blur(12px); }
+}
+
+/* 4. Анимация для иконок внутри кнопок (крутятся при наведении/нажатии) */
+button:hover svg, .settings-item:hover svg, .chat-menu-btn:hover svg {
+  transform: scale(1.1);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+button:active svg, .settings-item:active svg {
+  transform: scale(0.85) rotate(-10deg) !important;
+}
+
+/* 5. Пульсация онлайн-статуса (везде) */
+.online-dot, .chat-last-status::before {
+  animation: ultimatePulse 2s infinite !important;
+}
+@keyframes ultimatePulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* 6. Плавное изменение цвета фона при переключении тем */
+body, .screen, .top-bar, .chat-bar, .input-area, .bottom-nav, 
+.chat-list li, .msg, .modal-content, .settings-card, .settings-item {
+  transition: background-color 0.4s ease, color 0.3s ease, border-color 0.4s ease !important;
+}
+
+/* 7. Анимация "Дыхания" для кнопок с градиентом (Сквидики, Sqwid+, Premium) */
+.mp-coins, .plus-badge, .btn-create[style*="linear-gradient"] {
+  animation: ultimateBreathe 3s ease-in-out infinite !important;
+}
+@keyframes ultimateBreathe {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.03); filter: brightness(1.15); }
+}
+
+/* 8. Анимация встряски для ошибок (Toast) */
+.toast.toast-error {
+  animation: ultimateShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both !important;
+}
+@keyframes ultimateShake {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(4px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+  40%, 60% { transform: translate3d(6px, 0, 0); }
+}
+
+/* 9. Мягкое покачивание аватарок при наведении (для ПК) */
+.chat-ava img, .profile-ava img, .chat-info-ava img {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.chat-list li:hover .chat-ava img,
+.profile-top:hover .profile-ava img {
+  transform: scale(1.1) rotate(3deg);
+}
+
+/* 10. Задержка для плавного появления элементов списка в настройках */
+.settings-item, .menu-row {
+  animation: settingsSlideIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.settings-item:nth-child(1), .menu-row:nth-child(1) { animation-delay: 0.05s; }
+.settings-item:nth-child(2), .menu-row:nth-child(2) { animation-delay: 0.1s; }
+.settings-item:nth-child(3), .menu-row:nth-child(3) { animation-delay: 0.15s; }
+.settings-item:nth-child(4), .menu-row:nth-child(4) { animation-delay: 0.2s; }
+.settings-item:nth-child(n+5), .menu-row:nth-child(n+5) { animation-delay: 0.25s; }
+
+@keyframes settingsSlideIn {
+  0% { opacity: 0; transform: translateX(-20px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+/* 11. Плавное появление кнопок в профиле */
+.up-action-btn, .profile-action-btn {
+  animation: profileBtnIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.up-action-btn:nth-child(1) { animation-delay: 0.1s; }
+.up-action-btn:nth-child(2) { animation-delay: 0.15s; }
+.up-action-btn:nth-child(3) { animation-delay: 0.2s; }
+.up-action-btn:nth-child(4) { animation-delay: 0.25s; }
+
+@keyframes profileBtnIn {
+  0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+/* ============ ЮЗЕРНЕЙМЫ В ПРОФИЛЕ (Стиль Telegram) ============ */
+#usernameRow {
+  align-items: flex-start !important;
+}
+
+#profileMainUsername {
+  transition: opacity 0.2s ease;
+}
+
+#profileMainUsername:active {
+  opacity: 0.7;
+}
+
+#profileExtraUsernames {
+  transition: opacity 0.2s ease;
+}
+
+/* Чтобы сам список юзернеймов не разъезжался, если их много */
+#profileExtraUsernames span {
+  display: inline;
+}
+
+/* Тёмная тема — синий цвет делаем чуть светлее */
+body[data-theme="dark"] #profileMainUsername,
+body[data-theme="dark"] #profileExtraUsernames span {
+  color: #60a5fa !important; /* Светло-синий для тёмного фона */
+}
+
+/* Девчачья тема — можно сделать розовым, но оставим синим для контраста */
+body[data-theme="girl"] #profileMainUsername,
+body[data-theme="girl"] #profileExtraUsernames span {
+  color: #ec4899 !important;
+}
+/* ============ КАРТОЧКИ ЮЗЕРНЕЙМОВ В МАГАЗИНЕ ============ */
+.us-shop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.us-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  transition: transform 0.15s var(--spring), background 0.2s ease;
+}
+
+.us-card:active {
+  transform: scale(0.98);
+  background: rgba(249, 115, 22, 0.06);
+}
+
+.us-card.us-sold {
+  opacity: 0.6;
+}
+
+.us-card-left { flex: 1; min-width: 0; }
+
+.us-username {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #3b82f6; /* Синий, как в профиле */
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.3px;
+}
+
+.us-desc {
+  font-size: 0.78rem;
+  color: var(--text-2);
+  margin-top: 0.15rem;
+}
+
+.us-btn {
+  flex-shrink: 0;
+  padding: 0.6rem 0.95rem;
+  border-radius: 999px;
+  border: none;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.2s var(--spring);
+}
+
+.us-btn:active { transform: scale(0.94); }
+
+.us-btn-buy {
+  background: var(--grad-1);
+  color: #fff;
+}
+
+.us-btn-sold {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-2);
+  cursor: default;
+}
+
+/* Тёмная тема */
+body[data-theme="dark"] .us-card {
+  background: #1a1a1a;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body[data-theme="dark"] .us-username { color: #60a5fa; }
+body[data-theme="dark"] .us-btn-sold { background: rgba(255, 255, 255, 0.05); color: #71717a; }
+
+/* Девчачья тема */
+body[data-theme="girl"] .us-card {
+  background: #fff5fb;
+  border-color: rgba(236, 72, 153, 0.12);
+}
+body[data-theme="girl"] .us-username { color: #ec4899; }
+/* ============ АДМИНКА ЮЗЕРНЕЙМОВ ============ */
+#screen-admin-usernames .settings-card {
+  padding: 1rem;
+}
+
+#screen-admin-usernames .owner-user-row {
+  padding: 0.75rem 0.9rem;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+#screen-admin-usernames .owner-user-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+#screen-admin-usernames .owner-user-sub {
+  font-size: 0.78rem;
+  color: var(--text-3);
+  margin-top: 0.15rem;
+}
+
+#adminOpenUsernameManager {
+  display: none;
+}
