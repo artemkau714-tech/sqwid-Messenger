@@ -346,7 +346,7 @@ onAuthStateChanged(auth, async (user) => {
   // 🔥 РЕЖИМ РАЗРАБОТКИ (БЕЛЫЙ СПИСОК)
   // ============================================================
   const DEV_EMAIL = "artemkau714@gmail.com";
-  const IS_DEV_MODE = true; // Поставь false, когда захочешь открыть для всех
+  const IS_DEV_MODE = false; // Поставь false, когда захочешь открыть для всех
 
   if (IS_DEV_MODE && user.email !== DEV_EMAIL) {
     // Показываем заглушку и выкидываем
