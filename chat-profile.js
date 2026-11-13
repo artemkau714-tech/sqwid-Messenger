@@ -349,12 +349,12 @@ if (extraUnEl) {
 
   /* --- Share в шапке --- */
   const btnShare = document.getElementById("btnShareProfile");
-  if (btnShare) {
-    btnShare.addEventListener("click", async () => {
-      const base = window.location.origin + window.location.pathname.replace("chat.html", "");
-      const link = myData.username
-        ? base + "chat.html?u=" + myData.username
-        : base + "chat.html?uid=" + currentUser.uid;
+if (btnShare) {
+  btnShare.addEventListener("click", async () => {
+    const base = window.location.origin;
+    const link = myData.username
+      ? base + "/chat?u=" + myData.username
+      : base + "/chat?uid=" + currentUser.uid;
       try {
         if (navigator.clipboard) {
           await navigator.clipboard.writeText(link);

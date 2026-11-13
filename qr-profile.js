@@ -88,10 +88,10 @@ waitForSqwidQr((S) => {
      ССЫЛКА
      ============================================================ */
   function getProfileLink() {
-    const base = window.location.origin + window.location.pathname.replace("chat.html", "");
-    if (myData.username) return base + "chat.html?u=" + myData.username;
-    return base + "chat.html?uid=" + currentUser.uid;
-  }
+  const base = window.location.origin;
+  if (myData.username) return base + "/chat?u=" + myData.username;
+  return base + "/chat?uid=" + currentUser.uid;
+}
 
   /* ============================================================
      QR-ГЕНЕРАЦИЯ
