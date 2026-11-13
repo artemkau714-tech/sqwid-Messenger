@@ -1,7 +1,5 @@
 /* ============================================================
-   profileNN.js — профиль собеседника (Стиль Telegram)
-   + рабочие кнопки Чат, Звонок, Видео
-   + купленные рамки, фоны, значки и цвета ников
+   profileNN.js — Профиль собеседника (Стиль Telegram) + Юзернеймы
    ============================================================ */
 
 console.log("🚀 profileNN.js загружен, жду Sqwid...");
@@ -153,9 +151,81 @@ waitForSqwidNN((S) => {
       }
     }
 
+    /* ---- Юзернеймы ---- */
     const unEl = document.getElementById("upUsername");
-    if (unEl) unEl.textContent = u.username ? "@" + u.username : "@username";
+    if (unEl) {
+      if (u.username) {
+        unEl.innerHTML = `@${escH(u.username)}`;
+        unEl.style.color = "#3b82f6";
+        unEl.style.cursor = "pointer";
+        unEl.style.textDecoration = "underline";
+        unEl.onclick = () => openUsernameInfoModal(u.username, u);
+      } else {
+        unEl.textContent = "@username";
+        unEl.style.color = "var(--text-3)";
+        unEl.style.cursor = "default";
+        unEl.style.textDecoration = "none";
+        unEl.onclick = null;
+      }
 
+      // Блок купленных
+      let extraDiv = document.getElementById("upExtraUsernames");
+      if (!extraDiv) {
+        extraDiv = document.createElement("div");
+        extraDiv.id = "upExtraUsernames";
+        extraDiv.style.cssText = "font-size: 0.82rem; color: var(--text-3); font-weight: 500; margin-top: 4px; line-height: 1.35; word-break: break-word;";
+        unEl.parentNode.appendChild(extraDiv);
+      }
+
+      const purchased = u.purchasedUsernames || {};
+      const extraList = Object.keys(purchased);
+
+      if (extraList.length > 0) {
+        extraDiv.innerHTML = `а также `;
+        extraList.forEach((uname, index) => {
+          const span = document.createElement("span");
+          span.textContent = "@" + uname;
+          span.style.cssText = "color: #3b82f6; font-weight: 600; cursor: pointer; text-decoration: underline; margin-right: 4px;";
+          span.onclick = () => openUsernameInfoModal(uname, u);
+          extraDiv.appendChild(span);
+          
+          if (index < extraList.length - 1) {
+            extraDiv.appendChild(document.createTextNode(", "));
+          }
+        });
+        extraDiv.style.display = "block";
+      } else {
+        extraDiv.style.display = "none";
+      }
+    }
+/* ---- Анонимный номер (в чужом профиле) ---- */
+let phoneEl = document.getElementById("upPhone");
+if (!phoneEl) {
+  // Создаем элемент, если его нет
+  const bioRow = document.getElementById("upBioRow");
+  if (bioRow && bioRow.parentNode) {
+    phoneEl = document.createElement("div");
+    phoneEl.className = "profile-info-row";
+    phoneEl.id = "upPhoneRow";
+    phoneEl.innerHTML = `
+      <div class="profile-info-value" id="upPhone">—</div>
+      <div class="profile-info-label">Анонимный номер</div>
+    `;
+    bioRow.parentNode.appendChild(phoneEl);
+  }
+}
+
+const upPhoneVal = document.getElementById("upPhone");
+const upPhoneRow = document.getElementById("upPhoneRow");
+if (upPhoneVal && upPhoneRow) {
+  if (u.phone) {
+    upPhoneVal.textContent = u.phone;
+    upPhoneVal.style.color = "#10b981";
+    upPhoneRow.style.display = "block";
+  } else {
+    upPhoneRow.style.display = "none";
+  }
+}
     const scroll = document.querySelector("#screen-user-profile .profile-scroll");
     if (scroll) {
       const equippedBg = u.shopEquipped && u.shopEquipped.bg;
@@ -174,6 +244,69 @@ waitForSqwidNN((S) => {
         scroll.classList.remove("has-bg");
       }
     }
+  }
+
+  /* ============================================================
+     МОДАЛКА ИНФО О ЮЗЕРНЕЙМЕ (ДЛЯ СОБЕСЕДНИКА)
+     ============================================================ */
+  async function openUsernameInfoModal(uname, userData) {
+    const modal = document.getElementById("modal-username-info");
+    if (!modal) return;
+
+    document.getElementById("unInfoName").textContent = "@" + uname;
+    document.getElementById("unInfoOwner").textContent = userData.name || "Пользователь";
+
+    const shopSnap = await get(ref(db, "usernames_shop"));
+    const shop = shopSnap.val() || {};
+    let shopItem = null;
+
+    for (const id in shop) {
+      if (shop[id].username === uname) {
+        shopItem = shop[id];
+        break;
+      }
+    }
+
+    if (shopItem) {
+      document.getElementById("unInfoPrice").textContent = (shopItem.price || 0).toLocaleString("ru-RU") + " SQ";
+      if (shopItem.soldAt) {
+        const d = new Date(shopItem.soldAt);
+        document.getElementById("unInfoDate").textContent = `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${d.getFullYear()}`;
+      } else {
+        document.getElementById("unInfoDate").textContent = "—";
+      }
+    } else {
+      document.getElementById("unInfoPrice").textContent = "Основной";
+      document.getElementById("unInfoDate").textContent = "—";
+    }
+
+    let rarity = "Обычный";
+    let rarityColor = "#94a3b8";
+    let rarityBg = "rgba(148, 163, 184, 0.15)";
+
+    if (uname.length <= 3) {
+      rarity = "Легендарный"; rarityColor = "#f59e0b"; rarityBg = "rgba(245, 158, 11, 0.15)";
+    } else if (uname.length <= 5) {
+      rarity = "Эпический"; rarityColor = "#a855f7"; rarityBg = "rgba(168, 85, 247, 0.15)";
+    } else if (uname.length <= 7) {
+      rarity = "Редкий"; rarityColor = "#3b82f6"; rarityBg = "rgba(59, 130, 246, 0.15)";
+    }
+
+    const rarEl = document.getElementById("unInfoRarity");
+    rarEl.textContent = rarity;
+    rarEl.style.color = rarityColor;
+    rarEl.style.background = rarityBg;
+
+    modal.classList.add("active");
+  }
+
+  const btnCloseUnInfoNN = document.getElementById("btnCloseUnInfo");
+  if (btnCloseUnInfoNN) {
+    const newBtn = btnCloseUnInfoNN.cloneNode(true);
+    btnCloseUnInfoNN.parentNode.replaceChild(newBtn, btnCloseUnInfoNN);
+    newBtn.addEventListener("click", () => {
+      document.getElementById("modal-username-info").classList.remove("active");
+    });
   }
 
   function subscribeUser(uid) {

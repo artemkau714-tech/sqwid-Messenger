@@ -99,7 +99,7 @@ onAuthStateChanged(auth, (user) => {
 });
 
 /* ---------- Аварийное скрытие сплэша через 3 секунды ---------- */
-setTimeout(() => hideSplash(), 3000);
+setTimeout(() => hideSplash(), 8000);
 
 /* ---------- Переход в регистрацию ---------- */
 if (btnGoRegister) {

@@ -1004,8 +1004,16 @@ function renderMessage(msg, chatId) {
       contentHTML += `<div>🎤 Голосовое (${msg.duration || 0}с)</div>`;
     }
   } else {
-    contentHTML += `<div>${escH(msg.text || "")}</div>`;
-  }
+  // Обрабатываем текст: делаем номера +888xxxxxxxx кликабельными
+  let safeText = escH(msg.text || "");
+  
+  // Регулярка для номеров +888
+  safeText = safeText.replace(/\+888\d{8}/g, (match) => {
+    return `<span class="msg-phone-link" data-phone="${match}" style="color: #3b82f6; font-weight: 700; text-decoration: underline; cursor: pointer;">${match}</span>`;
+  });
+
+  contentHTML += `<div>${safeText}</div>`;
+}
 
   let viewsHTML = "";
   if (currentChatData && currentChatData.type === "channel") {
@@ -1888,13 +1896,24 @@ function renderPrivateResults(q) {
   const query = (q || "").toLowerCase().trim();
   const arr = [];
   for (const uid in userMap) {
-    if (uid === currentUser.uid) continue;
-    const u = userMap[uid];
-    const name = (u.name || u.email || "").toLowerCase();
-    const uname = (u.username || "").toLowerCase();
-    if (query && !name.includes(query) && !uname.includes(query)) continue;
-    arr.push({ uid, ...u });
+  if (uid === currentUser.uid) continue;
+  const u = userMap[uid];
+  const name = (u.name || u.email || "").toLowerCase();
+  const uname = (u.username || "").toLowerCase();
+
+  // 🔥 ПРОВЕРКА КУПЛЕННЫХ ЮЗЕРНЕЙМОВ
+  let hasPurchased = false;
+  const purchased = u.purchasedUsernames || {};
+  for (const pUn in purchased) {
+    if (pUn.toLowerCase().includes(query)) {
+      hasPurchased = true;
+      break;
+    }
   }
+
+  if (query && !name.includes(query) && !uname.includes(query) && !hasPurchased) continue;
+  arr.push({ uid, ...u });
+}
   arr.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   if (arr.length === 0) {
     box.innerHTML = '<div class="create-empty">Никого не найдено</div>';
@@ -2020,14 +2039,25 @@ async function renderMembersResults() {
 
   const arr = [];
   for (const uid in userMap) {
-    if (uid === currentUser.uid) continue;
-    if (alreadyInChat[uid]) continue;
-    const u = userMap[uid];
-    const name = (u.name || u.email || "").toLowerCase();
-    const uname = (u.username || "").toLowerCase();
-    if (q && !name.includes(q) && !uname.includes(q)) continue;
-    arr.push({ uid, ...u });
+  if (uid === currentUser.uid) continue;
+  if (alreadyInChat[uid]) continue;
+  const u = userMap[uid];
+  const name = (u.name || u.email || "").toLowerCase();
+  const uname = (u.username || "").toLowerCase();
+
+  // 🔥 ПРОВЕРКА КУПЛЕННЫХ ЮЗЕРНЕЙМОВ
+  let hasPurchased = false;
+  const purchased = u.purchasedUsernames || {};
+  for (const pUn in purchased) {
+    if (pUn.toLowerCase().includes(q)) {
+      hasPurchased = true;
+      break;
+    }
   }
+
+  if (q && !name.includes(q) && !uname.includes(q) && !hasPurchased) continue;
+  arr.push({ uid, ...u });
+}
   arr.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   if (arr.length === 0) {
     box.innerHTML = '<div class="create-empty">Никого не найдено</div>';
@@ -2201,5 +2231,38 @@ document.addEventListener("click", (e) => {
     e.target.classList.remove("active");
   }
 });
+/* ============================================================
+   КЛИК ПО НОМЕРУ В СООБЩЕНИИ
+   ============================================================ */
+document.addEventListener("click", async (e) => {
+  const phoneEl = e.target.closest(".msg-phone-link");
+  if (!phoneEl) return;
+  
+  e.preventDefault();
+  e.stopPropagation();
 
+  const phone = phoneEl.dataset.phone;
+  if (!phone) return;
+
+  try {
+    const usersSnap = await get(ref(db, "users"));
+    const users = usersSnap.val() || {};
+    
+    for (const uid in users) {
+      if (users[uid].phone === phone) {
+        if (window.Sqwid.openOtherProfile) {
+          window.Sqwid.openOtherProfile(uid);
+        } else {
+          showToast("Профиль загружается...", "info");
+        }
+        return;
+      }
+    }
+    
+    showToast("Пользователь с номером " + phone + " не найден", "info");
+  } catch (err) {
+    console.error("Ошибка поиска по номеру:", err);
+    showToast("Ошибка поиска", "error");
+  }
+}, true);
 console.log("✅ chat-main.js загружен");

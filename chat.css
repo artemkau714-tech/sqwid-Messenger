@@ -7402,3 +7402,201 @@ body[data-theme="girl"] .us-username { color: #ec4899; }
 .msg.own .msg-video-circle {
   border-color: rgba(255, 255, 255, 0.4);
 }
+/* ============================================================
+   СТРОГИЙ ЧЕРНО-БЕЛЫЙ ИНТЕРФЕЙС (STYLE OVERRIDE)
+   ============================================================ */
+
+/* 1. Убираем цветные пятна на фоне */
+body::before, 
+body::after {
+  display: none !important;
+}
+
+/* 2. Делаем фон строго черным (для всех тем) */
+body, 
+body[data-theme="light"], 
+body[data-theme="girl"] {
+  background: #000000 !important;
+}
+
+/* 3. Перекрашиваем акценты в белый цвет */
+:root, 
+body[data-theme="light"], 
+body[data-theme="girl"] {
+  --accent: #ffffff !important; 
+  --accent-grad: linear-gradient(135deg, #ffffff, #e5e5e5) !important; /* Белый градиент */
+  --bg: #000000 !important;
+  
+  /* Стекло (шапки, меню) делаем темно-серым */
+  --glass-bg: rgba(20, 20, 20, 0.85) !important;
+  --glass-border: rgba(255, 255, 255, 0.15) !important;
+  --glass-highlight: rgba(255, 255, 255, 0.08) !important;
+  
+  --text: #ffffff !important;
+  --text-2: #a1a1aa !important;
+  --text-3: #52525b !important;
+}
+
+/* 4. Меняем цветные аватарки на темно-серые */
+.chat-ava, 
+.top-avatar-btn,
+.profile-ava,
+.chat-info-ava {
+  background: #222 !important; 
+  color: #fff !important;
+}
+
+
+/* 5. Текст на белых кнопках делаем черным (чтобы читался) */
+.btn-create, 
+.send-plane, 
+.folder-chip.active, 
+.nav-btn.active,
+.premium-buy-btn,
+.big-gradient-btn,
+.us-btn-buy,
+.shop-card-btn.buy,
+.topup-product.selected,
+.payment-method-btn.active,
+.quest-btn {
+  background: #ffffff !important; 
+  color: #000000 !important; 
+  border: none !important;
+}
+
+.btn-create svg, 
+.send-plane svg,
+.nav-btn.active svg {
+  fill: #000 !important;
+  stroke: #000 !important;
+}
+
+/* 6. Свои сообщения делаем белыми, чужие — темно-серыми */
+.msg.own {
+  background: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1) !important;
+}
+.msg.own *, 
+.msg.own .msg-time,
+.msg.own .msg-link,
+.msg.own .msg-mention {
+  color: #000000 !important;
+}
+
+.msg.other {
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+  border: 1px solid #333 !important;
+}
+
+/* 7. Вкладки и папки */
+.folder-chip {
+  background: #111 !important;
+  border: 1px solid #333 !important;
+  color: #888 !important;
+}
+
+/* 8. Рамки аватарок (делаем их просто белыми) */
+.frame-gold, 
+.frame-fire, 
+.frame-rainbow, 
+.frame-plus, 
+.frame-neon, 
+.frame-cyber, 
+.frame-space {
+  border: 2px solid #ffffff !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* 9. Ссылки и упоминания (ЦВЕТНЫЕ) */
+.msg-link {
+  color: #3b82f6 !important; /* Синий */
+  text-decoration: underline !important;
+  text-decoration-color: rgba(59, 130, 246, 0.5) !important;
+}
+.msg-mention {
+  color: #3b82f6 !important; /* Синий для @username */
+  font-weight: 800 !important;
+}
+
+/* В своих (белых) сообщениях ссылки делаем темно-синими */
+.msg.own .msg-link,
+.msg.own .msg-mention {
+  color: #1d4ed8 !important;
+  text-decoration-color: rgba(29, 78, 216, 0.5) !important;
+}
+
+/* 10. Убираем фиолетовые/оранжевые свечения */
+.bottom-nav,
+.settings-item-icon,
+.chat-info-action-icon {
+  box-shadow: none !important;
+}
+/* ============================================
+   ПРОЗРАЧНЫЕ БЛОКИ В ПРОФИЛЕ (GLASSMORPHISM)
+   ============================================ */
+
+/* 1. Карточка с инфой (Почта, Сквидики, @username) */
+#screen-profile .profile-info-card {
+  background: rgba(0, 0, 0, 0.2) !important; /* Темное прозрачное стекло */
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Разделители внутри карточки */
+#screen-profile .profile-info-row + .profile-info-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 2. Кнопки действий (Выбрать фото, Изменить, Настройки) */
+#screen-profile .profile-action-btn {
+  background: rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Иконки внутри кнопок */
+#screen-profile .profile-action-icon {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+/* 3. Кнопки вкладок (Группы / Каналы) */
+#screen-profile .profile-tab-btn {
+  background: rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Активная кнопка вкладки (белая) */
+#screen-profile .profile-tab-btn.active {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
+}
+/* ============================================
+   УБИРАЕМ ЧЕРНЫЙ ГРАДИЕНТ ЗА КАРТОЧКАМИ ПРОФИЛЯ
+   ============================================ */
+
+/* 1. Отключаем черную заливку на фоне профиля */
+#screen-profile .profile-scroll.has-bg::before {
+  display: none !important;
+  background: none !important;
+}
+
+/* 2. Делаем так, чтобы фон профиля был чистым (без темных слоев) */
+#screen-profile .profile-scroll {
+  background-color: transparent !important;
+}
+
+/* 3. И на всякий случай убираем любые градиенты у самого скролла */
+#screen-profile .profile-scroll.has-bg {
+  background-image: inherit !important; /* Оставляем только картинку/обои */
+}

@@ -704,5 +704,175 @@ if (btnSubmitAdmin) {
     }
   });
 }
+  /* ============================================================
+   СИСТЕМА УЛУЧШЕНИЯ ЮЗЕРНЕЙМОВ (РУЛЕТКА)
+   ============================================================ */
+
+const RARITIES = [
+  { id: "common",    name: "Обычный",          color: "#94a3b8", chance: 40, multiplier: 0 },
+  { id: "normal",    name: "Нормальный",       color: "#3b82f6", chance: 25, multiplier: 1.5 },
+  { id: "rare",      name: "Редкий",           color: "#10b981", chance: 15, multiplier: 3 },
+  { id: "epic",      name: "Эпический",        color: "#8b5cf6", chance: 10, multiplier: 6 },
+  { id: "legendary", name: "Легендарный",      color: "#f59e0b", chance: 5,  multiplier: 12 },
+  { id: "mythic",    name: "Мифический",       color: "#ec4899", chance: 3,  multiplier: 25 },
+  { id: "divine",    name: "Божественный",     color: "#facc15", chance: 1.5, multiplier: 50 },
+  { id: "priceless", name: "Бесценный",        color: "#ef4444", chance: 0.5, multiplier: 100 }
+];
+
+function generateRouletteList(winRarity) {
+  const list = [];
+  for (let i = 0; i < 40; i++) {
+    if (i === 35) {
+      list.push(winRarity);
+    } else {
+      const randomR = RARITIES[Math.floor(Math.random() * RARITIES.length)];
+      list.push(randomR);
+    }
+  }
+  return list;
+}
+
+function getRandomRarity() {
+  const rand = Math.random() * 100;
+  let sum = 0;
+  for (const r of RARITIES) {
+    sum += r.chance;
+    if (rand <= sum) return r;
+  }
+  return RARITIES[0];
+}
+
+let currentUpgradeUname = null;
+let currentUpgradePrice = 500;
+
+async function openUpgradeModal(uname) {
+  if (!uname) return;
+  currentUpgradeUname = uname;
+
+  const shopSnap = await get(ref(db, "usernames_shop"));
+  const shop = shopSnap.val() || {};
+  let item = null;
+  for (const id in shop) {
+    if (shop[id].username === uname) { item = shop[id]; break; }
+  }
+
+  const upgradesCount = (item && item.upgrades) || 0;
+  currentUpgradePrice = 500 * Math.pow(3, upgradesCount);
+
+  let currentRarity = RARITIES[0];
+  if (item && item.rarityId) {
+    currentRarity = RARITIES.find(r => r.id === item.rarityId) || RARITIES[0];
+  }
+
+  document.getElementById("upCurrentName").textContent = "@" + uname;
+  const rarEl = document.getElementById("upCurrentRarity");
+  rarEl.textContent = currentRarity.name;
+  rarEl.style.color = currentRarity.color;
+  document.getElementById("upPrice").textContent = currentUpgradePrice.toLocaleString("ru-RU") + " SQ";
+
+  const track = document.getElementById("rouletteTrack");
+  track.style.transition = "none";
+  track.style.transform = "translateX(0)";
+  
+  document.getElementById("modal-upgrade-username").classList.add("active");
+}
+
+const btnStartUpgrade = document.getElementById("btnStartUpgrade");
+if (btnStartUpgrade) {
+  const newBtn = btnStartUpgrade.cloneNode(true);
+  btnStartUpgrade.parentNode.replaceChild(newBtn, btnStartUpgrade);
+
+  newBtn.addEventListener("click", async () => {
+    const myCoins = myData.coins || 0;
+    if (myCoins < currentUpgradePrice) {
+      return S.showToast("Недостаточно Сквидиков! Нужно: " + currentUpgradePrice, "error");
+    }
+
+    newBtn.disabled = true;
+    newBtn.textContent = "Крутим...";
+
+    await update(ref(db, "users/" + currentUser.uid), { coins: myCoins - currentUpgradePrice });
+
+    const winRarity = getRandomRarity();
+    const rouletteList = generateRouletteList(winRarity);
+    const track = document.getElementById("rouletteTrack");
+    track.innerHTML = "";
+
+    rouletteList.forEach((r) => {
+      const el = document.createElement("div");
+      el.style.cssText = `
+        width: 80px; height: 100%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+        font-weight: 800; font-size: 14px; color: ${r.color};
+        border-right: 1px solid #333;
+      `;
+      el.textContent = r.name;
+      track.appendChild(el);
+    });
+
+    setTimeout(() => {
+      const shift = (35 * 80) - (track.parentElement.offsetWidth / 2) + 40;
+      track.style.transition = "transform 4s cubic-bezier(0.1, 0.8, 0.2, 1)";
+      track.style.transform = `translateX(-${shift}px)`;
+    }, 50);
+
+    setTimeout(async () => {
+      newBtn.disabled = false;
+      newBtn.textContent = "🎰 Крутить!";
+      await applyUpgrade(winRarity);
+    }, 4200);
+  });
+}
+
+async function applyUpgrade(rarity) {
+  const shopSnap = await get(ref(db, "usernames_shop"));
+  const shop = shopSnap.val() || {};
+  let itemId = null;
+  let itemData = null;
+
+  for (const id in shop) {
+    if (shop[id].username === currentUpgradeUname) { itemId = id; itemData = shop[id]; break; }
+  }
+
+  if (!itemId) {
+    const newRef = push(ref(db, "usernames_shop"));
+    itemId = newRef.key;
+    itemData = {
+      id: itemId,
+      username: currentUpgradeUname,
+      price: 0,
+      rarityId: "common",
+      upgrades: 0,
+      sold: true,
+      soldTo: currentUser.uid,
+      soldAt: Date.now()
+    };
+    await set(newRef, itemData);
+  }
+
+  const newUpgradesCount = (itemData.upgrades || 0) + 1;
+  await update(ref(db, "usernames_shop/" + itemId), {
+    rarityId: rarity.id,
+    upgrades: newUpgradesCount,
+    price: (itemData.price || 0) + (500 * Math.pow(3, newUpgradesCount - 1))
+  });
+
+  S.showAlert(
+    `🎉 Вы выкрутили: ${rarity.name}!\n\nВаш юзернейм @${currentUpgradeUname} стал лучше.`,
+    "Улучшение"
+  );
+
+  document.getElementById("modal-upgrade-username").classList.remove("active");
+
+  if (window.Sqwid && window.Sqwid.showScreen) {
+    window.Sqwid.showScreen("screen-profile");
+  }
+}
+
+const btnCloseUpgrade = document.getElementById("btnCloseUpgrade");
+if (btnCloseUpgrade) btnCloseUpgrade.addEventListener("click", () => {
+  document.getElementById("modal-upgrade-username").classList.remove("active");
+});
+
+window.Sqwid.openUpgradeModal = openUpgradeModal;
   console.log("✅ shop.js готов");
 });

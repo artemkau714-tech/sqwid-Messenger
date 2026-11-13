@@ -1,6 +1,6 @@
 /* ============================================================
    notifications.js — Уведомления о новых сообщениях
-   Браузерные пуши + favicon badge + звук + вибрация
+   Браузерные пуши + favicon badge + звук (Tunnn.m4a) + вибрация
    ============================================================ */
 
 console.log("🚀 notifications.js загружен, жду Sqwid...");
@@ -42,56 +42,26 @@ waitForSqwidNotify((S) => {
   } catch (e) {}
 
   /* ============================================================
-     ЗВУК (WebAudio, без файлов)
+     ЗВУК (ТВОЙ ФАЙЛ Tunnn.m4a)
      ============================================================ */
-  let audioCtx = null;
-  function ensureCtx() {
-    if (!audioCtx) {
-      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
-    }
-    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
-    return audioCtx;
-  }
-
   function playNotifySound() {
     if (!soundEnabled) return;
-    const ctx = ensureCtx();
-    if (!ctx) return;
 
-    const play = (freq, delay, dur) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = freq;
-      const t0 = ctx.currentTime + delay;
-      gain.gain.setValueAtTime(0, t0);
-      gain.gain.linearRampToValueAtTime(0.18, t0 + 0.02);
-      gain.gain.setValueAtTime(0.18, t0 + dur - 0.05);
-      gain.gain.linearRampToValueAtTime(0, t0 + dur);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(t0);
-      osc.stop(t0 + dur);
-    };
-    play(880, 0, 0.15);
-    play(1200, 0.12, 0.18);
-  }
-
-  function playSoundCheck() {
-    if (!soundEnabled) return;
-    const ctx = ensureCtx();
-    if (!ctx) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.value = 1000;
-    gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02);
-    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.45);
+    try {
+      // Создаем аудио-элемент каждый раз заново, чтобы не было багов с кешем
+      const audio = new Audio("Tunnn.m4a");
+      audio.volume = 0.7; // Громкость (0.0 - 1.0)
+      
+      const playPromise = audio.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.warn("Не удалось воспроизвести звук (автоплей заблокирован):", error);
+        });
+      }
+    } catch (e) {
+      console.warn("Ошибка звука:", e);
+    }
   }
 
   /* ============================================================
@@ -200,7 +170,6 @@ waitForSqwidNotify((S) => {
 
   /* ============================================================
      СЛУШАЕМ НОВЫЕ СООБЩЕНИЯ ВО ВСЕХ ЧАТАХ
-     Без query() — просто onValue(ref) и фильтруем на клиенте.
      ============================================================ */
   function startGlobalMessageWatcher() {
     if (unsubAllMsgs) unsubAllMsgs();
@@ -214,18 +183,15 @@ waitForSqwidNotify((S) => {
         }
       }
 
-      // Отписываемся от предыдущих слушателей
       if (window._notifyListeners) {
         window._notifyListeners.forEach(u => { try { u(); } catch (e) {} });
       }
       window._notifyListeners = [];
 
       myChatIds.forEach(chatId => {
-        // Подписка на весь messages чата (Firebase отдаст только при изменениях)
         const unsub = onValue(ref(db, "messages/" + chatId), (msgSnap) => {
           const data = msgSnap.val() || {};
 
-          // Ищем самое свежее сообщение на клиенте
           let latest = null;
           let latestId = null;
           for (const id in data) {
@@ -242,31 +208,25 @@ waitForSqwidNotify((S) => {
           if (latest.sender === currentUser.uid) return;
           if (latest.timestamp <= lastSeenMsgTs) return;
 
-          // Проверяем, не выключены ли уведомления у этого чата
           const me = userMap[currentUser.uid] || window._currentUserData || {};
           const mutes = me.muted || {};
           if (mutes[chatId]) return;
 
-          // Если открыт этот чат и вкладка активна — не уведомляем
           const currentChatId = S.getChatId && S.getChatId();
           if (currentChatId === chatId && document.visibilityState === "visible") return;
 
-          // Имя отправителя
           const sender = userMap[latest.sender] || {};
           const senderName = sender.name || sender.email || "Пользователь";
 
-          // Заголовок чата
           const chat = chats[chatId] || {};
           let chatName = chat.name || "";
           if (chat.type === "private") chatName = senderName;
 
-          // Текст превью
           let body = "";
           if (latest.type === "photo") body = "📷 Фото" + (latest.text ? ": " + latest.text : "");
           else if (latest.type === "voice") body = "🎤 Голосовое сообщение";
           else body = latest.text || "Новое сообщение";
 
-          // Уведомление
           showNotification({
             title: chat.type === "private" ? senderName : chatName,
             body: chat.type === "private" ? body : (senderName + ": " + body),
@@ -274,7 +234,6 @@ waitForSqwidNotify((S) => {
             tag: "sqwid_chat_" + chatId
           });
 
-          // Звук + вибрация
           playNotifySound();
           if (vibrateEnabled && navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
@@ -283,7 +242,6 @@ waitForSqwidNotify((S) => {
         window._notifyListeners.push(unsub);
       });
 
-      // После первого прохода включаем флаг
       setTimeout(() => { isFirstLoad = false; }, 1500);
     });
 
@@ -297,7 +255,7 @@ waitForSqwidNotify((S) => {
   }
 
   /* ============================================================
-     СЧЁТЧИК НЕПРОЧИТАННЫХ (общий)
+     СЧЁТЧИК НЕПРОЧИТАННЫХ
      ============================================================ */
   function updateUnreadBadge() {
     updateFavicon(unreadTotal);
@@ -332,7 +290,7 @@ waitForSqwidNotify((S) => {
   recountUnread();
 
   /* ============================================================
-     НАСТРОЙКИ (для settings.js)
+     НАСТРОЙКИ
      ============================================================ */
   window.Sqwid.notifications = {
     request: requestPermission,
@@ -341,7 +299,7 @@ waitForSqwidNotify((S) => {
     setSound: (v) => {
       soundEnabled = !!v;
       try { localStorage.setItem("sqwid_notify_sound", v ? "1" : "0"); } catch (e) {}
-      if (v) playSoundCheck();
+      if (v) playNotifySound(); // Играем твой звук при включении
     },
     getVibrate: () => vibrateEnabled,
     setVibrate: (v) => {
@@ -355,7 +313,8 @@ waitForSqwidNotify((S) => {
         body: "Это тестовое уведомление 🔔",
         tag: "sqwid_test"
       });
-      playSoundCheck();
+      // 🔥 Играем ТВОЙ звук Tunnn.m4a
+      playNotifySound();
     }
   };
 

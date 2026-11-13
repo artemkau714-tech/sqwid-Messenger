@@ -1,11 +1,5 @@
 /* ============================================================
-   chat-profile.js — экран профиля (с поддержкой фонов и значков)
-   + QR-иконка в шапке
-   + 3 кнопки: Выбрать фото / Изменить / Настройки
-   + поля: Почта, @username, Сквидики
-   + вкладки: Группы / Каналы
-   + фон профиля (пресеты из магазина или свой файл)
-   + значок из магазина рядом с ником
+   chat-profile.js — Мой профиль + Анонимный номер + Юзернеймы
    ============================================================ */
 
 console.log("🚀 chat-profile.js загружен, жду Sqwid...");
@@ -34,9 +28,6 @@ waitForSqwidProfile((S) => {
   let myChatsData = {};
   let activeTab = "groups";
 
-  /* ============================================================
-     ПРЕСЕТЫ ФОНОВ (синхронизированы с shop.js)
-     ============================================================ */
   const BG_PRESETS = {
     sunset: "linear-gradient(135deg, #f97316, #ec4899)",
     ocean:  "linear-gradient(135deg, #06b6d4, #3b82f6)",
@@ -45,9 +36,6 @@ waitForSqwidProfile((S) => {
     space:  "radial-gradient(circle at 50% 30%, #1e1b4b, #000)"
   };
 
-  /* ============================================================
-     ИКОНКИ ЗНАЧКОВ (синхронизированы с shop.js)
-     ============================================================ */
   const BADGE_SVG = {
     star:    `<svg viewBox="0 0 24 24" width="16" height="16" fill="#f59e0b" style="vertical-align:middle;margin-left:4px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
     crown:   `<svg viewBox="0 0 24 24" width="16" height="16" fill="#f59e0b" style="vertical-align:middle;margin-left:4px;"><path d="M3 7l4 4 5-7 5 7 4-4v12H3V7z"/></svg>`,
@@ -55,9 +43,6 @@ waitForSqwidProfile((S) => {
     diamond: `<svg viewBox="0 0 24 24" width="16" height="16" fill="#06b6d4" style="vertical-align:middle;margin-left:4px;"><path d="M6 2l-4 6 10 14L22 8l-4-6z"/></svg>`
   };
 
-  /* ============================================================
-     ХЕЛПЕРЫ
-     ============================================================ */
   function isPlus() {
     return myData.plusUntil && myData.plusUntil > Date.now();
   }
@@ -67,25 +52,16 @@ waitForSqwidProfile((S) => {
     return d.innerHTML;
   }
 
-  /* ============================================================
-     ПОДПИСКА НА СЕБЯ
-     ============================================================ */
   onValue(ref(db, "users/" + currentUser.uid), (snap) => {
     myData = snap.val() || {};
     renderProfile();
   });
 
-  /* ============================================================
-     ПОДПИСКА НА ЧАТЫ
-     ============================================================ */
   onValue(ref(db, "chats"), (snap) => {
     myChatsData = snap.val() || {};
     renderTabContent();
   });
 
-  /* ============================================================
-     РЕНДЕР ПРОФИЛЯ
-     ============================================================ */
   function renderProfile() {
     const name = myData.name || (currentUser.email || "").split("@")[0] || "Пользователь";
 
@@ -99,7 +75,6 @@ waitForSqwidProfile((S) => {
       if (myData.nickFont === "mono") fontStyle += "font-family:'JetBrains Mono',monospace;";
       if (myData.nickFont === "script") fontStyle += "font-family:'Caveat',cursive;";
 
-      // Градиент / цвет
       if (myData.nickColor && typeof myData.nickColor === "string" && myData.nickColor.startsWith("linear-gradient")) {
         nameHTML += `<span style="display:inline-block;background:${myData.nickColor};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;font-weight:800;${fontStyle}">${escH(name)}</span>`;
       } else if (myData.nickColor) {
@@ -110,51 +85,58 @@ waitForSqwidProfile((S) => {
         nameHTML += `<span style="${fontStyle}">${escH(name)}</span>`;
       }
 
-      // Значок из магазина (SVG)
       if (myData.shopEquipped && myData.shopEquipped.badge && BADGE_SVG[myData.shopEquipped.badge]) {
         nameHTML += BADGE_SVG[myData.shopEquipped.badge];
       }
-
-      // Emoji из настроек (кастомный ник)
       if (myData.nickEmoji) nameHTML += ` <span class="nick-emoji">${myData.nickEmoji}</span>`;
 
       nameEl.innerHTML = nameHTML;
     }
 
-    /* ---- Юзернеймы (основной + купленные) ---- */
-const mainUnEl = document.getElementById("profileMainUsername");
-const extraUnEl = document.getElementById("profileExtraUsernames");
+    /* ---- Юзернеймы ---- */
+    const mainUnEl = document.getElementById("profileMainUsername");
+    const extraUnEl = document.getElementById("profileExtraUsernames");
 
-if (mainUnEl) {
-  if (myData.username) {
-    mainUnEl.textContent = "@" + myData.username;
-    mainUnEl.style.color = "#3b82f6"; // Синий, как в Telegram
-  } else {
-    mainUnEl.textContent = "Установить @username";
-    mainUnEl.style.color = "var(--text-3)";
-    mainUnEl.style.fontSize = "0.95rem";
-    mainUnEl.style.cursor = "pointer";
-    mainUnEl.onclick = () => {
-      if (window.Sqwid && window.Sqwid.showScreen) {
-        window.Sqwid.showScreen("screen-settings-account");
+    if (mainUnEl) {
+      if (myData.username) {
+        mainUnEl.textContent = "@" + myData.username;
+        mainUnEl.style.color = "#3b82f6";
+        mainUnEl.style.cursor = "pointer";
+        mainUnEl.style.textDecoration = "underline";
+        mainUnEl.onclick = () => openUsernameInfoModal(myData.username, myData);
+      } else {
+        mainUnEl.textContent = "Установить @username";
+        mainUnEl.style.color = "var(--text-3)";
+        mainUnEl.style.cursor = "pointer";
+        mainUnEl.style.textDecoration = "none";
+        mainUnEl.onclick = () => {
+          if (window.Sqwid && window.Sqwid.showScreen) window.Sqwid.showScreen("screen-settings-account");
+        };
       }
-    };
-  }
-}
+    }
 
-if (extraUnEl) {
-  const purchased = myData.purchasedUsernames || {};
-  const extraList = Object.keys(purchased);
-  
-  if (extraList.length > 0) {
-    // Форматируем: "а также @neo, @king"
-    const formatted = extraList.map(u => `@${u}`).join(", ");
-    extraUnEl.innerHTML = `а также <span style="color: #3b82f6; font-weight: 600;">${formatted}</span>`;
-    extraUnEl.style.display = "block";
-  } else {
-    extraUnEl.style.display = "none";
-  }
-}
+    if (extraUnEl) {
+      const purchased = myData.purchasedUsernames || {};
+      const extraList = Object.keys(purchased);
+      
+      if (extraList.length > 0) {
+        extraUnEl.innerHTML = `а также `;
+        extraList.forEach((uname, index) => {
+          const span = document.createElement("span");
+          span.textContent = "@" + uname;
+          span.style.cssText = "color: #3b82f6; font-weight: 600; cursor: pointer; text-decoration: underline; margin-right: 4px;";
+          span.onclick = () => openUsernameInfoModal(uname, myData);
+          extraUnEl.appendChild(span);
+          
+          if (index < extraList.length - 1) {
+            extraUnEl.appendChild(document.createTextNode(", "));
+          }
+        });
+        extraUnEl.style.display = "block";
+      } else {
+        extraUnEl.style.display = "none";
+      }
+    }
 
     /* ---- Bio ---- */
     const bioEl = document.getElementById("profileBio");
@@ -176,7 +158,6 @@ if (extraUnEl) {
     const wrap = document.querySelector("#screen-profile .profile-ava-wrap");
     if (wrap) {
       wrap.classList.remove("frame-gold", "frame-fire", "frame-rainbow", "frame-plus");
-      // Приоритет: shopEquipped.frame > avatarFrame > plus
       const frameValue = (myData.shopEquipped && myData.shopEquipped.frame) || myData.avatarFrame;
       if (frameValue) {
         wrap.classList.add("frame-" + frameValue);
@@ -188,7 +169,6 @@ if (extraUnEl) {
     /* ---- ФОН ПРОФИЛЯ ---- */
     const scroll = document.getElementById("profileScroll");
     if (scroll) {
-      // Приоритет: свой загруженный фон (Sqwid+) > пресет из магазина
       const equippedBg = myData.shopEquipped && myData.shopEquipped.bg;
       
       if (myData.profileBg && isPlus()) {
@@ -213,14 +193,177 @@ if (extraUnEl) {
     const emailEl = document.getElementById("profileEmailValue");
     if (emailEl) emailEl.textContent = currentUser.email || "—";
 
-    const unValEl = document.getElementById("profileUsernameValue");
-    if (unValEl) unValEl.textContent = myData.username ? "@" + myData.username : "@—";
+    /* ---- Анонимный номер ---- */
+    let phoneRow = document.getElementById("profilePhoneRow");
+    if (!phoneRow) {
+      // Создаем строку, если ее нет
+      const infoCard = document.querySelector("#screen-profile .profile-info-card");
+      if (infoCard) {
+        phoneRow = document.createElement("div");
+        phoneRow.className = "profile-info-row";
+        phoneRow.id = "profilePhoneRow";
+        phoneRow.innerHTML = `
+          <div class="profile-info-value" id="profilePhoneValue" style="cursor: pointer;">—</div>
+          <div class="profile-info-label">Номер телефона</div>
+        `;
+        infoCard.appendChild(phoneRow);
+      }
+    }
+
+    const phoneValEl = document.getElementById("profilePhoneValue");
+    if (phoneValEl) {
+      if (myData.phone) {
+        phoneValEl.textContent = myData.phone;
+        phoneValEl.style.color = "#10b981"; // Зеленый
+        phoneValEl.style.cursor = "pointer";
+        phoneValEl.style.textDecoration = "underline";
+        
+        // 🔥 ПРИ КЛИКЕ ОТКРЫВАЕМ МОДАЛКУ СМЕНЫ
+        phoneValEl.onclick = () => {
+          document.getElementById("modal-change-phone").classList.add("active");
+        };
+      } else {
+        phoneValEl.textContent = "Придумайте ваш анонимный номер";
+        phoneValEl.style.color = "#3b82f6"; // Синий
+        phoneValEl.style.cursor = "pointer";
+        phoneValEl.style.textDecoration = "none";
+        phoneValEl.onclick = () => {
+          document.getElementById("anonPhoneInput").value = "";
+          document.getElementById("modal-anon-phone").classList.add("active");
+        };
+      }
+    }
 
     const coinsEl = document.getElementById("profileCoinsValue");
     if (coinsEl) {
       const coins = myData.coins || 0;
       coinsEl.innerHTML = (window.Sqwid.coinIcon ? window.Sqwid.coinIcon(14) : "") + " " + coins.toLocaleString("ru-RU") + " SQ";
     }
+  }
+
+  /* ============================================================
+     МОДАЛКА ИНФО О ЮЗЕРНЕЙМЕ
+     ============================================================ */
+  async function openUsernameInfoModal(uname, userData) {
+    const modal = document.getElementById("modal-username-info");
+    if (!modal) return;
+
+    document.getElementById("unInfoName").textContent = "@" + uname;
+    document.getElementById("unInfoOwner").textContent = userData.name || "Вы";
+
+    const shopSnap = await get(ref(db, "usernames_shop"));
+    const shop = shopSnap.val() || {};
+    let shopItem = null;
+
+    for (const id in shop) {
+      if (shop[id].username === uname) {
+        shopItem = shop[id];
+        break;
+      }
+    }
+
+    if (shopItem) {
+      document.getElementById("unInfoPrice").textContent = (shopItem.price || 0).toLocaleString("ru-RU") + " SQ";
+      if (shopItem.soldAt) {
+        const d = new Date(shopItem.soldAt);
+        document.getElementById("unInfoDate").textContent = `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${d.getFullYear()}`;
+      } else {
+        document.getElementById("unInfoDate").textContent = "—";
+      }
+    } else {
+      document.getElementById("unInfoPrice").textContent = "Основной";
+      document.getElementById("unInfoDate").textContent = "—";
+    }
+
+    let rarity = "Обычный";
+    let rarityColor = "#94a3b8";
+    let rarityBg = "rgba(148, 163, 184, 0.15)";
+
+    if (uname.length <= 3) {
+      rarity = "Легендарный"; rarityColor = "#f59e0b"; rarityBg = "rgba(245, 158, 11, 0.15)";
+    } else if (uname.length <= 5) {
+      rarity = "Эпический"; rarityColor = "#a855f7"; rarityBg = "rgba(168, 85, 247, 0.15)";
+    } else if (uname.length <= 7) {
+      rarity = "Редкий"; rarityColor = "#3b82f6"; rarityBg = "rgba(59, 130, 246, 0.15)";
+    }
+
+    const rarEl = document.getElementById("unInfoRarity");
+    rarEl.textContent = rarity;
+    rarEl.style.color = rarityColor;
+    rarEl.style.background = rarityBg;
+
+    // 🔥 ПРИВЯЗКА КНОПКИ УЛУЧШЕНИЯ
+    const btnUpgrade = document.getElementById("btnUpgradeUsernameInModal");
+    if (btnUpgrade) {
+      const newUpg = btnUpgrade.cloneNode(true);
+      btnUpgrade.parentNode.replaceChild(newUpg, btnUpgrade);
+      
+      newUpg.style.display = "block";
+      newUpg.onclick = () => {
+        modal.classList.remove("active");
+        if (window.Sqwid.openUpgradeModal) {
+          window.Sqwid.openUpgradeModal(uname);
+        } else {
+          S.showToast("Рулетка загружается...", "info");
+        }
+      };
+    }
+
+    modal.classList.add("active");
+  }
+
+  const btnCloseUnInfo = document.getElementById("btnCloseUnInfo");
+  if (btnCloseUnInfo) {
+    const newBtn = btnCloseUnInfo.cloneNode(true);
+    btnCloseUnInfo.parentNode.replaceChild(newBtn, btnCloseUnInfo);
+    newBtn.addEventListener("click", () => {
+      document.getElementById("modal-username-info").classList.remove("active");
+    });
+  }
+
+  /* ============================================================
+     СОХРАНЕНИЕ АНОНИМНОГО НОМЕРА
+     ============================================================ */
+  const btnSaveAnonPhone = document.getElementById("btnSaveAnonPhone");
+  if (btnSaveAnonPhone) {
+    const newBtn = btnSaveAnonPhone.cloneNode(true);
+    btnSaveAnonPhone.parentNode.replaceChild(newBtn, btnSaveAnonPhone);
+    
+    newBtn.addEventListener("click", async () => {
+      const input = document.getElementById("anonPhoneInput");
+      const digits = input.value.replace(/\D/g, ""); // Оставляем только цифры
+
+      if (digits.length !== 8) {
+        return S.showToast("Введите ровно 8 цифр", "error");
+      }
+
+      const fullPhone = "+888" + digits;
+
+      try {
+        await update(ref(db, "users/" + currentUser.uid), { phone: fullPhone });
+        S.showToast("Номер сохранен навсегда!", "ok");
+        document.getElementById("modal-anon-phone").classList.remove("active");
+      } catch (e) {
+        S.showToast("Ошибка: " + e.message, "error");
+      }
+    });
+  }
+
+  const btnCancelAnonPhone = document.getElementById("btnCancelAnonPhone");
+  if (btnCancelAnonPhone) {
+    btnCancelAnonPhone.addEventListener("click", () => {
+      document.getElementById("modal-anon-phone").classList.remove("active");
+    });
+  }
+
+  /* ============================================================
+     ЗАКРЫТИЕ МОДАЛКИ СМЕНЫ НОМЕРА
+     ============================================================ */
+  const btnCloseChangePhone = document.getElementById("btnCloseChangePhone");
+  if (btnCloseChangePhone) {
+    btnCloseChangePhone.addEventListener("click", () => {
+      document.getElementById("modal-change-phone").classList.remove("active");
+    });
   }
 
   /* ============================================================
@@ -294,20 +437,14 @@ if (extraUnEl) {
   /* ============================================================
      КНОПКИ
      ============================================================ */
-
-  /* --- «Выбрать фото» --- */
   const btnPhoto = document.getElementById("btnProfilePhoto");
   const avatarInput = document.getElementById("profileAvatarInput");
   if (btnPhoto && avatarInput) {
     btnPhoto.addEventListener("click", () => avatarInput.click());
-
     avatarInput.addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      if (file.size > 500 * 1024) {
-        S.showToast("Фото до 500 КБ", "error");
-        return;
-      }
+      if (file.size > 500 * 1024) return S.showToast("Фото до 500 КБ", "error");
       const r = new FileReader();
       r.onload = async (ev) => {
         try {
@@ -322,23 +459,12 @@ if (extraUnEl) {
     });
   }
 
-  /* --- «Изменить» --- */
   const btnEdit = document.getElementById("btnEditProfile");
-  if (btnEdit) {
-    btnEdit.addEventListener("click", () => {
-      S.showScreen("screen-settings-account");
-    });
-  }
+  if (btnEdit) btnEdit.addEventListener("click", () => S.showScreen("screen-settings-account"));
 
-  /* --- «Настройки» --- */
   const btnSettings = document.getElementById("btnProfileSettings");
-  if (btnSettings) {
-    btnSettings.addEventListener("click", () => {
-      S.showScreen("screen-settings");
-    });
-  }
+  if (btnSettings) btnSettings.addEventListener("click", () => S.showScreen("screen-settings"));
 
-  /* --- QR-иконка в шапке --- */
   const btnQr = document.getElementById("btnProfileQr");
   if (btnQr) {
     btnQr.addEventListener("click", () => {
@@ -347,14 +473,13 @@ if (extraUnEl) {
     });
   }
 
-  /* --- Share в шапке --- */
   const btnShare = document.getElementById("btnShareProfile");
-if (btnShare) {
-  btnShare.addEventListener("click", async () => {
-    const base = window.location.origin;
-    const link = myData.username
-      ? base + "/chat?u=" + myData.username
-      : base + "/chat?uid=" + currentUser.uid;
+  if (btnShare) {
+    btnShare.addEventListener("click", async () => {
+      const base = window.location.origin;
+      const link = myData.username
+        ? base + "/chat?u=" + myData.username
+        : base + "/chat?uid=" + currentUser.uid;
       try {
         if (navigator.clipboard) {
           await navigator.clipboard.writeText(link);
@@ -368,7 +493,6 @@ if (btnShare) {
     });
   }
 
-  /* --- Бургер в шапке --- */
   const btnBurger = document.getElementById("btnBurgerFromProfile");
   if (btnBurger) {
     btnBurger.addEventListener("click", () => {
