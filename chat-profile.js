@@ -196,7 +196,6 @@ waitForSqwidProfile((S) => {
     /* ---- Анонимный номер ---- */
     let phoneRow = document.getElementById("profilePhoneRow");
     if (!phoneRow) {
-      // Создаем строку, если ее нет
       const infoCard = document.querySelector("#screen-profile .profile-info-card");
       if (infoCard) {
         phoneRow = document.createElement("div");
@@ -218,8 +217,12 @@ waitForSqwidProfile((S) => {
         phoneValEl.style.cursor = "pointer";
         phoneValEl.style.textDecoration = "underline";
         
-        // 🔥 ПРИ КЛИКЕ ОТКРЫВАЕМ МОДАЛКУ СМЕНЫ
+        // 🔥 ПРИ КЛИКЕ ОТКРЫВАЕМ МОДАЛКУ И ЗАПОЛНЯЕМ ТЕКУЩИЙ НОМЕР
         phoneValEl.onclick = () => {
+          document.getElementById("changePhoneCurrent").value = myData.phone;
+          document.getElementById("changePhoneNew").value = "";
+          document.getElementById("changePhoneIfBusy").value = "";
+          document.getElementById("changePhoneMessage").value = "";
           document.getElementById("modal-change-phone").classList.add("active");
         };
       } else {
@@ -357,11 +360,52 @@ waitForSqwidProfile((S) => {
   }
 
   /* ============================================================
-     ЗАКРЫТИЕ МОДАЛКИ СМЕНЫ НОМЕРА
+     ОТПРАВКА ЗАЯВКИ НА СМЕНУ НОМЕРА
      ============================================================ */
-  const btnCloseChangePhone = document.getElementById("btnCloseChangePhone");
-  if (btnCloseChangePhone) {
-    btnCloseChangePhone.addEventListener("click", () => {
+  const btnSendPhoneRequest = document.getElementById("btnSendPhoneRequest");
+  if (btnSendPhoneRequest) {
+    const newBtn = btnSendPhoneRequest.cloneNode(true);
+    btnSendPhoneRequest.parentNode.replaceChild(newBtn, btnSendPhoneRequest);
+    
+    newBtn.addEventListener("click", async () => {
+      const curPhone = document.getElementById("changePhoneCurrent").value;
+      let newPhone = document.getElementById("changePhoneNew").value.trim();
+      const ifBusy = document.getElementById("changePhoneIfBusy").value.trim();
+      const msg = document.getElementById("changePhoneMessage").value.trim();
+
+      // Приводим к формату +888...
+      newPhone = newPhone.replace(/\D/g, "");
+      if (newPhone.length === 8) newPhone = "+888" + newPhone;
+      else if (newPhone.length === 11 && newPhone.startsWith("888")) newPhone = "+888" + newPhone.slice(3);
+
+      if (!newPhone || !/^\+888\d{8}$/.test(newPhone)) {
+        return S.showToast("Введите желаемый номер в формате +888XXXXXXXX", "error");
+      }
+
+      // Формируем текст письма
+      const emailBody = 
+        `Здравствуйте! Я хочу изменить свой анонимный номер.\n\n` +
+        `Текущий номер: ${curPhone}\n` +
+        `Желаемый номер: ${newPhone}\n` +
+        `Если номер занят: ${ifBusy || "(не указано)"}\n` +
+        `Пожелания: ${msg || "(нет)"}\n\n` +
+        `Мой ID: ${currentUser.uid}\n` +
+        `Мой email: ${currentUser.email}`;
+
+      const emailSubject = "Смена анонимного номера Sqwid";
+      const mailto = `mailto:sqwid.support@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+
+      // Открываем почтовое приложение
+      window.location.href = mailto;
+      
+      document.getElementById("modal-change-phone").classList.remove("active");
+      S.showToast("Открываем почтовое приложение...", "info");
+    });
+  }
+
+  const btnCancelPhoneRequest = document.getElementById("btnCancelPhoneRequest");
+  if (btnCancelPhoneRequest) {
+    btnCancelPhoneRequest.addEventListener("click", () => {
       document.getElementById("modal-change-phone").classList.remove("active");
     });
   }

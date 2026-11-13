@@ -2110,6 +2110,35 @@
     <button class="btn-secondary" id="btnCloseUpgrade" style="width: 100%; margin-top: 12px;">Отмена</button>
   </div>
 </div>
+  <!-- МОДАЛКА СМЕНЫ НОМЕРА (ЗАЯВКА) -->
+<div id="modal-change-phone" class="modal">
+  <div class="modal-content" style="padding: 24px;">
+    <h2 style="text-align: center; margin-bottom: 16px;">Заявка на смену номера</h2>
+    
+    <div class="settings-field" style="padding: 0 0 16px 0;">
+      <label>Текущий номер</label>
+      <input id="changePhoneCurrent" type="text" class="settings-input" readonly style="opacity: 0.7; background: rgba(0,0,0,0.1);">
+    </div>
+
+    <div class="settings-field" style="padding: 0 0 16px 0;">
+      <label>Желаемый номер (+888 и 8 цифр)</label>
+      <input id="changePhoneNew" type="tel" placeholder="+88812345678" maxlength="12" class="settings-input">
+    </div>
+
+    <div class="settings-field" style="padding: 0 0 16px 0;">
+      <label>Если номер занят, что делать?</label>
+      <input id="changePhoneIfBusy" type="text" placeholder="Например: придумайте другой" class="settings-input">
+    </div>
+
+    <div class="settings-field" style="padding: 0 0 16px 0;">
+      <label>Пожелания / Сообщение модераторам</label>
+      <textarea id="changePhoneMessage" rows="2" placeholder="Ваше сообщение..." class="settings-input"></textarea>
+    </div>
+
+    <button class="btn-create" id="btnSendPhoneRequest" style="width: 100%;">Отправить заявку</button>
+    <button class="btn-secondary" id="btnCancelPhoneRequest" style="width: 100%; margin-top: 12px;">Отмена</button>
+  </div>
+</div>
 <!-- МОДАЛКА СМЕНЫ НОМЕРА -->
 <div id="modal-change-phone" class="modal">
   <div class="modal-content" style="text-align: center; padding: 24px;">
