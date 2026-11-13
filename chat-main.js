@@ -135,7 +135,10 @@ function showScreen(id) {
       "screen-choose-members", "screen-chat-info", "screen-edit-chat",
       "screen-chat-members", "screen-owner", "screen-report-view",
       "screen-search-messages", "screen-gallery", "screen-viewer",
-      "screen-banned", "screen-games", "screen-payment-stub"
+      "screen-banned", "screen-games", "screen-payment-stub", "screen-call",
+      "screen-qr",
+      // 👇 ДОБАВЛЯЕМ ЭТИ СТРОКИ:
+      "screen-checkout", "screen-settings-plus", "screen-settings-business"
     ].includes(id);
     if (nav) nav.style.display = hideNav ? "none" : "flex";
     document.body.classList.toggle("on-chat", id === "screen-messages");
@@ -338,7 +341,34 @@ onAuthStateChanged(auth, async (user) => {
     window.location.replace("index.html");
     return;
   }
+
+  // ============================================================
+  // 🔥 РЕЖИМ РАЗРАБОТКИ (БЕЛЫЙ СПИСОК)
+  // ============================================================
+  const DEV_EMAIL = "artemkau714@gmail.com";
+  const IS_DEV_MODE = true; // Поставь false, когда захочешь открыть для всех
+
+  if (IS_DEV_MODE && user.email !== DEV_EMAIL) {
+    // Показываем заглушку и выкидываем
+    document.body.innerHTML = `
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center; padding:20px; font-family:sans-serif; background:#0a0a10; color:#fff;">
+        <div style="font-size:60px; margin-bottom:20px;">🛠</div>
+        <h1 style="margin:0 0 10px;">Идут технические работы</h1>
+        <p style="color:#a1a1aa; max-width:300px; line-height:1.5; margin-bottom:20px;">
+          Мы обновляем Sqwid. Пожалуйста, зайдите позже.
+        </p>
+        <button onclick="window.location.href='index.html'" style="padding:12px 24px; border-radius:12px; border:none; background:#f97316; color:#fff; font-weight:bold; cursor:pointer;">
+          На главную
+        </button>
+      </div>
+    `;
+    await signOut(auth);
+    return;
+  }
+  // ============================================================
+
   currentUser = user;
+ 
 
   window.Sqwid = {
     currentUser,

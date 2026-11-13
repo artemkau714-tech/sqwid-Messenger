@@ -1,8 +1,8 @@
 /* ============================================================
-   shop-plus.js — Покупка Sqwid+ Premium
+   shop-plus.js — ФИНАЛЬНАЯ ВЕРСИЯ (С экраном подтверждения)
    ============================================================ */
 
-console.log("🚀 shop-plus.js загружен, жду Sqwid...");
+console.log("🚀 shop-plus.js загружен");
 
 function waitForSqwidShopPlus(cb) {
   let tries = 0;
@@ -28,7 +28,11 @@ waitForSqwidShopPlus((S) => {
   const WORKER_URL = "https://sqwid.artemkau714.workers.dev/create-payment"; 
 
   let myData = {};
+  let currentCheckoutData = null; // Данные текущей покупки
 
+  /* ============================================================
+     КАТАЛОГ ТАРИФОВ
+     ============================================================ */
   const CATALOG = {
     premium: [
       { id: "plus_1m", name: "1 месяц",   price: 199,  months: 1 },
@@ -41,6 +45,9 @@ waitForSqwidShopPlus((S) => {
     myData = snap.val() || {};
   });
 
+  /* ============================================================
+     ОТКРЫТИЕ МОДАЛКИ ВЫБОРА ТАРИФА
+     ============================================================ */
   function openTopUp() {
     const modal = document.getElementById("modal-topup");
     if (!modal) return;
@@ -51,6 +58,9 @@ waitForSqwidShopPlus((S) => {
   }
   window.Sqwid.openTopUp = openTopUp;
 
+  /* ============================================================
+     РЕНДЕР МЕНЮ ВЫБОРА ТАРИФА (Внутри модалки)
+     ============================================================ */
   function renderTopUpMenu() {
     const box = document.getElementById("topupScroll");
     if (!box) return;
@@ -100,6 +110,9 @@ waitForSqwidShopPlus((S) => {
     box.appendChild(coinsInfo);
   }
 
+  /* ============================================================
+     КАРТОЧКА ТАРИФА
+     ============================================================ */
   function buildProductRow(item, type) {
     const row = document.createElement("button");
     row.className = "topup-product";
@@ -119,39 +132,132 @@ waitForSqwidShopPlus((S) => {
       <div class="topup-product-price">${item.price}₽</div>
     `;
 
+    // 🔥 ПРИ КЛИКЕ ОТКРЫВАЕМ НАШ НОВЫЙ ЭКРАН
     row.addEventListener("click", () => {
-      selectProduct(item, type);
+      openCheckoutScreen(item, type);
     });
 
     return row;
   }
 
-  async function selectProduct(item, type) {
+  /* ============================================================
+     ЭКРАН ПОДТВЕРЖДЕНИЯ ОПЛАТЫ (Checkout)
+     ============================================================ */
+  function openCheckoutScreen(item, type) {
+    // Закрываем модалку выбора тарифа
     const modal = document.getElementById("modal-topup");
     if (modal) modal.classList.remove("active");
 
-    S.showToast("Создаём платёж...", "info");
+    // Сохраняем данные текущей покупки
+    currentCheckoutData = { item, type };
 
-    try {
-      const response = await fetch(WORKER_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: currentUser.uid,
-          planId: item.id
-        }),
-      });
+    // Заполняем данные на экране
+    const nameEl = document.getElementById("checkoutName");
+    const descEl = document.getElementById("checkoutDesc");
+    const periodEl = document.getElementById("checkoutPeriod");
+    const priceSubEl = document.getElementById("checkoutPriceSub");
+    const priceTotalEl = document.getElementById("checkoutPriceTotal");
+    const btnPriceEl = document.getElementById("btnFinalPayPrice");
 
-      const data = await response.json();
-      
-      if (data.error) throw new Error(data.error);
+    const formattedPrice = item.price.toLocaleString("ru-RU") + ",00 ₽";
+    
+    if (nameEl) nameEl.textContent = (type === "business" ? "Business: " : "Sqwid+: ") + item.name;
+    if (descEl) descEl.textContent = type === "business" ? "Ваш доступ к бизнес-функциям." : "Ваш доступ к десяткам эксклюзивных функций.";
+    if (periodEl) periodEl.textContent = item.months === 1 ? "Ежемесячный платёж" : "Платёж за " + item.months + " мес.";
+    if (priceSubEl) priceSubEl.textContent = formattedPrice;
+    if (priceTotalEl) priceTotalEl.textContent = formattedPrice;
+    if (btnPriceEl) btnPriceEl.textContent = formattedPrice;
 
-      // Перенаправляем на оплату
-      window.location.href = data.redirect;
-      
-    } catch (e) {
-      S.showAlert("Ошибка оплаты: " + e.message, "Ошибка");
+    // Сбрасываем галочку и кнопку
+    const agree = document.getElementById("checkoutAgree");
+    if (agree) agree.checked = false;
+    updatePayButtonState();
+
+    // Переходим на экран
+    S.showScreen("screen-checkout");
+  }
+
+  function updatePayButtonState() {
+    const agree = document.getElementById("checkoutAgree");
+    const btn = document.getElementById("btnFinalPay");
+    if (!agree || !btn) return;
+
+    if (agree.checked) {
+      btn.style.background = "linear-gradient(135deg, #8b5cf6, #ec4899)";
+      btn.style.color = "#fff";
+      btn.style.cursor = "pointer";
+    } else {
+      btn.style.background = "#4b5563";
+      btn.style.color = "rgba(255,255,255,0.5)";
+      btn.style.cursor = "not-allowed";
     }
+  }
+
+  // Привязка галочки
+  const agreeCheckbox = document.getElementById("checkoutAgree");
+  if (agreeCheckbox) {
+    const newChk = agreeCheckbox.cloneNode(true);
+    agreeCheckbox.parentNode.replaceChild(newChk, agreeCheckbox);
+    newChk.addEventListener("change", updatePayButtonState);
+  }
+
+  // Привязка кнопки "ЗАПЛАТИТЬ" (Отправка на воркер)
+  const btnFinalPay = document.getElementById("btnFinalPay");
+  if (btnFinalPay) {
+    const newBtn = btnFinalPay.cloneNode(true);
+    btnFinalPay.parentNode.replaceChild(newBtn, btnFinalPay);
+    
+    newBtn.addEventListener("click", async () => {
+      const agree = document.getElementById("checkoutAgree");
+      if (!agree || !agree.checked) return;
+      if (!currentCheckoutData) return;
+
+      const { item, type } = currentCheckoutData;
+
+      // Меняем текст кнопки на время загрузки
+      newBtn.textContent = "Создаём платёж...";
+      newBtn.disabled = true;
+
+      try {
+        const response = await fetch(WORKER_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            uid: currentUser.uid,
+            planId: item.id,
+            type: type,
+            price: item.price,
+            name: item.name
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.error) throw new Error(data.error);
+        if (!data.redirect) throw new Error("Воркер не вернул ссылку на оплату (redirect)");
+
+        // 🔥 ПЕРЕХОД НА САЙТ ОПЛАТЫ
+        window.location.href = data.redirect;
+
+      } catch (e) {
+        console.error("Ошибка оплаты:", e);
+        S.showAlert("Ошибка оплаты: " + e.message + "\n\nПроверьте, работает ли ваш воркер.", "Ошибка");
+        newBtn.textContent = "ЗАПЛАТИТЬ " + item.price.toLocaleString("ru-RU") + ",00 ₽";
+        newBtn.disabled = false;
+      }
+    });
+  }
+
+  // Кнопка "Назад" на экране чекаута
+  const btnBackCheckout = document.getElementById("btnBackCheckout");
+  if (btnBackCheckout) {
+    const newBack = btnBackCheckout.cloneNode(true);
+    btnBackCheckout.parentNode.replaceChild(newBack, btnBackCheckout);
+    newBack.addEventListener("click", () => {
+      // Возвращаемся на экран подписки
+      const type = currentCheckoutData ? currentCheckoutData.type : "premium";
+      S.showScreen(type === "business" ? "screen-settings-business" : "screen-settings-plus");
+    });
   }
 
   /* ============================================================
@@ -213,5 +319,5 @@ waitForSqwidShopPlus((S) => {
     });
   }
 
-  console.log("✅ shop-plus.js готов");
+  console.log("✅ shop-plus.js полностью готов (с экраном оплаты)");
 });
