@@ -632,10 +632,6 @@
         <div class="settings-section-title">Тема оформления</div>
         <div class="settings-card">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
-            <button id="themeLight" class="theme-btn active" type="button">
-              <div class="theme-btn-icon">☀️</div>
-              <div class="theme-btn-label">Светлая</div>
-            </button>
             <button id="themeDark" class="theme-btn" type="button">
               <div class="theme-btn-icon">🌙</div>
               <div class="theme-btn-label">Тёмная</div>
@@ -647,12 +643,14 @@
           </div>
         </div>
       </div>
-      <div class="settings-section">
-        <div class="settings-section-title">Фон сообщений</div>
-        <div class="settings-card">
-          <div id="bgPicker" class="bg-picker"></div>
-        </div>
-      </div>
+      <class="settings-section">
+  <div class="settings-section-title">Фон сообщений</div>
+  <div class="settings-card">
+    <!-- Новые кастомные фоны -->
+    <div id="customBgPicker" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
+      <!-- Фон будет генерироваться через JS, чтобы не хардкодить пути -->
+    </div>
+  </div>
     </div>
   </div>
 
@@ -1091,11 +1089,9 @@
       </div>
     </header>
     <div class="shop-tabs">
-      <button class="shop-tab active" data-shop-tab="frames" data-i18n="shop.frames">Рамки</button>
-      <button class="shop-tab" data-shop-tab="backgrounds" data-i18n="shop.backgrounds">Фоны</button>
-      <button class="shop-tab" data-shop-tab="badges" data-i18n="shop.badges">Значки</button>
-      <button class="shop-tab" data-shop-tab="nicks" data-i18n="shop.nicks">Ники</button>
-      <button class="shop-tab" data-shop-tab="usernames" data-i18n="shop.usernames">Юзернеймы</button>
+  <button class="shop-tab active" data-shop-tab="badges">Значки</button>
+  <button class="shop-tab" data-shop-tab="profileBg">Фоны профиля</button>
+  <button class="shop-tab" data-shop-tab="usernames">Юзернеймы</button>
     </div>
     <div id="shopBody" class="shop-body">
       <div id="shopGrid" class="shop-grid"></div>
@@ -2042,7 +2038,10 @@
     <button class="btn-create" id="btnUpgradeUsernameInModal" style="width: 100%; margin-bottom: 12px; background: linear-gradient(135deg, #f59e0b, #ec4899); display: none;">
       🎰 Улучшить юзернейм
     </button>
-
+<!-- Кнопка продажи -->
+<button class="btn-create" id="btnSellUsername" style="width: 100%; margin-bottom: 12px; background: linear-gradient(135deg, #10b981, #059669); display: none;">
+  💰 Продать юзернейм
+</button>
     <button class="btn-secondary" id="btnCloseUnInfo" style="width: 100%;">Понятно</button>
   </div>
 </div>
@@ -2110,6 +2109,28 @@
     <button class="btn-secondary" id="btnCloseUpgrade" style="width: 100%; margin-top: 12px;">Отмена</button>
   </div>
 </div>
+  <!-- ЭКРАН ПОДТВЕРЖДЕНИЯ ПОЧТЫ -->
+<div id="screen-verify-email" class="screen">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;">
+    <div style="font-size:5rem;margin-bottom:1.25rem;">📧</div>
+    <h2 style="font-size:1.5rem;font-weight:800;color:var(--text);margin:0 0 0.75rem;">Подтвердите почту</h2>
+    <div style="font-size:0.94rem;color:var(--text-2);line-height:1.5;max-width:18rem;">
+      Мы отправили письмо на <b id="verifyEmailText" style="color:var(--accent);">email@example.com</b>. Перейдите по ссылке в письме, чтобы продолжить.
+    </div>
+    
+    <button class="btn-create" id="btnResendEmail" style="margin-top:2rem;width:100%;max-width:18rem;">
+      Отправить ещё раз
+    </button>
+    
+    <button class="btn-secondary" id="btnCheckVerify" style="margin-top:0.6rem;width:100%;max-width:18rem;">
+      Я подтвердил, проверить
+    </button>
+    
+    <button class="btn-secondary" id="btnLogoutVerify" style="margin-top:0.6rem;width:100%;max-width:18rem;color:#ef4444;">
+      Выйти из аккаунта
+    </button>
+  </div>
+</div>
   <!-- МОДАЛКА СМЕНЫ НОМЕРА (ЗАЯВКА) -->
 <div id="modal-change-phone" class="modal">
   <div class="modal-content" style="padding: 24px;">
@@ -2160,6 +2181,22 @@
     </a>
 
     <button class="btn-secondary" id="btnCloseChangePhone" style="width: 100%;">Закрыть</button>
+  </div>
+</div>
+  <!-- МОДАЛКА ВЫБОРА ПРОДАЖИ -->
+<div id="modal-sell-choice" class="modal">
+  <div class="modal-content" style="text-align: center; padding: 24px;">
+    <h2 style="margin-bottom: 16px;">Как продать @<span id="sellChoiceUn"></span>?</h2>
+    
+    <button class="btn-create" id="btnSellToMarket" style="width: 100%; margin-bottom: 12px; background: linear-gradient(135deg, #f59e0b, #ec4899);">
+      🛒 Выставить в магазин
+    </button>
+    
+    <button class="btn-create" id="btnSellToBot" style="width: 100%; margin-bottom: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb);">
+      🤖 Продать Сквиду (сразу)
+    </button>
+    
+    <button class="btn-secondary" id="btnCloseSellChoice" style="width: 100%;">Отмена</button>
   </div>
 </div>
   <!-- МОДАЛКА АНОНИМНОГО НОМЕРА -->
@@ -2378,7 +2415,9 @@
   <script type="module" src="swipe-back.js"></script>
   <script type="module" src="stickers.js"></script>
   <script type="module" src="qr-scanner.js"></script>
+  <script type="module" src="floating-bg.js"></script>
   <!-- ПОДКЛЮЧАЕМ ПАНЕЛЬ ЭМОДЗИ -->
   <script type="module" src="emoji.js"></script>
+    <script type="module" src="sqwid-ai.js"></script>
 </body>
 </html>

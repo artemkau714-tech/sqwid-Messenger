@@ -341,7 +341,50 @@ onAuthStateChanged(auth, async (user) => {
     window.location.replace("index.html");
     return;
   }
+// 🔥 ПРОВЕРКА ПОДТВЕРЖДЕНИЯ ПОЧТЫ
+if (!user.emailVerified) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  const verifyScreen = document.getElementById("screen-verify-email");
+  if (verifyScreen) {
+    verifyScreen.classList.add("active");
+    document.getElementById("verifyEmailText").textContent = user.email;
+    
+    const btnResend = document.getElementById("btnResendEmail");
+    const newResend = btnResend.cloneNode(true);
+    btnResend.parentNode.replaceChild(newResend, btnResend);
+    newResend.onclick = async () => {
+      try {
+        const { sendEmailVerification } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
+        await sendEmailVerification(user);
+        showToast("Письмо отправлено!", "ok");
+      } catch (e) {
+        showToast("Ошибка: " + e.message, "error");
+      }
+    };
 
+    const btnCheck = document.getElementById("btnCheckVerify");
+    const newCheck = btnCheck.cloneNode(true);
+    btnCheck.parentNode.replaceChild(newCheck, btnCheck);
+    newCheck.onclick = async () => {
+      await user.reload();
+      if (user.emailVerified) {
+        showToast("Почта подтверждена!", "ok");
+        window.location.reload();
+      } else {
+        showToast("Почта ещё не подтверждена. Проверьте письмо.", "warn");
+      }
+    };
+
+    const btnLogout = document.getElementById("btnLogoutVerify");
+    const newLogout = btnLogout.cloneNode(true);
+    btnLogout.parentNode.replaceChild(newLogout, btnLogout);
+    newLogout.onclick = async () => {
+      await signOut(auth);
+      window.location.replace("index.html");
+    };
+  }
+  return; // Останавливаем загрузку мессенджера, если почта не подтверждена
+}
   // ============================================================
   // 🔥 РЕЖИМ РАЗРАБОТКИ (БЕЛЫЙ СПИСОК)
   // ============================================================
@@ -2265,4 +2308,92 @@ document.addEventListener("click", async (e) => {
     showToast("Ошибка поиска", "error");
   }
 }, true);
+/* ============================================================
+   ФОНЫ ЧАТА И СНЕГ (Перезапись старой логики)
+   ============================================================ */
+const CUSTOM_BGS = [
+  { id: "bg_black", name: "Черный", url: "Black.jpg", isSnow: false },
+  { id: "bg_sakura", name: "Сакура", url: "sakura.jpg", isSnow: false },
+  { id: "bg_dolina", name: "Заснеженная долина", url: "DolinaSnega.jpg", isSnow: true }
+];
+
+let snowInterval = null;
+
+function startSnowFall() {
+  const box = document.getElementById("messages");
+  if (!box) return;
+  if (document.getElementById("snowContainer")) return;
+
+  const container = document.createElement("div");
+  container.id = "snowContainer";
+  container.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden;";
+  box.appendChild(container);
+
+  snowInterval = setInterval(() => {
+    const snow = document.createElement("div");
+    snow.className = "snowflake";
+    snow.textContent = "❄️";
+    snow.style.position = "absolute";
+    snow.style.left = Math.random() * 100 + "%";
+    snow.style.top = "-20px";
+    snow.style.fontSize = (10 + Math.random() * 20) + "px";
+    snow.style.opacity = 0.4 + Math.random() * 0.6;
+    snow.style.textShadow = "0 0 5px rgba(255,255,255,0.8)";
+    snow.style.animation = `fall ${3 + Math.random() * 4}s linear forwards`;
+    
+    container.appendChild(snow);
+
+    setTimeout(() => {
+      if (snow.parentNode) snow.remove();
+    }, 7000);
+  }, 200);
+}
+
+function stopSnowFall() {
+  if (snowInterval) clearInterval(snowInterval);
+  snowInterval = null;
+  const container = document.getElementById("snowContainer");
+  if (container) container.remove();
+}
+
+// Перезаписываем функцию setChatBackground
+window.Sqwid.setChatBackground = function(name) {
+  const box = document.getElementById("messages");
+  if (!box) return;
+
+  try { localStorage.setItem("sqwid_chat_bg_" + currentUser.uid, name); } catch (e) {}
+
+  const bg = CUSTOM_BGS.find(b => b.id === name);
+  if (!bg) return;
+
+  box.style.backgroundImage = "";
+  box.style.backgroundColor = "";
+  box.style.backgroundSize = "cover";
+  box.style.backgroundPosition = "center";
+  box.dataset.bg = "";
+
+  if (bg.id === "bg_black") {
+    box.style.backgroundColor = "#000";
+    stopSnowFall();
+  } else {
+    box.style.backgroundImage = `url('${bg.url}')`;
+    if (bg.isSnow) {
+      startSnowFall();
+    } else {
+      stopSnowFall();
+    }
+  }
+};
+
+// Принудительно применяем фон при заходе в чат (перехватываем openChat)
+const originalOpenChat = window.Sqwid.openChat;
+window.Sqwid.openChat = function(chatId) {
+  originalOpenChat(chatId);
+  setTimeout(() => {
+    const savedBg = localStorage.getItem("sqwid_chat_bg_" + currentUser.uid) || "bg_black";
+    window.Sqwid.setChatBackground(savedBg);
+  }, 100);
+};
+
+console.log("✅ Фоны чата и снег загружены");
 console.log("✅ chat-main.js загружен");

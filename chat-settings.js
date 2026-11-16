@@ -1,5 +1,5 @@
 /* ============================================================
-   chat-settings.js — настройки (с поддержкой масштабирования)
+   chat-settings.js — настройки (Темы + Новые фоны чата)
    ============================================================ */
 
 console.log("🚀 chat-settings.js загружен, жду Sqwid...");
@@ -67,26 +67,24 @@ waitForSqwidSettings((S) => {
      ТЕМА
      ============================================================ */
   function applyTheme(theme) {
-    if (theme === "dark") {
-      document.body.setAttribute("data-theme", "dark");
-    } else if (theme === "girl") {
+    if (theme === "girl") {
       document.body.setAttribute("data-theme", "girl");
     } else {
-      document.body.removeAttribute("data-theme");
+      // Всё, что не "girl", принудительно делаем "dark" (светлую убрали)
+      document.body.setAttribute("data-theme", "dark");
     }
-    try { localStorage.setItem("sqwid_theme", theme); } catch (e) {}
+    try { localStorage.setItem("sqwid_theme", theme === "girl" ? "girl" : "dark"); } catch (e) {}
     
-    const light = document.getElementById("themeLight");
     const dark = document.getElementById("themeDark");
     const girl = document.getElementById("themeGirl");
-    if (light) light.classList.toggle("active", theme !== "dark" && theme !== "girl");
-    if (dark) dark.classList.toggle("active", theme === "dark");
+    if (dark) dark.classList.toggle("active", theme !== "girl");
     if (girl) girl.classList.toggle("active", theme === "girl");
   }
 
   (function initTheme() {
-    let saved = "light";
-    try { saved = localStorage.getItem("sqwid_theme") || "light"; } catch (e) {}
+    let saved = "dark"; // По умолчанию тёмная
+    try { saved = localStorage.getItem("sqwid_theme") || "dark"; } catch (e) {}
+    if (saved === "light") saved = "dark"; // Принудительно убираем светлую
     applyTheme(saved);
   })();
 
@@ -158,13 +156,11 @@ waitForSqwidSettings((S) => {
     const balEl = document.getElementById("settingsBalance");
     if (balEl) balEl.textContent = "🪙 " + (myData.coins || 0) + " SQ";
 
-    let cur = "light";
-    try { cur = localStorage.getItem("sqwid_theme") || "light"; } catch (e) {}
-    const light = document.getElementById("themeLight");
+    let cur = "dark";
+    try { cur = localStorage.getItem("sqwid_theme") || "dark"; } catch (e) {}
     const dark = document.getElementById("themeDark");
     const girl = document.getElementById("themeGirl");
-    if (light) light.classList.toggle("active", cur !== "dark" && cur !== "girl");
-    if (dark) dark.classList.toggle("active", cur === "dark");
+    if (dark) dark.classList.toggle("active", cur !== "girl");
     if (girl) girl.classList.toggle("active", cur === "girl");
 
     const plusSection = document.getElementById("settingsPlusSection");
@@ -226,9 +222,6 @@ waitForSqwidSettings((S) => {
   /* ============================================================
      ТЕМА — обработчики
      ============================================================ */
-  const btnThemeLight = document.getElementById("themeLight");
-  if (btnThemeLight) btnThemeLight.addEventListener("click", () => applyTheme("light"));
-
   const btnThemeDark = document.getElementById("themeDark");
   if (btnThemeDark) btnThemeDark.addEventListener("click", () => applyTheme("dark"));
 
@@ -595,45 +588,53 @@ waitForSqwidSettings((S) => {
   }
 
   /* ============================================================
-     ФОН СООБЩЕНИЙ
+     ФОН СООБЩЕНИЙ (КАСТОМНЫЕ КАРТИНКИ)
      ============================================================ */
-  const BGS = ["diamonds", "dots", "waves", "grid", "stars"];
-  const BGS_PLUS = ["plus-gold", "plus-space", "plus-waves"];
+  const CUSTOM_BGS = [
+    { id: "bg_black", name: "Черный", url: "Black.jpg", isSnow: false },
+    { id: "bg_sakura", name: "Сакура", url: "sakura.jpg", isSnow: false },
+    { id: "bg_dolina", name: "Заснеженная долина", url: "DolinaSnega.jpg", isSnow: true }
+  ];
 
   function renderBgPicker() {
-    const box = document.getElementById("bgPicker");
+    const box = document.getElementById("customBgPicker");
     if (!box) return;
     box.innerHTML = "";
-    const all = isPlus() ? BGS.concat(BGS_PLUS) : BGS;
-    const current = localStorage.getItem("sqwid_chat_bg_" + currentUser.uid) || "diamonds";
+    
+    const current = localStorage.getItem("sqwid_chat_bg_" + currentUser.uid) || "bg_black";
 
-    all.forEach(bg => {
+    CUSTOM_BGS.forEach(bg => {
       const item = document.createElement("div");
-      item.className = "bg-picker-item" + (bg === current ? " active" : "");
-      item.style.background = bgPreviewStyle(bg);
-      item.dataset.bg = bg;
+      item.className = "bg-picker-item" + (bg.id === current ? " active" : "");
+      
+      item.style.backgroundImage = `url('${bg.url}')`;
+      item.style.backgroundSize = "cover";
+      item.style.backgroundPosition = "center";
+      item.style.aspectRatio = "1";
+      item.style.borderRadius = "12px";
+      item.style.border = bg.id === current ? "3px solid var(--accent)" : "2px solid transparent";
+      item.style.cursor = "pointer";
+      item.style.position = "relative";
+      item.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)";
+      
+      if (bg.isSnow) {
+        const snowIcon = document.createElement("div");
+        snowIcon.textContent = "❄️";
+        snowIcon.style.cssText = "position:absolute;top:4px;right:4px;font-size:16px;text-shadow:0 2px 4px rgba(0,0,0,0.5);";
+        item.appendChild(snowIcon);
+      }
+
       item.addEventListener("click", () => {
-        localStorage.setItem("sqwid_chat_bg_" + currentUser.uid, bg);
-        if (window.Sqwid.setChatBackground) window.Sqwid.setChatBackground(bg);
+        localStorage.setItem("sqwid_chat_bg_" + currentUser.uid, bg.id);
+        if (window.Sqwid.setChatBackground) {
+          window.Sqwid.setChatBackground(bg.id);
+        }
         renderBgPicker();
         S.showToast("Фон применён", "ok");
       });
+
       box.appendChild(item);
     });
-  }
-
-  function bgPreviewStyle(bg) {
-    const map = {
-      diamonds: "linear-gradient(45deg, #f97316 25%, transparent 25%, transparent 75%, #f97316 75%), #fef5ec",
-      dots: "radial-gradient(circle, rgba(249,115,22,0.5) 1.5px, transparent 1.5px) 0 0 / 12px 12px, #fff7ed",
-      waves: "repeating-linear-gradient(45deg, rgba(245,158,11,0.3) 0, rgba(245,158,11,0.3) 1px, transparent 1px, transparent 10px), #fef3e7",
-      grid: "linear-gradient(rgba(251,146,60,0.3) 1px, transparent 1px) 0 0 / 100% 12px, #fff7ed",
-      stars: "radial-gradient(circle, rgba(245,158,11,0.5) 1px, transparent 1.5px) 0 0 / 20px 20px, #fffbeb",
-      "plus-gold": "linear-gradient(135deg, #f59e0b, #ffd966)",
-      "plus-space": "radial-gradient(circle at 50% 50%, #1e1b4b, #000)",
-      "plus-waves": "repeating-linear-gradient(90deg, rgba(249,115,22,0.5), rgba(236,72,153,0.5) 20px, rgba(139,92,246,0.5) 40px)"
-    };
-    return map[bg] || "#eee";
   }
 
   /* ============================================================
@@ -787,7 +788,6 @@ waitForSqwidSettings((S) => {
      ОБРАБОТЧИКИ КНОПОК "РАЗВЛЕЧЕНИЯ" (МАГАЗИН И ИГРЫ)
      ============================================================ */
   
-  // Открыть Игры
   const funOpenGames = document.getElementById("funOpenGames");
   if (funOpenGames) {
     funOpenGames.addEventListener("click", () => {
@@ -799,7 +799,6 @@ waitForSqwidSettings((S) => {
     });
   }
 
-  // Открыть Магазин
   const funOpenShop = document.getElementById("funOpenShop");
   if (funOpenShop) {
     funOpenShop.addEventListener("click", () => {
@@ -811,7 +810,6 @@ waitForSqwidSettings((S) => {
     });
   }
 
-  // Открыть из экрана Сквидиков
   const coinsOpenShop = document.getElementById("coinsOpenShop");
   if (coinsOpenShop) {
     coinsOpenShop.addEventListener("click", () => {

@@ -4,6 +4,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  sendEmailVerification, // 🔥 ДОБАВИЛИ
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import {
@@ -26,14 +27,12 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-/* ---------- Переключение экранов ---------- */
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   const el = document.getElementById(id);
   if (el) el.classList.add("active");
 }
 
-/* ---------- СПЛЭШ ---------- */
 let splashHidden = false;
 function hideSplash() {
   if (splashHidden) return;
@@ -46,7 +45,6 @@ function hideSplash() {
   }, 500);
 }
 
-/* ---------- Toast ---------- */
 let toastTimer = null;
 function showToast(text, type = "info", duration = 3000) {
   let el = document.getElementById("toastEl");
@@ -64,14 +62,12 @@ function showToast(text, type = "info", duration = 3000) {
   toastTimer = setTimeout(() => el.classList.remove("show"), duration);
 }
 
-/* ---------- Элементы входа ---------- */
 const loginEmail = document.getElementById("loginEmail");
 const loginPassword = document.getElementById("loginPassword");
 const btnLogin = document.getElementById("btnLogin");
 const btnGoRegister = document.getElementById("btnGoRegister");
 const btnForgotPassword = document.getElementById("btnForgotPassword");
 
-/* ---------- Элементы регистрации ---------- */
 const regAvatarInput = document.getElementById("regAvatarInput");
 const regAvatarPreview = document.getElementById("regAvatarPreview");
 const regEmail = document.getElementById("regEmail");
@@ -85,34 +81,27 @@ const regAgreeCheckbox = document.getElementById("regAgreeCheckbox");
 
 let regAvatarBase64 = null;
 
-/* ---------- Проверка авторизации ---------- */
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    /* Залогинен — показываем сплэш и редиректим в чаты */
     const splash = document.getElementById("sqwidSplash");
     if (splash) splash.classList.remove("hidden");
+    // Если почта не подтверждена, все равно кидаем в chat.html, там его встретит проверка
     window.location.href = "chat.html";
   } else {
-    /* НЕ залогинен — прячем сплэш, показываем форму входа */
     hideSplash();
   }
 });
 
-/* ---------- Аварийное скрытие сплэша через 3 секунды ---------- */
 setTimeout(() => hideSplash(), 8000);
 
-/* ---------- Переход в регистрацию ---------- */
 if (btnGoRegister) {
   btnGoRegister.addEventListener("click", () => {
-    if (loginEmail.value.trim()) {
-      regEmail.value = loginEmail.value.trim();
-    }
+    if (loginEmail.value.trim()) regEmail.value = loginEmail.value.trim();
     if (regStatus) regStatus.textContent = "";
     showScreen("screen-register");
   });
 }
 
-/* ---------- Назад на вход ---------- */
 if (btnBackToLogin) {
   btnBackToLogin.addEventListener("click", () => {
     if (regStatus) regStatus.textContent = "";
@@ -120,15 +109,11 @@ if (btnBackToLogin) {
   });
 }
 
-/* ---------- Загрузка аватара ---------- */
 if (regAvatarInput) {
   regAvatarInput.addEventListener("change", () => {
     const file = regAvatarInput.files[0];
     if (!file) return;
-    if (file.size > 500 * 1024) {
-      showToast("Фото до 500 КБ", "warn");
-      return;
-    }
+    if (file.size > 500 * 1024) { showToast("Фото до 500 КБ", "warn"); return; }
     const reader = new FileReader();
     reader.onload = (e) => {
       regAvatarBase64 = e.target.result;
@@ -139,7 +124,6 @@ if (regAvatarInput) {
   });
 }
 
-/* ---------- Показать/скрыть пароль ---------- */
 if (btnTogglePass) {
   btnTogglePass.addEventListener("click", () => {
     const isPass = regPassword.type === "password";
@@ -148,14 +132,10 @@ if (btnTogglePass) {
   });
 }
 
-/* ---------- ВХОД ---------- */
 async function login() {
   const email = loginEmail.value.trim();
   const password = loginPassword.value;
-  if (!email || !password) {
-    showToast("Заполните email и пароль", "warn");
-    return;
-  }
+  if (!email || !password) { showToast("Заполните email и пароль", "warn"); return; }
   btnLogin.textContent = "...";
   btnLogin.disabled = true;
   try {
@@ -171,15 +151,10 @@ if (btnLogin) btnLogin.addEventListener("click", login);
 if (loginEmail) loginEmail.addEventListener("keydown", (e) => { if (e.key === "Enter") loginPassword.focus(); });
 if (loginPassword) loginPassword.addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
 
-/* ---------- ЗАБЫЛИ ПАРОЛЬ ---------- */
 if (btnForgotPassword) {
   btnForgotPassword.addEventListener("click", async () => {
     const email = (loginEmail.value || "").trim();
-    if (!email) {
-      showToast("Введите email, чтобы сбросить пароль", "warn");
-      loginEmail.focus();
-      return;
-    }
+    if (!email) { showToast("Введите email, чтобы сбросить пароль", "warn"); loginEmail.focus(); return; }
     try {
       btnForgotPassword.textContent = "Отправляем...";
       btnForgotPassword.disabled = true;
@@ -194,19 +169,16 @@ if (btnForgotPassword) {
   });
 }
 
-/* ---------- РЕГИСТРАЦИЯ ---------- */
 async function register() {
   const email = regEmail.value.trim();
   const password = regPassword.value;
   const name = regName.value.trim();
 
-  // ПРОВЕРКА ЧЕКБОКСА СОГЛАШЕНИЯ
   if (regAgreeCheckbox && !regAgreeCheckbox.checked) {
     regStatus.textContent = "Необходимо принять соглашение";
     showToast("Пожалуйста, примите пользовательское соглашение", "warn");
     return;
   }
-
   if (!email) { regStatus.textContent = "Введите email"; return; }
   if (!password || password.length < 6) { regStatus.textContent = "Пароль минимум 6 символов"; return; }
   if (!name) { regStatus.textContent = "Введите имя"; return; }
@@ -217,6 +189,14 @@ async function register() {
 
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
+    
+    // 🔥 ОТПРАВЛЯЕМ ПИСЬМО ПОДТВЕРЖДЕНИЯ
+    try {
+      await sendEmailVerification(cred.user);
+    } catch (e) {
+      console.warn("Не удалось отправить письмо:", e);
+    }
+
     await set(ref(db, "users/" + cred.user.uid), {
       email: email,
       name: name,
@@ -224,8 +204,14 @@ async function register() {
       hideEmail: false,
       createdAt: Date.now()
     });
-    regStatus.textContent = "Готово! Заходим...";
-    /* onAuthStateChanged перекинет в chat.html */
+    
+    regStatus.textContent = "Успех! Проверьте почту и войдите.";
+    showToast("Письмо отправлено на " + email, "ok", 5000);
+    
+    setTimeout(() => {
+      window.location.href = "chat.html";
+    }, 2000);
+
   } catch (err) {
     const msg = translateError(err.code);
     regStatus.textContent = msg;
@@ -240,7 +226,6 @@ if (regEmail) regEmail.addEventListener("keydown", (e) => { if (e.key === "Enter
 if (regPassword) regPassword.addEventListener("keydown", (e) => { if (e.key === "Enter") regName.focus(); });
 if (regName) regName.addEventListener("keydown", (e) => { if (e.key === "Enter") register(); });
 
-/* ---------- Перевод ошибок ---------- */
 function translateError(code) {
   const map = {
     "auth/invalid-email": "Неверный формат email",
@@ -255,12 +240,10 @@ function translateError(code) {
   };
   return map[code] || ("Ошибка: " + code);
 }
-/* ---------- Регистрация Service Worker для PWA ---------- */
+
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch((err) => {
-      console.warn("SW registration failed:", err);
-    });
+    navigator.serviceWorker.register("/sw.js").catch((err) => console.warn("SW failed:", err));
   });
 }
 console.log("✅ index.js загружен");

@@ -1,5 +1,5 @@
 /* ============================================================
-   chat-profile.js — Мой профиль + Анонимный номер + Юзернеймы
+   chat-profile.js — Мой профиль + Анонимный номер + Юзернеймы + Продажа
    ============================================================ */
 
 console.log("🚀 chat-profile.js загружен, жду Sqwid...");
@@ -217,7 +217,6 @@ waitForSqwidProfile((S) => {
         phoneValEl.style.cursor = "pointer";
         phoneValEl.style.textDecoration = "underline";
         
-        // 🔥 ПРИ КЛИКЕ ОТКРЫВАЕМ МОДАЛКУ И ЗАПОЛНЯЕМ ТЕКУЩИЙ НОМЕР
         phoneValEl.onclick = () => {
           document.getElementById("changePhoneCurrent").value = myData.phone;
           document.getElementById("changePhoneNew").value = "";
@@ -245,7 +244,7 @@ waitForSqwidProfile((S) => {
   }
 
   /* ============================================================
-     МОДАЛКА ИНФО О ЮЗЕРНЕЙМЕ
+     МОДАЛКА ИНФО О ЮЗЕРНЕЙМЕ И ПРОДАЖА
      ============================================================ */
   async function openUsernameInfoModal(uname, userData) {
     const modal = document.getElementById("modal-username-info");
@@ -264,6 +263,9 @@ waitForSqwidProfile((S) => {
         break;
       }
     }
+
+    // Цена для продажи (берем из магазина или ставим базовую 500)
+    const sellPrice = shopItem ? shopItem.price : 500;
 
     if (shopItem) {
       document.getElementById("unInfoPrice").textContent = (shopItem.price || 0).toLocaleString("ru-RU") + " SQ";
@@ -312,6 +314,22 @@ waitForSqwidProfile((S) => {
       };
     }
 
+    // 🔥 ПРИВЯЗКА КНОПКИ ПРОДАЖИ
+    const btnSell = document.getElementById("btnSellUsername");
+    if (btnSell) {
+      const isMyUsername = (myData.username === uname || (myData.purchasedUsernames && myData.purchasedUsernames[uname]));
+      
+      if (isMyUsername) {
+        btnSell.style.display = "block";
+        btnSell.onclick = () => {
+          modal.classList.remove("active");
+          window.openSellChoiceModal(uname, sellPrice);
+        };
+      } else {
+        btnSell.style.display = "none";
+      }
+    }
+
     modal.classList.add("active");
   }
 
@@ -325,6 +343,94 @@ waitForSqwidProfile((S) => {
   }
 
   /* ============================================================
+     ЛОГИКА ПРОДАЖИ ЮЗЕРНЕЙМА
+     ============================================================ */
+  let sellUsername = null;
+  let sellPrice = 0;
+
+  window.openSellChoiceModal = function(uname, price) {
+    sellUsername = uname;
+    sellPrice = price;
+    
+    const nameEl = document.getElementById("sellChoiceUn");
+    if (nameEl) nameEl.textContent = uname;
+    
+    const modal = document.getElementById("modal-sell-choice");
+    if (modal) modal.classList.add("active");
+  };
+
+  const btnCloseSellChoice = document.getElementById("btnCloseSellChoice");
+  if (btnCloseSellChoice) {
+    btnCloseSellChoice.addEventListener("click", () => {
+      document.getElementById("modal-sell-choice").classList.remove("active");
+    });
+  }
+
+  const btnSellToMarket = document.getElementById("btnSellToMarket");
+  if (btnSellToMarket) {
+    btnSellToMarket.addEventListener("click", async () => {
+      document.getElementById("modal-sell-choice").classList.remove("active");
+      
+      try {
+        const updates = {};
+        updates[`users/${currentUser.uid}/username`] = null;
+        updates[`users/${currentUser.uid}/purchasedUsernames/${sellUsername}`] = null;
+        
+        const newRef = S.push(S.ref(db, "usernames_shop"));
+        updates[`usernames_shop/${newRef.key}`] = {
+          id: newRef.key,
+          username: sellUsername,
+          price: sellPrice,
+          description: `Продавец: ${myData.name || "Пользователь"}`,
+          category: "custom",
+          addedBy: currentUser.uid,
+          addedAt: Date.now(),
+          sold: false
+        };
+        
+        await S.update(S.ref(db), updates);
+        S.showToast(`@${sellUsername} выставлен в магазин за ${sellPrice} SQ`, "ok", 3000);
+      } catch (e) {
+        S.showToast("Ошибка: " + e.message, "error");
+      }
+    });
+  }
+
+  const btnSellToBot = document.getElementById("btnSellToBot");
+  if (btnSellToBot) {
+    btnSellToBot.addEventListener("click", async () => {
+      document.getElementById("modal-sell-choice").classList.remove("active");
+      
+      try {
+        const tax = Math.floor(sellPrice * 0.03);
+        const userGets = sellPrice - tax;
+        
+        const updates = {};
+        updates[`users/${currentUser.uid}/username`] = null;
+        updates[`users/${currentUser.uid}/purchasedUsernames/${sellUsername}`] = null;
+        updates[`users/${currentUser.uid}/coins`] = (myData.coins || 0) + userGets;
+        
+        const newRef = S.push(S.ref(db, "usernames_shop"));
+        updates[`usernames_shop/${newRef.key}`] = {
+          id: newRef.key,
+          username: sellUsername,
+          price: sellPrice,
+          description: "Куплен Сквидиком (автоматически)",
+          category: "custom",
+          addedBy: "SQWID_BOT",
+          addedAt: Date.now(),
+          sold: false
+        };
+        
+        await S.update(S.ref(db), updates);
+        S.showToast(`Продано Сквиду! Начислено ${userGets} SQ (налог 3%)`, "ok", 3000);
+      } catch (e) {
+        S.showToast("Ошибка: " + e.message, "error");
+      }
+    });
+  }
+
+  /* ============================================================
      СОХРАНЕНИЕ АНОНИМНОГО НОМЕРА
      ============================================================ */
   const btnSaveAnonPhone = document.getElementById("btnSaveAnonPhone");
@@ -334,7 +440,7 @@ waitForSqwidProfile((S) => {
     
     newBtn.addEventListener("click", async () => {
       const input = document.getElementById("anonPhoneInput");
-      const digits = input.value.replace(/\D/g, ""); // Оставляем только цифры
+      const digits = input.value.replace(/\D/g, "");
 
       if (digits.length !== 8) {
         return S.showToast("Введите ровно 8 цифр", "error");
@@ -373,7 +479,6 @@ waitForSqwidProfile((S) => {
       const ifBusy = document.getElementById("changePhoneIfBusy").value.trim();
       const msg = document.getElementById("changePhoneMessage").value.trim();
 
-      // Приводим к формату +888...
       newPhone = newPhone.replace(/\D/g, "");
       if (newPhone.length === 8) newPhone = "+888" + newPhone;
       else if (newPhone.length === 11 && newPhone.startsWith("888")) newPhone = "+888" + newPhone.slice(3);
@@ -382,7 +487,6 @@ waitForSqwidProfile((S) => {
         return S.showToast("Введите желаемый номер в формате +888XXXXXXXX", "error");
       }
 
-      // Формируем текст письма
       const emailBody = 
         `Здравствуйте! Я хочу изменить свой анонимный номер.\n\n` +
         `Текущий номер: ${curPhone}\n` +
@@ -395,7 +499,6 @@ waitForSqwidProfile((S) => {
       const emailSubject = "Смена анонимного номера Sqwid";
       const mailto = `mailto:sqwid.support@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
 
-      // Открываем почтовое приложение
       window.location.href = mailto;
       
       document.getElementById("modal-change-phone").classList.remove("active");

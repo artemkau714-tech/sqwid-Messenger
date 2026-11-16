@@ -271,19 +271,23 @@ waitForSqwidSendFB((S) => {
         }, chatData.autoDelete * 1000);
       }
 
-    } catch (e) {
-      setOptimisticStatus(tempId, "error", e.message || "Ошибка");
-      playErrorSound();
-      S.showToast("Ошибка отправки: " + (e.message || ""), "error", 3000);
+      } catch (e) {
+    setOptimisticStatus(tempId, "error", e.message || "Ошибка");
+    playErrorSound();
+    S.showToast("Ошибка отправки: " + (e.message || ""), "error", 3000);
 
-      // Вернуть текст в инпут
-      if (!input.value) {
-        input.value = text;
-      }
+    if (!input.value) {
+      input.value = text;
     }
-
-    return true;
   }
+
+  // 🔥 ВОЗВРАЩАЕМ ФОКУС, ЧТОБЫ КЛАВИАТУРА НЕ ЗАКРЫЛАСЬ
+  setTimeout(() => {
+    input.focus();
+  }, 10);
+
+  return true;
+}
 
   function escapeHtml(t) {
     const d = document.createElement("div");

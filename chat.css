@@ -7600,3 +7600,711 @@ body[data-theme="girl"] {
 #screen-profile .profile-scroll.has-bg {
   background-image: inherit !important; /* Оставляем только картинку/обои */
 }
+/* ============================================
+   СВЕТЛАЯ ТЕМА (ИСПРАВЛЕННАЯ)
+   ============================================ */
+body[data-theme="light"] {
+  --bg: #f2f4f8 !important;
+  --surface: rgba(255, 255, 255, 0.85) !important;
+  --surface-strong: #ffffff !important;
+  --text: #0f172a !important;
+  --text-2: #475569 !important;
+  --text-3: #94a3b8 !important;
+  --border: rgba(15, 23, 42, 0.08) !important;
+  background: #f2f4f8 !important;
+}
+
+/* Перебиваем черный фон в чатах */
+body[data-theme="light"] .messages { background: #f2f4f8 !important; }
+body[data-theme="light"] .top-bar,
+body[data-theme="light"] .chat-bar,
+body[data-theme="light"] .input-area,
+body[data-theme="light"] .bottom-nav {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Чужие сообщения (белые) */
+body[data-theme="light"] .msg.other {
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+  color: #0f172a !important;
+}
+
+/* Свои сообщения (черные с белым текстом) */
+body[data-theme="light"] .msg.own {
+  background: #0f172a !important;
+  color: #ffffff !important;
+}
+body[data-theme="light"] .msg.own .msg-time { color: rgba(255, 255, 255, 0.7) !important; }
+body[data-theme="light"] .msg.own .reaction-chip { background: rgba(255, 255, 255, 0.2) !important; }
+
+/* Кнопки и панели */
+body[data-theme="light"] .top-search input,
+body[data-theme="light"] .attach-btn,
+body[data-theme="light"] .record-btn,
+body[data-theme="light"] .settings-card,
+body[data-theme="light"] .menu-row {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+
+/* ============================================
+   РОЗОВАЯ (ДЕВЧАЧЬЯ) ТЕМА (ИСПРАВЛЕННАЯ)
+   ============================================ */
+body[data-theme="girl"] {
+  --bg: #fdf2f8 !important;
+  --surface: rgba(255, 240, 250, 0.85) !important;
+  --surface-strong: #fff5fb !important;
+  --text: #4c1d3d !important;
+  --text-2: #831843 !important;
+  --text-3: #c084a8 !important;
+  --border: rgba(217, 70, 239, 0.12) !important;
+  background: #fdf2f8 !important;
+}
+
+/* Перебиваем черный фон */
+body[data-theme="girl"] .messages { background: #fdf2f8 !important; }
+body[data-theme="girl"] .top-bar,
+body[data-theme="girl"] .chat-bar,
+body[data-theme="girl"] .input-area,
+body[data-theme="girl"] .bottom-nav {
+  background: rgba(255, 240, 250, 0.85) !important;
+  border-color: rgba(236, 72, 153, 0.15) !important;
+}
+
+/* Чужие сообщения (светло-розовые) */
+body[data-theme="girl"] .msg.other {
+  background: #fff5fb !important;
+  border: 1px solid rgba(236, 72, 153, 0.12) !important;
+  color: #4c1d3d !important;
+}
+
+/* Свои сообщения (ярко-розовые) */
+body[data-theme="girl"] .msg.own {
+  background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Кнопки и панели */
+body[data-theme="girl"] .top-search input,
+body[data-theme="girl"] .attach-btn,
+body[data-theme="girl"] .record-btn,
+body[data-theme="girl"] .settings-card,
+body[data-theme="girl"] .menu-row {
+  background: #fff5fb !important;
+  color: #4c1d3d !important;
+  border-color: rgba(236, 72, 153, 0.15) !important;
+}
+/* ============================================
+   СВЕТЛАЯ ТЕМА (ФИНАЛЬНЫЙ ФИКС)
+   ============================================ */
+body[data-theme="light"] {
+  --bg: #f0f4f8 !important;
+  --surface: #ffffff !important;
+  --surface-strong: #ffffff !important;
+  --text: #0f172a !important;
+  --text-2: #475569 !important;
+  --text-3: #94a3b8 !important;
+  --border: rgba(15, 23, 42, 0.1) !important;
+  background-color: #f0f4f8 !important;
+}
+
+/* Фикс для всех экранов, чтобы не было черных полос */
+body[data-theme="light"] .screen,
+body[data-theme="light"] .settings-body,
+body[data-theme="light"] .profile-scroll {
+  background-color: #f0f4f8 !important;
+}
+
+body[data-theme="light"] .settings-card,
+body[data-theme="light"] .profile-info-card,
+body[data-theme="light"] .top-bar,
+body[data-theme="light"] .chat-bar,
+body[data-theme="light"] .input-area,
+body[data-theme="light"] .bottom-nav {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+}
+
+body[data-theme="light"] .input-area input,
+body[data-theme="light"] .settings-field input,
+body[data-theme="light"] .settings-field textarea {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+}
+
+body[data-theme="light"] .settings-field label,
+body[data-theme="light"] .profile-info-label {
+  color: #475569 !important;
+}
+
+body[data-theme="light"] .settings-item-title,
+body[data-theme="light"] .profile-info-value {
+  color: #0f172a !important;
+}
+
+body[data-theme="light"] .settings-item-sub {
+  color: #94a3b8 !important;
+}
+
+
+/* ============================================
+   РОЗОВАЯ (ДЕВЧАЧЬЯ) ТЕМА (БОЛЬШЕ РОЗОВОГО)
+   ============================================ */
+body[data-theme="girl"] {
+  --bg: #fdf2f8 !important;
+  --surface: #fff0f9 !important;
+  --surface-strong: #fff5fb !important;
+  --text: #831843 !important;
+  --text-2: #9d174d !important;
+  --text-3: #db2777 !important;
+  --border: rgba(236, 72, 153, 0.2) !important;
+  background-color: #fdf2f8 !important;
+}
+
+/* Красивый розовый градиент на фоне */
+body[data-theme="girl"] .screen,
+body[data-theme="girl"] .settings-body,
+body[data-theme="girl"] .profile-scroll {
+  background: linear-gradient(180deg, #fdf2f8 0%, #fce7f3 100%) !important;
+}
+
+body[data-theme="girl"] .settings-card,
+body[data-theme="girl"] .profile-info-card {
+  background: #fff0f9 !important;
+  border: 1px solid rgba(236, 72, 153, 0.2) !important;
+}
+
+body[data-theme="girl"] .top-bar,
+body[data-theme="girl"] .chat-bar,
+body[data-theme="girl"] .input-area,
+body[data-theme="girl"] .bottom-nav {
+  background: rgba(255, 240, 250, 0.9) !important;
+  border-color: rgba(236, 72, 153, 0.2) !important;
+}
+
+body[data-theme="girl"] .input-area input,
+body[data-theme="girl"] .settings-field input,
+body[data-theme="girl"] .settings-field textarea {
+  background: #fff5fb !important;
+  color: #831843 !important;
+  border: 1px solid rgba(236, 72, 153, 0.2) !important;
+}
+
+/* Текст */
+body[data-theme="girl"] .settings-field label,
+body[data-theme="girl"] .profile-info-label {
+  color: #be185d !important;
+}
+
+body[data-theme="girl"] .settings-item-title,
+body[data-theme="girl"] .profile-info-value {
+  color: #831843 !important;
+}
+
+/* Акценты (кнопки, иконки) */
+body[data-theme="girl"] .profile-action-icon,
+body[data-theme="girl"] .settings-item-icon {
+  background: linear-gradient(135deg, #ec4899, #a855f7) !important;
+  color: #ffffff !important;
+}
+
+/* Кнопки "Сохранить профиль", "Сменить email" и т.д. */
+body[data-theme="girl"] .btn-create {
+  background: linear-gradient(135deg, #ec4899 0%, #d946ef 100%) !important;
+  color: #fff !important;
+}
+
+body[data-theme="girl"] .btn-secondary {
+  background: #fff0f9 !important;
+  color: #be185d !important;
+  border: 1px solid rgba(236, 72, 153, 0.3) !important;
+}
+
+/* Рамка аватара */
+body[data-theme="girl"] .profile-ava-wrap {
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.3) !important;
+}
+/* ============================================
+   ЖИДКОЕ СТЕКЛО (Потемнее и Прозрачнее)
+   ============================================ */
+
+/* 1. Нижнее меню (Bottom Nav) */
+.bottom-nav {
+  background: rgba(15, 23, 42, 0.45) !important; /* Темное стекло (тёмно-синий с прозрачностью) */
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Кнопки в нижнем меню (неактивные) */
+.nav-btn {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Активная кнопка в нижнем меню */
+.nav-btn.active {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: none !important; /* Убираем свечение */
+}
+
+/* 2. Верхние панели (шапки) */
+.top-bar, .chat-bar {
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 3. Строка ввода сообщений */
+.input-area {
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Поле ввода внутри панели */
+.input-area input {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+/* Кнопки (скрепка, микрофон, смайлик) */
+.attach-btn, .record-btn, .emoji-toggle-btn {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: none !important;
+}
+
+/* 4. Кнопки "Назад" и прочие круглые кнопки в шапках */
+.chat-back, .top-new-btn, .chat-menu-btn {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+/* 5. Модальные окна (всплывающие меню) */
+.modal-content {
+  background: rgba(15, 23, 42, 0.75) !important; /* Темное стекло */
+  backdrop-filter: blur(32px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Кнопки внутри модалок */
+.menu-row {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+.menu-row.cancel {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  border: none !important;
+}
+
+/* 6. Панель быстрых ответов (если есть) */
+.quick-replies {
+  background: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+/* ============================================
+   ФИКС ПРОФИЛЯ (СЕРЫЕ КАРТОЧКИ)
+   ============================================ */
+/* Делаем карточку в чужом профиле темной, а не серой */
+#screen-user-profile .profile-info-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+}
+
+/* Текст внутри карточки делаем белым, чтобы читался */
+#screen-user-profile .profile-info-value,
+#screen-user-profile .profile-info-label {
+  color: #ffffff !important;
+}
+
+/* Разделители внутри карточки */
+#screen-user-profile .profile-info-row + .profile-info-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* ============================================
+   ЖИДКОЕ СТЕКЛО ДЛЯ РОЗОВОЙ ТЕМЫ
+   ============================================ */
+body[data-theme="girl"] .bottom-nav {
+  background: rgba(255, 240, 250, 0.4) !important; /* Розовое прозрачное стекло */
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1px solid rgba(236, 72, 153, 0.2) !important;
+  box-shadow: 0 8px 32px rgba(236, 72, 153, 0.15) !important;
+}
+
+body[data-theme="girl"] .top-bar, 
+body[data-theme="girl"] .chat-bar,
+body[data-theme="girl"] .input-area {
+  background: rgba(255, 240, 250, 0.4) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border-color: rgba(236, 72, 153, 0.15) !important;
+}
+
+/* ============================================
+   УВЕЛИЧИВАЕМ НИЖНЕЕ МЕНЮ
+   ============================================ */
+.bottom-nav {
+  padding: 0.8rem 0.6rem !important; /* Увеличиваем внутренние отступы */
+  min-height: 4.5rem !important; /* Делаем его выше */
+  margin: 0.75rem 0.75rem calc(0.75rem + env(safe-area-inset-bottom, 0px)) 0.75rem !important;
+  border-radius: 1.5rem !important;
+}
+
+.nav-btn {
+  padding: 0.8rem 0.5rem !important; /* Увеличиваем кнопки */
+  gap: 0.3rem !important; /* Расстояние между иконкой и текстом */
+}
+
+.nav-icon {
+  width: 26px !important; /* Увеличиваем иконки (было 22) */
+  height: 26px !important;
+}
+
+.nav-label {
+  font-size: 0.78rem !important; /* Увеличиваем текст (было 0.69) */
+  font-weight: 800 !important;
+}
+
+/* ============================================
+   ЧЕРНЫЙ ТЕКСТ И ИКОНКИ В РОЗОВОЙ ТЕМЕ
+   ============================================ */
+body[data-theme="girl"] .nav-btn {
+  color: #4c1d3d !important; /* Темно-бордовый (почти черный) */
+}
+
+body[data-theme="girl"] .nav-btn .nav-icon {
+  stroke: #4c1d3d !important; /* Делаем SVG черным */
+  fill: none !important;
+}
+
+/* Активная кнопка в розовой теме (оставляем белой на розовом фоне) */
+body[data-theme="girl"] .nav-btn.active {
+  background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%) !important;
+  color: #ffffff !important;
+}
+body[data-theme="girl"] .nav-btn.active .nav-icon {
+  stroke: #ffffff !important;
+}
+/* ============================================
+   РОЗОВАЯ ТЕМА — ИСПРАВЛЕНИЕ ВСЕГО (Контраст)
+   ============================================ */
+
+/* 1. Убираем белый квадрат за аватаркой */
+body[data-theme="girl"] .profile-ava-wrap {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 2. Делаем карточку с инфой (юзернейм, телефон, био) темной */
+body[data-theme="girl"] #screen-user-profile .profile-info-card,
+body[data-theme="girl"] .profile-info-card {
+  background: rgba(255, 255, 255, 0.4) !important;
+  border: 1px solid rgba(236, 72, 153, 0.2) !important;
+}
+
+/* 3. Кнопки действий (Чат, Звук, Звонок, Видео) */
+body[data-theme="girl"] .up-action-btn {
+  background: rgba(255, 255, 255, 0.4) !important;
+  border: 1px solid rgba(236, 72, 153, 0.2) !important;
+}
+body[data-theme="girl"] .up-action-btn span,
+body[data-theme="girl"] .up-action-btn svg {
+  color: #831843 !important; /* Темно-розовый/бордовый текст и иконки */
+}
+
+/* 4. Весь текст в профиле делаем темным */
+body[data-theme="girl"] .profile-info-value,
+body[data-theme="girl"] .profile-info-label,
+body[data-theme="girl"] .profile-name,
+body[data-theme="girl"] .profile-bio,
+body[data-theme="girl"] .profile-status {
+  color: #4c1d3d !important; /* Почти черный с розовым оттенком */
+}
+
+/* 5. Юзернейм и анонимный номер делаем яркими */
+body[data-theme="girl"] .profile-info-value[style*="color: rgb(59, 130, 246)"] {
+  color: #be185d !important; /* Ярко-розовый для @username */
+}
+body[data-theme="girl"] .profile-info-value[style*="color: rgb(16, 185, 129)"] {
+  color: #be185d !important; /* Ярко-розовый для номера */
+}
+
+/* 6. Кнопка "Пожаловаться" */
+body[data-theme="girl"] .btn-secondary {
+  background: rgba(236, 72, 153, 0.1) !important;
+  color: #be185d !important;
+  border: 1px solid rgba(236, 72, 153, 0.3) !important;
+}
+
+/* 7. Кнопки в шапке (Назад, Меню) */
+body[data-theme="girl"] .top-new-btn,
+body[data-theme="girl"] .chat-back {
+  background: rgba(255, 255, 255, 0.5) !important;
+  color: #831843 !important;
+}
+body[data-theme="girl"] .top-new-btn svg,
+body[data-theme="girl"] .chat-back svg {
+  stroke: #831843 !important;
+}
+
+/* 8. Нижнее меню — делаем текст и иконки темными */
+body[data-theme="girl"] .bottom-nav {
+  background: rgba(255, 255, 255, 0.6) !important; /* Светлое стекло */
+  border: 1px solid rgba(236, 72, 153, 0.2) !important;
+}
+body[data-theme="girl"] .nav-btn {
+  color: #831843 !important;
+}
+body[data-theme="girl"] .nav-btn .nav-icon {
+  stroke: #831843 !important;
+  fill: none !important;
+}
+
+/* 9. Исправляем сливающийся текст в других местах (настройки, чаты) */
+body[data-theme="girl"] .chat-name,
+body[data-theme="girl"] .settings-item-title,
+body[data-theme="girl"] .settings-section-title,
+body[data-theme="girl"] .create-name-input,
+body[data-theme="girl"] .menu-row {
+  color: #4c1d3d !important;
+}
+body[data-theme="girl"] .chat-last,
+body[data-theme="girl"] .settings-item-sub,
+body[data-theme="girl"] .profile-info-label {
+  color: #9d174d !important;
+}
+/* ============================================
+   РОЗОВАЯ ТЕМА — ФИКС ВСЕГО ТЕКСТА
+   ============================================ */
+
+/* Весь основной текст делаем темно-бордовым */
+body[data-theme="girl"] .profile-name,
+body[data-theme="girl"] .profile-bio,
+body[data-theme="girl"] .profile-info-value,
+body[data-theme="girl"] .profile-info-label,
+body[data-theme="girl"] .chat-name,
+body[data-theme="girl"] .chat-last,
+body[data-theme="girl"] .settings-item-title,
+body[data-theme="girl"] .settings-item-sub,
+body[data-theme="girl"] .settings-section-title,
+body[data-theme="girl"] .menu-row,
+body[data-theme="girl"] .top-title,
+body[data-theme="girl"] .create-name-input,
+body[data-theme="girl"] .create-row-text,
+body[data-theme="girl"] .create-row-value,
+body[data-theme="girl"] .settings-field label,
+body[data-theme="girl"] #upName,
+body[data-theme="girl"] #upBio,
+body[data-theme="girl"] #upStatusText {
+  color: #4c1d3d !important; /* Темно-бордовый */
+}
+
+/* Юзернейм и номер телефона (перебиваем синий и зеленый) */
+body[data-theme="girl"] #upUsername,
+body[data-theme="girl"] #upPhone,
+body[data-theme="girl"] .profile-info-value {
+  color: #be185d !important; /* Ярко-розовый для акцента, чтобы выделялся */
+}
+
+/* Кнопки действий (Чат, Звук, Звонок, Видео) */
+body[data-theme="girl"] .up-action-btn,
+body[data-theme="girl"] .up-action-btn span,
+body[data-theme="girl"] .up-action-btn svg {
+  color: #4c1d3d !important;
+}
+
+/* Карточки (чтобы текст не сливался) */
+body[data-theme="girl"] .profile-info-card,
+body[data-theme="girl"] .settings-card,
+body[data-theme="girl"] .create-head-card {
+  background: rgba(255, 255, 255, 0.5) !important; /* Белое полупрозрачное */
+  border: 1px solid rgba(236, 72, 153, 0.2) !important;
+}
+
+/* Кнопка "Пожаловаться" и прочие второстепенные кнопки */
+body[data-theme="girl"] .btn-secondary {
+  color: #be185d !important;
+  border-color: rgba(236, 72, 153, 0.4) !important;
+  background: rgba(236, 72, 153, 0.1) !important;
+}
+
+/* Нижнее меню */
+body[data-theme="girl"] .bottom-nav {
+  background: rgba(255, 255, 255, 0.7) !important; /* Светлое стекло */
+  border: 1px solid rgba(236, 72, 153, 0.2) !important;
+}
+
+body[data-theme="girl"] .nav-btn,
+body[data-theme="girl"] .nav-label {
+  color: #4c1d3d !important; /* Темный текст */
+}
+
+body[data-theme="girl"] .nav-btn .nav-icon {
+  stroke: #4c1d3d !important; /* Темные иконки */
+  fill: none !important;
+}
+
+/* Активная кнопка в нижнем меню */
+body[data-theme="girl"] .nav-btn.active {
+  background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%) !important;
+  color: #ffffff !important;
+}
+body[data-theme="girl"] .nav-btn.active .nav-label {
+  color: #ffffff !important;
+}
+body[data-theme="girl"] .nav-btn.active .nav-icon {
+  stroke: #ffffff !important;
+}
+
+/* Иконки в шапке профиля (Назад, Меню) */
+body[data-theme="girl"] .top-new-btn svg,
+body[data-theme="girl"] .chat-back svg {
+  stroke: #4c1d3d !important;
+}
+/* ============================================
+   РОЗОВАЯ ТЕМА — ФИНАЛЬНЫЙ ФИКС
+   ============================================ */
+
+/* Фон страниц */
+body[data-theme="girl"] {
+  background: #fdf2f8 !important;
+}
+
+body[data-theme="girl"] .screen,
+body[data-theme="girl"] .settings-body,
+body[data-theme="girl"] .profile-scroll,
+body[data-theme="girl"] .chat-list {
+  background: transparent !important;
+}
+
+/* Текст везде темный */
+body[data-theme="girl"] .profile-name,
+body[data-theme="girl"] .profile-bio,
+body[data-theme="girl"] .profile-info-value,
+body[data-theme="girl"] .profile-info-label,
+body[data-theme="girl"] .chat-name,
+body[data-theme="girl"] .chat-last,
+body[data-theme="girl"] .settings-item-title,
+body[data-theme="girl"] .settings-item-sub,
+body[data-theme="girl"] .settings-section-title,
+body[data-theme="girl"] .menu-row,
+body[data-theme="girl"] .top-title,
+body[data-theme="girl"] .create-name-input,
+body[data-theme="girl"] .create-row-text,
+body[data-theme="girl"] .create-row-value,
+body[data-theme="girl"] .settings-field label,
+body[data-theme="girl"] #upName,
+body[data-theme="girl"] #upBio,
+body[data-theme="girl"] #upStatusText {
+  color: #4c1d3d !important; /* Темно-бордовый */
+}
+
+/* Юзернейм и номер */
+body[data-theme="girl"] #upUsername,
+body[data-theme="girl"] #upPhone,
+body[data-theme="girl"] .profile-info-value {
+  color: #be185d !important; /* Ярко-розовый */
+}
+
+/* Карточки */
+body[data-theme="girl"] .profile-info-card,
+body[data-theme="girl"] .settings-card,
+body[data-theme="girl"] .create-head-card,
+body[data-theme="girl"] .chat-info-action {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(236, 72, 153, 0.2) !important;
+}
+
+/* Кнопки действий в профиле */
+body[data-theme="girl"] .up-action-btn {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(236, 72, 153, 0.2) !important;
+}
+body[data-theme="girl"] .up-action-btn span,
+body[data-theme="girl"] .up-action-btn svg {
+  color: #4c1d3d !important;
+}
+
+/* Кнопки */
+body[data-theme="girl"] .btn-secondary {
+  color: #be185d !important;
+  border-color: rgba(236, 72, 153, 0.3) !important;
+  background: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Нижнее меню */
+body[data-theme="girl"] .bottom-nav {
+  background: rgba(255, 255, 255, 0.75) !important; /* Светлое стекло */
+  border: 1px solid rgba(236, 72, 153, 0.2) !important;
+}
+
+body[data-theme="girl"] .nav-btn,
+body[data-theme="girl"] .nav-label {
+  color: #4c1d3d !important;
+}
+
+body[data-theme="girl"] .nav-btn .nav-icon {
+  stroke: #4c1d3d !important;
+  fill: none !important;
+}
+
+body[data-theme="girl"] .nav-btn.active {
+  background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%) !important;
+  color: #ffffff !important;
+}
+body[data-theme="girl"] .nav-btn.active .nav-label,
+body[data-theme="girl"] .nav-btn.active .nav-icon {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+#profileScroll { position: relative; overflow: hidden; }
+#floatingBgCanvas { pointer-events: none; }
+#profileScroll > div:not(#floatingBgCanvas) { position: relative; z-index: 2; }
+/* ============================================
+   АНИМАЦИЯ СНЕГА И ФОНЫ ЧАТА
+   ============================================ */
+@keyframes fall {
+  to {
+    transform: translateY(110vh) rotate(360deg);
+  }
+}
+
+/* Стили для новых кастомных кнопок выбора фона */
+.bg-picker-item {
+  aspect-ratio: 1;
+  border-radius: 0.75rem;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s var(--spring), border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+}
+.bg-picker-item:active { transform: scale(0.95); }
+.bg-picker-item.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+}
