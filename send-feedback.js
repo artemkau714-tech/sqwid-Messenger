@@ -75,15 +75,19 @@ waitForSqwidSendFB((S) => {
     osc.stop(ctx.currentTime + 0.28);
   }
 
+  function escapeHtml(t) {
+    const d = document.createElement("div");
+    d.textContent = t == null ? "" : t;
+    return d.innerHTML;
+  }
+  function fmtTime(ts) {
+    const d = new Date(ts);
+    return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getFullYear()).slice(-2)} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  }
+
   /* ============================================================
-     ОПТИМИСТИЧНАЯ ОТПРАВКА
-     Перехватываем клик по btnSend и Enter — блокируем родной
-     обработчик и делаем свой, с оптимистичным рендером.
+     ОПТИМИСТИЧНЫЙ "ПУЗЫРЬ"
      ============================================================ */
-
-  let isIntercepting = false;
-
-  // Оптимистичный "пузырь" со статусом отправки
   function renderOptimistic(text, replyTo, tempId) {
     const box = document.getElementById("messages");
     if (!box) return null;
@@ -146,7 +150,6 @@ waitForSqwidSendFB((S) => {
       statusEl.style.color = "#ef4444";
       statusEl.style.fontWeight = "900";
       statusEl.style.fontSize = "13px";
-      // Позволить повтор по клику
       statusEl.addEventListener("click", (e) => {
         e.stopPropagation();
         S.showToast("Нажмите ещё раз чтобы повторить", "info");
@@ -160,18 +163,27 @@ waitForSqwidSendFB((S) => {
   }
 
   /* ============================================================
-     ПЕРЕХВАТ ОТПРАВКИ
+     ОПТИМИСТИЧНАЯ ОТПРАВКА
+     Возвращает:
+       true  — обработали сами (родной обработчик не нужен)
+       false — это режим редактирования, пусть работает chat-main.js
      ============================================================ */
   async function sendOptimistic() {
     const input = document.getElementById("msgInput");
-    if (!input) return false;
+    if (!input) return true;
+
+    // 🔥 РЕЖИМ РЕДАКТИРОВАНИЯ — отдаём управление chat-main.js
+    if (window._sqwidEditingMsgId) {
+      return false;
+    }
+
     const text = input.value.trim();
-    if (!text) return false;
+    if (!text) return true;
 
     const chatId = S.getChatId && S.getChatId();
-    if (!chatId) return false;
+    if (!chatId) return true;
 
-    // Проверки (мут, бан)
+    // Мут / бан
     if (window._currentUserData && window._currentUserData.muted === true) {
       S.showToast("🔇 НА ВАС МУТ!!!", "error", 2000);
       return true;
@@ -206,13 +218,7 @@ waitForSqwidSendFB((S) => {
       return true;
     }
 
-    // Режим редактирования — пропускаем к родному обработчику
-    // (chat-main.js сам обработает)
-    if (window._sqwidEditingMsgId) {
-      return false;
-    }
-
-    // Мгновенно показываем "пузырь"
+    // Мгновенный пузырь
     const tempId = "temp_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
     const replyTo = window._sqwidReplyTo || null;
 
@@ -220,12 +226,9 @@ waitForSqwidSendFB((S) => {
     if (window.Sqwid.reply && window.Sqwid.reply.hide) window.Sqwid.reply.hide();
     if (window.Sqwid.stopTyping) window.Sqwid.stopTyping();
 
-    const optimisticEl = renderOptimistic(text, replyTo, tempId);
-
-    // Звук отправки
+    renderOptimistic(text, replyTo, tempId);
     playSendSound();
 
-    // Реальная запись в Firebase
     try {
       const newRef = S.push(S.ref(S.db, "messages/" + chatId));
       const payload = {
@@ -256,62 +259,55 @@ waitForSqwidSendFB((S) => {
       // Убираем оптимистичный — реальное сообщение придёт из onValue
       setTimeout(() => removeOptimistic(tempId), 400);
 
-      // Обновляем чат
       await S.update(S.ref(S.db, "chats/" + chatId), {
         lastMsg: text,
         lastMsgAt: Date.now(),
         lastMsgSender: currentUser.uid
       });
 
-      // Автоудаление
       const chatData = S.getChatData && S.getChatData();
       if (chatData && chatData.autoDelete > 0) {
         setTimeout(() => {
           S.remove(S.ref(S.db, `messages/${chatId}/${newRef.key}`)).catch(() => {});
         }, chatData.autoDelete * 1000);
       }
-
-      } catch (e) {
-    setOptimisticStatus(tempId, "error", e.message || "Ошибка");
-    playErrorSound();
-    S.showToast("Ошибка отправки: " + (e.message || ""), "error", 3000);
-
-    if (!input.value) {
-      input.value = text;
+    } catch (e) {
+      setOptimisticStatus(tempId, "error", e.message || "Ошибка");
+      playErrorSound();
+      S.showToast("Ошибка отправки: " + (e.message || ""), "error", 3000);
+      if (!input.value) input.value = text;
     }
-  }
 
-  // 🔥 ВОЗВРАЩАЕМ ФОКУС, ЧТОБЫ КЛАВИАТУРА НЕ ЗАКРЫЛАСЬ
-  setTimeout(() => {
-    input.focus();
-  }, 10);
-
-  return true;
-}
-
-  function escapeHtml(t) {
-    const d = document.createElement("div");
-    d.textContent = t == null ? "" : t;
-    return d.innerHTML;
-  }
-  function fmtTime(ts) {
-    const d = new Date(ts);
-    return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getFullYear()).slice(-2)} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    // Возвращаем фокус, чтобы клавиатура не закрылась
+    setTimeout(() => input.focus(), 10);
+    return true;
   }
 
   /* ============================================================
-     ПОДМЕНА КНОПКИ / ENTER
-     Используем capture=true, чтобы перехватить ДО chat-main.js
+     ПЕРЕХВАТ ОТПРАВКИ
+     ВАЖНО: перехватываем только когда реально нужно.
+     В режиме редактирования — просто НЕ трогаем событие,
+     чтобы родной обработчик chat-main.js всё сделал сам.
      ============================================================ */
   const btnSend = document.getElementById("btnSend");
   if (btnSend) {
     btnSend.addEventListener("click", async (e) => {
+      // Режим редактирования — родной обработчик
+      if (window._sqwidEditingMsgId) return;
+
+      const input = document.getElementById("msgInput");
+      if (!input || !input.value.trim()) return; // нечего отправлять
+
+      // Уже кто-то обрабатывает (защита от двойного клика)
+      if (window._sqwidSendFeedbackActive) return;
+      window._sqwidSendFeedbackActive = true;
+
       e.stopImmediatePropagation();
       e.preventDefault();
-      const handled = await sendOptimistic();
-      if (!handled) {
-        // Пусть родной обработчик выполнится (например, редактирование)
-        e.target.dispatchEvent(new Event("click", { bubbles: false }));
+      try {
+        await sendOptimistic();
+      } finally {
+        window._sqwidSendFeedbackActive = false;
       }
     }, true);
   }
@@ -320,12 +316,21 @@ waitForSqwidSendFB((S) => {
   if (msgInput) {
     msgInput.addEventListener("keydown", async (e) => {
       if (e.key !== "Enter") return;
+      // Режим редактирования — родной обработчик
+      if (window._sqwidEditingMsgId) return;
+
+      const input = document.getElementById("msgInput");
+      if (!input || !input.value.trim()) return;
+
+      if (window._sqwidSendFeedbackActive) return;
+      window._sqwidSendFeedbackActive = true;
+
       e.stopImmediatePropagation();
       e.preventDefault();
-      const handled = await sendOptimistic();
-      if (!handled) {
-        // для edit — родной обработчик
-        msgInput.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+      try {
+        await sendOptimistic();
+      } finally {
+        window._sqwidSendFeedbackActive = false;
       }
     }, true);
   }
