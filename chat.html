@@ -290,9 +290,9 @@
     <div class="profile-scroll" style="padding-top: 4rem;" id="upProfileScroll">
       
       <div class="profile-top">
-        <div class="profile-ava-wrap">
-          <div class="profile-ava" id="upAva"><span>?</span></div>
-        </div>
+  <div class="profile-ava-wrap avatar-fx-wrap" id="upAvaWrap">
+    <div class="profile-ava" id="upAva"><span>?</span></div>
+  </div>
         
         <h2 class="profile-name" id="upName">Имя</h2>
         <div class="profile-status" id="upStatus" style="font-size:0.85rem;color:var(--text-3);margin-bottom:1rem;display:flex;align-items:center;justify-content:center;gap:4px;">
@@ -510,7 +510,19 @@
         </div>
         <svg class="settings-item-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
-
+<!-- Кнопка Консоли -->
+<div class="settings-item" id="openConsoleBtn" style="display:none;">
+  <div class="settings-item-icon" style="background:linear-gradient(135deg,#ef4444,#b91c1c);">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+    </svg>
+  </div>
+  <div class="settings-item-body">
+    <div class="settings-item-title">Консоль</div>
+    <div class="settings-item-sub">Управление пользователями</div>
+  </div>
+  <svg class="settings-item-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+</div>
       <button class="settings-logout-btn" id="settingsLogout">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         Выйти из аккаунта
@@ -643,11 +655,11 @@
           </div>
         </div>
       </div>
-      <class="settings-section">
+      <div class="settings-section">
   <div class="settings-section-title">Фон сообщений</div>
   <div class="settings-card">
     <!-- Новые кастомные фоны -->
-    <div id="customBgPicker" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
+    <div id="bgPicker" class="bg-picker" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 8px;"></div>
       <!-- Фон будет генерироваться через JS, чтобы не хардкодить пути -->
     </div>
   </div>
@@ -987,7 +999,9 @@
     <div class="profile-scroll" id="profileScroll">
       <div class="profile-top">
         <div class="profile-ava-wrap">
-          <div class="profile-ava" id="profileAva"><span id="profileAvaLetter">?</span></div>
+          <div class="avatar-fx-wrap" id="profileAvaWrap">
+  <div class="profile-ava" id="profileAva"><span id="profileAvaLetter">?</span></div>
+          </div>
         </div>
         <h2 class="profile-name" id="profileName">Имя</h2>
         <div class="profile-username" id="profileUsername"></div>
@@ -1092,6 +1106,7 @@
   <button class="shop-tab active" data-shop-tab="badges">Значки</button>
   <button class="shop-tab" data-shop-tab="profileBg">Фоны профиля</button>
   <button class="shop-tab" data-shop-tab="usernames">Юзернеймы</button>
+      <button class="shop-tab" data-shop-tab="avatar_fx" id="shopTabAvatar" style="display:none;">Аватар</button>
     </div>
     <div id="shopBody" class="shop-body">
       <div id="shopGrid" class="shop-grid"></div>
@@ -1774,7 +1789,37 @@
       </div>
     </div>
   </div>
+<!-- ============ ПАНЕЛЬ КОНСОЛИ ============ -->
+<div class="owner-pane" data-pane="console">
+  <div style="max-width: 600px; margin: 0 auto; width: 100%;">
+    <div style="background: var(--surface-strong); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
+      <div style="font-size: 0.75rem; color: var(--accent); font-weight: 800; margin-bottom: 0.5rem;">ДОСТУПНЫЕ КОМАНДЫ</div>
+      <div style="font-size: 0.8rem; line-height: 1.6; color: var(--text-2); font-family: monospace; display: flex; flex-direction: column; gap: 4px;">
+        <div><b style="color:var(--text);">ban</b> [uid/email/@username] — забанить</div>
+        <div><b style="color:var(--text);">unban</b> [uid/email/@username] — разбанить</div>
+        <div><b style="color:var(--text);">mute</b> [uid/email/@username] — замутить</div>
+        <div><b style="color:var(--text);">unmute</b> [uid/email/@username] — размутить</div>
+        <div><b style="color:var(--text);">freeze</b> [uid/email/@username] — заморозить</div>
+        <div><b style="color:var(--text);">verify</b> [uid/email/@username] — выдать галочку</div>
+        <div><b style="color:var(--text);">unverify</b> [uid/email/@username] — снять галочку</div>
+        <div><b style="color:var(--text);">plus</b> [uid/email/@username] [мес] — выдать Sqwid+</div>
+        <div><b style="color:var(--text);">takeplus</b> [uid/email/@username] — забрать Sqwid+</div>
+        <div><b style="color:var(--text);">sq</b> [uid/email/@username] [сумма] — выдать Сквидики</div>
+        <div><b style="color:var(--text);">takesq</b> [uid/email/@username] [сумма] — забрать Сквидики</div>
+        <div><b style="color:var(--text);">info</b> [uid/email/@username] — инфо о юзере</div>
+      </div>
+    </div>
 
+    <div id="ownerConsoleLog" style="background: #0a0a0a; border-radius: var(--radius-md); padding: 0.75rem; height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.8rem; color: #10b981; margin-bottom: 1rem; border: 1px solid var(--border);">
+      <div style="color: #888;">> Консоль готова...</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <input id="ownerConsoleInput" type="text" placeholder="Введите команду..." style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-strong); color: var(--text); font-family: monospace; font-size: 16px; outline: none;">
+      <button id="ownerConsoleRun" class="btn-create" style="width: 100%; padding: 12px;">Выполнить</button>
+    </div>
+  </div>
+</div>
   <div id="modal-topup" class="modal">
     <div class="modal-content" style="padding-bottom:0.5rem;">
       <h2 style="display:flex;align-items:center;justify-content:center;gap:0.5rem;">
@@ -2332,6 +2377,42 @@
     </div>
     <button class="btn-secondary" id="btnCrashClose" style="width:100%;margin-top:0.5rem;" data-i18n="common.close">Закрыть</button>
   </div></div>
+  <!-- ЭКРАН КОНСОЛИ -->
+<div id="screen-console" class="screen">
+  <header class="top-bar">
+    <button class="top-new-btn" id="btnBackConsole"><svg width="20" height="20"><use href="#ico-back"/></svg></button>
+    <div class="top-title" style="flex:1;">Консоль</div>
+  </header>
+  
+  <div class="settings-body" style="display:flex; flex-direction:column; height:100%;">
+    <div style="background: var(--surface-strong); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
+      <div style="font-size: 0.75rem; color: var(--accent); font-weight: 800; margin-bottom: 0.5rem;">КОМАНДЫ</div>
+      <div style="font-size: 0.8rem; line-height: 1.6; color: var(--text-2); font-family: monospace; display: flex; flex-direction: column; gap: 4px; max-height: 150px; overflow-y: auto;">
+        <div><b>ban</b> [uid/email/@username]</div>
+        <div><b>unban</b> [uid/email/@username]</div>
+        <div><b>mute</b> [uid/email/@username]</div>
+        <div><b>unmute</b> [uid/email/@username]</div>
+        <div><b>freeze</b> [uid/email/@username]</div>
+        <div><b>verify</b> [uid/email/@username]</div>
+        <div><b>unverify</b> [uid/email/@username]</div>
+        <div><b>plus</b> [uid/email/@username] [мес]</div>
+        <div><b>takeplus</b> [uid/email/@username]</div>
+        <div><b>sq</b> [uid/email/@username] [сумма]</div>
+        <div><b>takesq</b> [uid/email/@username] [сумма]</div>
+        <div><b>info</b> [uid/email/@username]</div>
+      </div>
+    </div>
+
+    <div id="screenConsoleLog" style="flex:1; background: #0a0a0a; border-radius: var(--radius-md); padding: 0.75rem; overflow-y: auto; font-family: monospace; font-size: 0.8rem; color: #10b981; margin-bottom: 1rem; border: 1px solid var(--border);">
+      <div style="color: #888;">> Готов...</div>
+    </div>
+
+    <div style="display: flex; gap: 10px; padding-bottom: 20px;">
+      <input id="screenConsoleInput" type="text" placeholder="Команда..." style="flex:1; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-strong); color: var(--text); font-family: monospace; font-size: 16px; outline: none;">
+      <button id="screenConsoleRun" class="btn-create" style="width: auto; padding: 0 20px;">OK</button>
+    </div>
+  </div>
+</div>
 <!-- ============ ЭКРАН УПРАВЛЕНИЯ ЮЗЕРНЕЙМАМИ (ДЛЯ АДМИНОВ) ============ -->
 <div id="screen-admin-usernames" class="screen">
   <header class="top-bar">
@@ -2419,5 +2500,6 @@
   <!-- ПОДКЛЮЧАЕМ ПАНЕЛЬ ЭМОДЗИ -->
   <script type="module" src="emoji.js"></script>
     <script type="module" src="sqwid-ai.js"></script>
+     <script type="module" src="console.js"></script>
 </body>
 </html>

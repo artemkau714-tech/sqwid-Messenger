@@ -293,6 +293,11 @@ waitForSqwidOwner((S) => {
       if (target === "chats")      renderChats();
       if (target === "reports")    renderReports();
       if (target === "moderators") renderModerators();
+      if (target === "console") {
+        document.getElementById("ownerConsoleLog").innerHTML = '<div style="color: #888;">> Консоль готова...</div>';
+        document.getElementById("ownerConsoleInput").value = "";
+        document.getElementById("ownerConsoleLog").scrollTop = 0;
+      }
     });
   });
 
@@ -1204,6 +1209,119 @@ Sqwid+: ${plusCount}
     reportContext = null;
     S.showToast("Жалоба отправлена модераторам", "ok");
   });
+/* ============================================================
+   КОНСОЛЬ
+   ============================================================ */
+const ownerConsoleLog = document.getElementById("ownerConsoleLog");
+const ownerConsoleInput = document.getElementById("ownerConsoleInput");
+const ownerConsoleRun = document.getElementById("ownerConsoleRun");
 
+function consolePrint(text, color) {
+  if (!ownerConsoleLog) return;
+  const div = document.createElement("div");
+  div.style.color = color || "#10b981";
+  div.style.marginBottom = "4px";
+  div.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+  ownerConsoleLog.appendChild(div);
+  ownerConsoleLog.scrollTop = ownerConsoleLog.scrollHeight;
+}
+
+async function findUserByQuery(query) {
+  if (!query) return null;
+  if (query.startsWith("@")) {
+    const uname = query.slice(1).toLowerCase();
+    for (const uid in allUsers) {
+      if (allUsers[uid].username && allUsers[uid].username.toLowerCase() === uname) {
+        return { uid, ...allUsers[uid] };
+      }
+    }
+    return null;
+  }
+  if (query.includes("@")) {
+    for (const uid in allUsers) {
+      if (allUsers[uid].email && allUsers[uid].email.toLowerCase() === query.toLowerCase()) {
+        return { uid, ...allUsers[uid] };
+      }
+    }
+    return null;
+  }
+  if (allUsers[query]) return { uid: query, ...allUsers[query] };
+  return null;
+}
+
+async function runOwnerCommand() {
+  if (!ownerConsoleInput) return;
+  const cmdText = ownerConsoleInput.value.trim();
+  if (!cmdText) return;
+  ownerConsoleInput.value = "";
+  consolePrint("> " + cmdText, "#f97316");
+
+  const parts = cmdText.split(" ");
+  const cmd = parts[0].toLowerCase();
+  const query = parts[1];
+  const arg = parts[2];
+
+  if (!query) return consolePrint("Ошибка: укажи UID, email или @username", "#ef4444");
+
+  try {
+    const user = await findUserByQuery(query);
+    if (!user) return consolePrint("Пользователь не найден: " + query, "#ef4444");
+
+    consolePrint("Найден: " + (user.name || user.email) + " (" + user.uid + ")", "#3b82f6");
+
+    const updates = {};
+    switch (cmd) {
+      case "ban": updates.banned = true; break;
+      case "unban": updates.banned = null; break;
+      case "mute": updates.muted = true; break;
+      case "unmute": updates.muted = null; break;
+      case "freeze": updates.frozen = true; break;
+      case "verify": updates.verified = true; break;
+      case "unverify": updates.verified = null; break;
+      case "takeplus": updates.plusUntil = null; break;
+      case "plus":
+        const months = parseInt(arg) || 1;
+        updates.plusUntil = Date.now() + months * 30 * 24 * 60 * 60 * 1000;
+        break;
+      case "sq":
+        const amt = parseInt(arg) || 0;
+        updates.coins = (user.coins || 0) + amt;
+        break;
+      case "takesq":
+        const tamt = parseInt(arg) || 0;
+        updates.coins = Math.max(0, (user.coins || 0) - tamt);
+        break;
+      case "info":
+        consolePrint("--- ИНФО ---", "#f97316");
+        consolePrint("Имя: " + (user.name || "—"), "#fff");
+        consolePrint("Email: " + (user.email || "—"), "#fff");
+        consolePrint("Username: @" + (user.username || "—"), "#fff");
+        consolePrint("UID: " + user.uid, "#fff");
+        consolePrint("Баланс: " + (user.coins || 0) + " SQ", "#fff");
+        consolePrint("Бан: " + (user.banned ? "ДА" : "НЕТ"), "#fff");
+        consolePrint("Мут: " + (user.muted ? "ДА" : "НЕТ"), "#fff");
+        consolePrint("Заморозка: " + (user.frozen ? "ДА" : "НЕТ"), "#fff");
+        consolePrint("Верификация: " + (user.verified ? "ДА" : "НЕТ"), "#fff");
+        consolePrint("Sqwid+: " + (user.plusUntil && user.plusUntil > Date.now() ? "ДА" : "НЕТ"), "#fff");
+        return;
+      default:
+        return consolePrint("❌ Неизвестная команда: " + cmd, "#ef4444");
+    }
+
+    await update(ref(db, "users/" + user.uid), updates);
+    await logAction("Консоль: " + cmd, JSON.stringify(updates), user.uid, "user");
+    consolePrint("✅ Выполнено: " + cmd + " для " + (user.name || user.uid), "#10b981");
+
+  } catch (e) {
+    consolePrint("Ошибка: " + e.message, "#ef4444");
+  }
+}
+
+if (ownerConsoleRun) ownerConsoleRun.addEventListener("click", runOwnerCommand);
+if (ownerConsoleInput) {
+  ownerConsoleInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") runOwnerCommand();
+  });
+}
   console.log("✅ owner.js готов");
 });

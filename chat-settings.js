@@ -271,15 +271,74 @@ waitForSqwidSettings((S) => {
       username = usernameRaw;
 
       if (username !== (myData.username || "")) {
-        const snap = await get(ref(db, "users"));
-        const users = snap.val() || {};
+        // Проверяем старые записи пользователей и активные лоты магазина.
+        const [usersSnap, shopSnap] = await Promise.all([
+          get(ref(db, "users")),
+          get(ref(db, "usernames_shop"))
+        ]);
+        const users = usersSnap.val() || {};
+        const shop = shopSnap.val() || {};
+
         for (const uid in users) {
           if (uid === currentUser.uid) continue;
-          const u = users[uid];
-          if (u.username && u.username.toLowerCase() === username) {
-            return S.showAlert("Юзернейм @" + username + " занят", "Ошибка");
+          const other = users[uid] || {};
+          const names = [other.username, ...Object.keys(other.purchasedUsernames || {})];
+          if (names.some(n => String(n || "").toLowerCase() === username)) {
+            return S.showAlert("Юзернейм @" + username + " уже занят", "Ошибка");
           }
         }
+
+        const listed = Object.values(shop).some(item =>
+          item && !item.sold && String(item.username || "").toLowerCase() === username
+        );
+        if (listed) {
+          return S.showAlert("Этот юзернейм выставлен на продажу. Бесплатно установить его нельзя.", "Юзернейм в магазине");
+        }
+
+        // Реестр + транзакция не дают двум пользователям одновременно занять одно имя.
+        const registryRef = ref(db, "username_registry/" + username);
+        const previousRegistrySnap = await get(registryRef);
+        const previousRegistry = previousRegistrySnap.val() || null;
+        const claim = await S.runTransaction(registryRef, current => {
+          if (current && (current.uid !== currentUser.uid || current.status === "listed")) return;
+          return {
+            uid: currentUser.uid,
+            username,
+            status: "owned",
+            updatedAt: Date.now()
+          };
+        });
+
+        if (!claim.committed) {
+          return S.showAlert("Юзернейм @" + username + " уже занят или выставлен на продажу", "Ошибка");
+        }
+
+        try {
+          const updates = { name, bio, username };
+          if (avatarChanged && avatarBase64) updates.photo = avatarBase64;
+          await update(ref(db, "users/" + currentUser.uid), updates);
+
+          const oldUsername = String(myData.username || "").toLowerCase();
+          if (oldUsername && oldUsername !== username) {
+            const oldRef = ref(db, "username_registry/" + oldUsername);
+            await S.runTransaction(oldRef, current => {
+              if (current && current.uid === currentUser.uid) return null;
+              return current;
+            });
+          }
+
+          S.showAlert("Профиль сохранён", "Готово");
+          avatarChanged = false;
+          avatarBase64 = null;
+        } catch (saveError) {
+          // Если профиль не сохранился, освобождаем только что занятое имя.
+          await S.runTransaction(registryRef, current => {
+            if (current && current.uid === currentUser.uid) return previousRegistry;
+            return current;
+          });
+          throw saveError;
+        }
+        return;
       }
     }
 
@@ -597,45 +656,58 @@ waitForSqwidSettings((S) => {
   ];
 
   function renderBgPicker() {
-    const box = document.getElementById("customBgPicker");
-    if (!box) return;
-    box.innerHTML = "";
-    
-    const current = localStorage.getItem("sqwid_chat_bg_" + currentUser.uid) || "bg_black";
+  const box = document.getElementById("bgPicker");
+  if (!box) return;
+  box.innerHTML = "";
 
-    CUSTOM_BGS.forEach(bg => {
-      const item = document.createElement("div");
-      item.className = "bg-picker-item" + (bg.id === current ? " active" : "");
-      
+  // Список всех фонов
+  // Список всех фонов (ТОЛЬКО АНИМАЦИИ)
+const ALL_BGS = [
+  { id: "anim_snow", name: "Снежинки ❄️", type: "anim", emoji: "❄️" },
+  { id: "anim_hearts", name: "Сердечки ❤️", type: "anim", emoji: "❤️" },
+  { id: "anim_cars", name: "Машинки 🚗", type: "anim", emoji: "🚗" }
+];
+
+  const current = localStorage.getItem("sqwid_chat_bg_" + currentUser.uid) || "diamonds";
+
+  ALL_BGS.forEach(bg => {
+    const item = document.createElement("div");
+    item.className = "bg-picker-item" + (bg.id === current ? " active" : "");
+    item.style.cssText = "aspect-ratio:1; border-radius:12px; cursor:pointer; border: 2px solid transparent; position:relative; overflow:hidden;";
+
+    if (bg.type === "css") {
+      item.classList.add(bg.class); // Применяем старый CSS класс для превью
+    } else if (bg.type === "image") {
       item.style.backgroundImage = `url('${bg.url}')`;
       item.style.backgroundSize = "cover";
       item.style.backgroundPosition = "center";
-      item.style.aspectRatio = "1";
-      item.style.borderRadius = "12px";
-      item.style.border = bg.id === current ? "3px solid var(--accent)" : "2px solid transparent";
-      item.style.cursor = "pointer";
-      item.style.position = "relative";
-      item.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)";
+    } else if (bg.type === "anim") {
+      item.style.backgroundColor = "#111";
+      item.style.display = "flex";
+      item.style.alignItems = "center";
+      item.style.justifyContent = "center";
+      item.style.fontSize = "24px";
+      item.textContent = bg.emoji;
+    }
+
+    if (bg.id === current) {
+      item.style.borderColor = "var(--accent)";
+      item.style.boxShadow = "0 0 0 2px rgba(249, 115, 22, 0.3)";
+    }
+
+    item.addEventListener("click", () => {
+      localStorage.setItem("sqwid_chat_bg_" + currentUser.uid, bg.id);
       
-      if (bg.isSnow) {
-        const snowIcon = document.createElement("div");
-        snowIcon.textContent = "❄️";
-        snowIcon.style.cssText = "position:absolute;top:4px;right:4px;font-size:16px;text-shadow:0 2px 4px rgba(0,0,0,0.5);";
-        item.appendChild(snowIcon);
-      }
-
-      item.addEventListener("click", () => {
-        localStorage.setItem("sqwid_chat_bg_" + currentUser.uid, bg.id);
-        if (window.Sqwid.setChatBackground) {
-          window.Sqwid.setChatBackground(bg.id);
-        }
-        renderBgPicker();
-        S.showToast("Фон применён", "ok");
-      });
-
-      box.appendChild(item);
+      // Вызываем глобальную функцию обновления из chat-main.js
+      if (window.applyChatBg) window.applyChatBg();
+      
+      renderBgPicker(); // Перерисовываем выделение
+      S.showToast("Фон применён", "ok");
     });
-  }
+
+    box.appendChild(item);
+  });
+}
 
   /* ============================================================
      ПАПКИ

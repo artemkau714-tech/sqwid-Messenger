@@ -1,6 +1,5 @@
 /* ============================================================
-   chat-main.js — ФИНАЛЬНАЯ версия
-   Умный diff-рендер + Значки/Рамки собеседника + typing
+   chat-main.js — ФИНАЛЬНАЯ версия (с новыми фонами)
    ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -78,8 +77,13 @@ const REACTIONS_DEFAULT = ["👍", "❤️", "🔥", "😂", "😮", "😢", "�
 const REACTIONS_CHANNEL = ["👍", "❤️", "🔥", "🎉"];
 const REACTIONS_PLUS = ["💫", "🌟", "⭐", "✨"];
 
-const CHAT_BACKGROUNDS = ["diamonds", "dots", "waves", "grid", "stars"];
-const CHAT_BACKGROUNDS_PLUS = ["plus-gold", "plus-space", "plus-waves"];
+// Новые фоны
+const CUSTOM_BGS = [
+  { id: "bg_black", name: "Черный", url: "Black.jpg", isSnow: false },
+  { id: "bg_sakura", name: "Сакура", url: "sakura.jpg", isSnow: false },
+  { id: "bg_dolina", name: "Заснеженная долина", url: "DolinaSnega.jpg", isSnow: true }
+];
+let snowInterval = null;
 
 function escH(t) {
   const d = document.createElement("div");
@@ -136,9 +140,7 @@ function showScreen(id) {
       "screen-chat-members", "screen-owner", "screen-report-view",
       "screen-search-messages", "screen-gallery", "screen-viewer",
       "screen-banned", "screen-games", "screen-payment-stub", "screen-call",
-      "screen-qr",
-      // 👇 ДОБАВЛЯЕМ ЭТИ СТРОКИ:
-      "screen-checkout", "screen-settings-plus", "screen-settings-business"
+      "screen-qr", "screen-checkout", "screen-settings-plus", "screen-settings-business"
     ].includes(id);
     if (nav) nav.style.display = hideNav ? "none" : "flex";
     document.body.classList.toggle("on-chat", id === "screen-messages");
@@ -309,28 +311,93 @@ function getReactionList() {
   return base;
 }
 
-function getAllBackgrounds() {
-  if (isPlusUser()) return CHAT_BACKGROUNDS.concat(CHAT_BACKGROUNDS_PLUS);
-  return CHAT_BACKGROUNDS;
-}
-function setChatBackground(name) {
-  const box = document.getElementById("messages");
-  if (!box) return;
-  const all = getAllBackgrounds();
-  const bg = all.includes(name) ? name : "diamonds";
-  box.dataset.bg = bg;
-  try { localStorage.setItem("sqwid_chat_bg_" + currentUser.uid, bg); } catch (e) {}
-}
-function loadChatBackground() {
-  try {
-    const saved = localStorage.getItem("sqwid_chat_bg_" + currentUser.uid);
-    const box = document.getElementById("messages");
-    if (!box) return;
-    const all = getAllBackgrounds();
-    box.dataset.bg = all.includes(saved) ? saved : "diamonds";
-  } catch (e) {}
+/* ============================================================
+   ЛОГИКА СНЕГА И ФОНОВ
+   ============================================================ */
+function startSnowFall(emoji) {
+  // Удаляем старый контейнер, если есть
+  const oldContainer = document.getElementById("snowContainer");
+  if (oldContainer) oldContainer.remove();
+
+  // Создаем новый контейнер и крепим его прямо к body (поверх всего)
+  const container = document.createElement("div");
+  container.id = "snowContainer";
+  container.style.cssText = "position:fixed; inset:0; pointer-events:none; z-index:99; overflow:hidden;";
+  document.body.appendChild(container);
+
+  snowInterval = setInterval(() => {
+    // Если мы не в чате — останавливаем снег
+    const chatScreen = document.getElementById("screen-messages");
+    if (!chatScreen || !chatScreen.classList.contains("active")) return;
+
+    const snow = document.createElement("div");
+    snow.className = "snowflake";
+    snow.textContent = emoji || "❄️";
+    snow.style.position = "absolute";
+    snow.style.left = Math.random() * 100 + "%";
+    snow.style.top = "-30px";
+    snow.style.fontSize = (15 + Math.random() * 20) + "px";
+    snow.style.opacity = 0.3 + Math.random() * 0.4; // Чуть прозрачнее, чтобы не мешать
+    snow.style.textShadow = "0 0 5px rgba(255,255,255,0.8)";
+    snow.style.animation = `fall ${4 + Math.random() * 5}s linear forwards`;
+    
+    // Ограничиваем количество
+    if (container.children.length > 40) {
+      container.removeChild(container.firstChild);
+    }
+    
+    container.appendChild(snow);
+    setTimeout(() => { if (snow.parentNode) snow.remove(); }, 9000);
+  }, 300);
 }
 
+function stopSnowFall() {
+  if (snowInterval) clearInterval(snowInterval);
+  snowInterval = null;
+  const container = document.getElementById("snowContainer");
+  if (container) container.remove();
+}
+
+
+window.applyChatBg = function() {
+  const box = document.getElementById("messages");
+  if (!box || !currentUser) return;
+
+  const saved = localStorage.getItem("sqwid_chat_bg_" + currentUser.uid) || "diamonds";
+  
+  // 1. Сбрасываем всё старое
+  box.className = "messages";
+  box.removeAttribute("data-bg");
+  box.style.backgroundImage = "";
+  box.style.backgroundColor = "";
+  box.style.backgroundSize = "cover";
+  box.style.backgroundPosition = "center";
+  stopSnowFall(); // Убираем старые эмодзи
+  
+  if (saved.startsWith("bg_")) {
+    // 2. Это картинка
+    const url = saved === "bg_black" ? "" : saved === "bg_sakura" ? "sakura.jpg" : "DolinaSnega.jpg";
+    box.style.backgroundImage = url ? `url('${url}')` : "";
+    box.style.backgroundColor = url ? "transparent" : "#000";
+    
+    if (saved === "bg_dolina") startSnowFall("❄️");
+    
+  } else if (saved.startsWith("anim_")) {
+    // 3. Это анимация с эмодзи
+    box.style.backgroundColor = "#000";
+    if (saved === "anim_snow") startSnowFall("❄️");
+    if (saved === "anim_hearts") startSnowFall("❤️");
+    if (saved === "anim_cars") startSnowFall("🚗");
+    
+  } else {
+    // 4. Это старые CSS-фоны (diamonds, dots...)
+    box.dataset.bg = saved;
+  }
+};
+
+/* ============================================================
+   АВТОРИЗАЦИЯ
+   ============================================================ */
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     if (unsubChats) { unsubChats(); unsubChats = null; }
@@ -341,58 +408,59 @@ onAuthStateChanged(auth, async (user) => {
     window.location.replace("index.html");
     return;
   }
-// 🔥 ПРОВЕРКА ПОДТВЕРЖДЕНИЯ ПОЧТЫ
-if (!user.emailVerified) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  const verifyScreen = document.getElementById("screen-verify-email");
-  if (verifyScreen) {
-    verifyScreen.classList.add("active");
-    document.getElementById("verifyEmailText").textContent = user.email;
-    
-    const btnResend = document.getElementById("btnResendEmail");
-    const newResend = btnResend.cloneNode(true);
-    btnResend.parentNode.replaceChild(newResend, btnResend);
-    newResend.onclick = async () => {
-      try {
-        const { sendEmailVerification } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
-        await sendEmailVerification(user);
-        showToast("Письмо отправлено!", "ok");
-      } catch (e) {
-        showToast("Ошибка: " + e.message, "error");
-      }
-    };
 
-    const btnCheck = document.getElementById("btnCheckVerify");
-    const newCheck = btnCheck.cloneNode(true);
-    btnCheck.parentNode.replaceChild(newCheck, btnCheck);
-    newCheck.onclick = async () => {
-      await user.reload();
-      if (user.emailVerified) {
-        showToast("Почта подтверждена!", "ok");
-        window.location.reload();
-      } else {
-        showToast("Почта ещё не подтверждена. Проверьте письмо.", "warn");
-      }
-    };
+  // 🔥 ПРОВЕРКА ПОДТВЕРЖДЕНИЯ ПОЧТЫ
+  if (!user.emailVerified) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    const verifyScreen = document.getElementById("screen-verify-email");
+    if (verifyScreen) {
+      verifyScreen.classList.add("active");
+      document.getElementById("verifyEmailText").textContent = user.email;
+      
+      const btnResend = document.getElementById("btnResendEmail");
+      const newResend = btnResend.cloneNode(true);
+      btnResend.parentNode.replaceChild(newResend, btnResend);
+      newResend.onclick = async () => {
+        try {
+          const { sendEmailVerification } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js");
+          await sendEmailVerification(user);
+          showToast("Письмо отправлено!", "ok");
+        } catch (e) {
+          showToast("Ошибка: " + e.message, "error");
+        }
+      };
 
-    const btnLogout = document.getElementById("btnLogoutVerify");
-    const newLogout = btnLogout.cloneNode(true);
-    btnLogout.parentNode.replaceChild(newLogout, btnLogout);
-    newLogout.onclick = async () => {
-      await signOut(auth);
-      window.location.replace("index.html");
-    };
+      const btnCheck = document.getElementById("btnCheckVerify");
+      const newCheck = btnCheck.cloneNode(true);
+      btnCheck.parentNode.replaceChild(newCheck, btnCheck);
+      newCheck.onclick = async () => {
+        await user.reload();
+        if (user.emailVerified) {
+          showToast("Почта подтверждена!", "ok");
+          window.location.reload();
+        } else {
+          showToast("Почта ещё не подтверждена. Проверьте письмо.", "warn");
+        }
+      };
+
+      const btnLogout = document.getElementById("btnLogoutVerify");
+      const newLogout = btnLogout.cloneNode(true);
+      btnLogout.parentNode.replaceChild(newLogout, btnLogout);
+      newLogout.onclick = async () => {
+        await signOut(auth);
+        window.location.replace("index.html");
+      };
+    }
+    return; 
   }
-  return; // Останавливаем загрузку мессенджера, если почта не подтверждена
-}
+
   // ============================================================
-  // 🔥 РЕЖИМ РАЗРАБОТКИ (БЕЛЫЙ СПИСОК)
+  // 🔥 РЕЖИМ РАЗРАБОТКИ
   // ============================================================
   const DEV_EMAIL = "artemkau714@gmail.com";
-  const IS_DEV_MODE = false; // Поставь false, когда захочешь открыть для всех
+  const IS_DEV_MODE = false;
 
   if (IS_DEV_MODE && user.email !== DEV_EMAIL) {
-    // Показываем заглушку и выкидываем
     document.body.innerHTML = `
       <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center; padding:20px; font-family:sans-serif; background:#0a0a10; color:#fff;">
         <div style="font-size:60px; margin-bottom:20px;">🛠</div>
@@ -408,10 +476,8 @@ if (!user.emailVerified) {
     await signOut(auth);
     return;
   }
-  // ============================================================
 
   currentUser = user;
- 
 
   window.Sqwid = {
     currentUser,
@@ -429,7 +495,6 @@ if (!user.emailVerified) {
     showAlert, showConfirm, showPrompt, showToast,
     openAddMembersToChat: (id) => openAddMembersToChat(id),
     setChatBackground: (n) => setChatBackground(n),
-    CHAT_BACKGROUNDS: CHAT_BACKGROUNDS,
     isPlus: () => isPlusUser(),
     refreshChatList: () => loadChats(),
     startTyping: () => startTyping(),
@@ -458,7 +523,6 @@ if (!user.emailVerified) {
       if (window.Sqwid) window.Sqwid.userMap = userMap;
       loadChats();
       
-      // Обновляем рамку в открытом чате
       if (currentChatId && currentChatData) {
          const otherUid = currentChatData.type === "private" 
            ? Object.keys(currentChatData.members || {}).find(u => u !== currentUser.uid) 
@@ -598,13 +662,12 @@ const searchInputEl = document.getElementById("searchInput");
 if (searchInputEl) searchInputEl.addEventListener("input", loadChats);
 
 /* ============================================================
-   УМНЫЙ РЕНДЕР СООБЩЕНИЙ (без полной перезагрузки)
+   УМНЫЙ РЕНДЕР СООБЩЕНИЙ
    ============================================================ */
 function renderMessagesDiff(box, arr, chatId) {
   const currentIds = new Set();
   arr.forEach(m => currentIds.add(m.id));
 
-  // 1. Удаляем из DOM те сообщения, которых больше нет в базе
   const domMsgs = box.querySelectorAll(".msg[data-msg-id]");
   domMsgs.forEach(node => {
     const id = node.dataset.msgId;
@@ -614,7 +677,6 @@ function renderMessagesDiff(box, arr, chatId) {
     }
   });
 
-  // 2. Проходимся по актуальным сообщениям
   arr.forEach(msg => {
     if (!msg.id) return;
 
@@ -634,7 +696,6 @@ function renderMessagesDiff(box, arr, chatId) {
 }
 
 function updateMessageInPlace(el, msg, chatId) {
-  // 1. Обновляем реакции
   const reactions = msg.reactions || {};
   const reactKeys = Object.keys(reactions).filter(e => Object.keys(reactions[e] || {}).length > 0);
   
@@ -678,7 +739,6 @@ function updateMessageInPlace(el, msg, chatId) {
     }
   }
   
-  // 2. Обновляем галочки
   if (msg.sender === currentUser.uid && currentChatData && currentChatData.type === "private") {
     const readBy = msg.readBy || {};
     const partnerUid = Object.keys(currentChatData.members || {}).find(u => u !== currentUser.uid);
@@ -713,7 +773,6 @@ function updateMessageInPlace(el, msg, chatId) {
     }
   }
   
-  // 3. Обновляем edited метку
   if (msg.editedAt && !el.querySelector(".msg-edited")) {
     const t = el.querySelector(".msg-time");
     if (t) {
@@ -781,10 +840,8 @@ async function openChat(chatId) {
       else ava.innerHTML = avatarUrl ? `<img src="${avatarUrl}">` : escH(displayName.charAt(0).toUpperCase());
       ava.classList.toggle("frozen-ava", isFrozen);
       
-      // Убираем старые рамки
       ava.classList.remove("frame-gold", "frame-fire", "frame-rainbow", "frame-plus");
       
-      // Ставим новую рамку собеседнику (если это приватный чат)
       if (chat.type === "private" && otherUid) {
         const ou = userMap[otherUid] || {};
         const frameValue = (ou.shopEquipped && ou.shopEquipped.frame) || ou.avatarFrame;
@@ -838,9 +895,11 @@ async function openChat(chatId) {
     }
 
     const msgsBox = document.getElementById("messages");
-    if (msgsBox) msgsBox.innerHTML = ""; // Чистим только при входе в чат
+    if (msgsBox) msgsBox.innerHTML = ""; 
     showScreen("screen-messages");
-    loadChatBackground();
+    
+    // 🔥 ПРИМЕНЯЕМ ФОН ПРИ ВХОДЕ В ЧАТ
+    applyChatBg();
 
     if (window.Sqwid && window.Sqwid.onChatOpen) {
       try { window.Sqwid.onChatOpen(chatId); } catch (e) {}
@@ -849,7 +908,6 @@ async function openChat(chatId) {
     if (unsubMessages) unsubMessages();
     const msgsRef = query(ref(db, "messages/" + chatId), orderByChild("timestamp"), limitToLast(200));
     
-    // Первый рендер флаг
     let isFirstRender = true;
 
     unsubMessages = onValue(msgsRef, async (snapshot) => {
@@ -874,18 +932,15 @@ async function openChat(chatId) {
           }));
 
         if (isFirstRender) {
-          // При первом заходе рисуем всё и скроллим вниз
           arr.forEach(m => {
             try { renderMessage(m, chatId); } catch (e) {}
           });
           box.scrollTop = box.scrollHeight;
           isFirstRender = false;
         } else {
-          // При обновлениях используем умный diff
           renderMessagesDiff(box, arr, chatId);
         }
 
-        // Отметка "прочитано"
         const readUpdates = {};
         let hasReadUpdates = false;
         for (const m of arr) {
@@ -924,7 +979,6 @@ function renderMessage(msg, chatId) {
   const box = document.getElementById("messages");
   if (!box) return;
 
-  // Проверка, что такого сообщения еще нет
   if (msg.id && box.querySelector(`.msg[data-msg-id="${msg.id}"]`)) return;
 
   const isOwn = msg.sender === currentUser.uid;
@@ -1000,7 +1054,6 @@ function renderMessage(msg, chatId) {
     const isFrozen = su.frozen === true;
     const frozenClass = isFrozen ? " frozen-name" : "";
     
-    // Цвет и шрифт
     let nameStyle = "font-size:11.5px;font-weight:700;color:#f97316;margin-bottom:3px;";
     let nameClass = frozenClass;
     if (su.nickFont === "bold") nameStyle += "font-weight:900;";
@@ -1047,14 +1100,10 @@ function renderMessage(msg, chatId) {
       contentHTML += `<div>🎤 Голосовое (${msg.duration || 0}с)</div>`;
     }
   } else {
-  // Обрабатываем текст: делаем номера +888xxxxxxxx кликабельными
   let safeText = escH(msg.text || "");
-  
-  // Регулярка для номеров +888
   safeText = safeText.replace(/\+888\d{8}/g, (match) => {
     return `<span class="msg-phone-link" data-phone="${match}" style="color: #3b82f6; font-weight: 700; text-decoration: underline; cursor: pointer;">${match}</span>`;
   });
-
   contentHTML += `<div>${safeText}</div>`;
 }
 
@@ -1362,13 +1411,7 @@ if (editMsgBtn) editMsgBtn.addEventListener("click", () => {
   const canEdit = msg.sender === currentUser.uid || (isChannel && isAdmin);
 
   if (!canEdit) { showToast("Нет прав на редактирование", "error"); return; }
-  if (msg.type === "video_circle" && msg.video) {
-  contentHTML += `
-    <div class="msg-video-circle" onclick="this.querySelector('video').play()">
-      <video src="${msg.video}" playsinline loop></video>
-    </div>
-  `;
-  }
+  
   if (msg.type === "photo") { showToast("Фото не редактируется", "error"); return; }
   if (msg.type === "voice") { showToast("Голосовое не редактируется", "error"); return; }
 
@@ -1944,7 +1987,6 @@ function renderPrivateResults(q) {
   const name = (u.name || u.email || "").toLowerCase();
   const uname = (u.username || "").toLowerCase();
 
-  // 🔥 ПРОВЕРКА КУПЛЕННЫХ ЮЗЕРНЕЙМОВ
   let hasPurchased = false;
   const purchased = u.purchasedUsernames || {};
   for (const pUn in purchased) {
@@ -2088,7 +2130,6 @@ async function renderMembersResults() {
   const name = (u.name || u.email || "").toLowerCase();
   const uname = (u.username || "").toLowerCase();
 
-  // 🔥 ПРОВЕРКА КУПЛЕННЫХ ЮЗЕРНЕЙМОВ
   let hasPurchased = false;
   const purchased = u.purchasedUsernames || {};
   for (const pUn in purchased) {
@@ -2308,92 +2349,5 @@ document.addEventListener("click", async (e) => {
     showToast("Ошибка поиска", "error");
   }
 }, true);
-/* ============================================================
-   ФОНЫ ЧАТА И СНЕГ (Перезапись старой логики)
-   ============================================================ */
-const CUSTOM_BGS = [
-  { id: "bg_black", name: "Черный", url: "Black.jpg", isSnow: false },
-  { id: "bg_sakura", name: "Сакура", url: "sakura.jpg", isSnow: false },
-  { id: "bg_dolina", name: "Заснеженная долина", url: "DolinaSnega.jpg", isSnow: true }
-];
 
-let snowInterval = null;
-
-function startSnowFall() {
-  const box = document.getElementById("messages");
-  if (!box) return;
-  if (document.getElementById("snowContainer")) return;
-
-  const container = document.createElement("div");
-  container.id = "snowContainer";
-  container.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden;";
-  box.appendChild(container);
-
-  snowInterval = setInterval(() => {
-    const snow = document.createElement("div");
-    snow.className = "snowflake";
-    snow.textContent = "❄️";
-    snow.style.position = "absolute";
-    snow.style.left = Math.random() * 100 + "%";
-    snow.style.top = "-20px";
-    snow.style.fontSize = (10 + Math.random() * 20) + "px";
-    snow.style.opacity = 0.4 + Math.random() * 0.6;
-    snow.style.textShadow = "0 0 5px rgba(255,255,255,0.8)";
-    snow.style.animation = `fall ${3 + Math.random() * 4}s linear forwards`;
-    
-    container.appendChild(snow);
-
-    setTimeout(() => {
-      if (snow.parentNode) snow.remove();
-    }, 7000);
-  }, 200);
-}
-
-function stopSnowFall() {
-  if (snowInterval) clearInterval(snowInterval);
-  snowInterval = null;
-  const container = document.getElementById("snowContainer");
-  if (container) container.remove();
-}
-
-// Перезаписываем функцию setChatBackground
-window.Sqwid.setChatBackground = function(name) {
-  const box = document.getElementById("messages");
-  if (!box) return;
-
-  try { localStorage.setItem("sqwid_chat_bg_" + currentUser.uid, name); } catch (e) {}
-
-  const bg = CUSTOM_BGS.find(b => b.id === name);
-  if (!bg) return;
-
-  box.style.backgroundImage = "";
-  box.style.backgroundColor = "";
-  box.style.backgroundSize = "cover";
-  box.style.backgroundPosition = "center";
-  box.dataset.bg = "";
-
-  if (bg.id === "bg_black") {
-    box.style.backgroundColor = "#000";
-    stopSnowFall();
-  } else {
-    box.style.backgroundImage = `url('${bg.url}')`;
-    if (bg.isSnow) {
-      startSnowFall();
-    } else {
-      stopSnowFall();
-    }
-  }
-};
-
-// Принудительно применяем фон при заходе в чат (перехватываем openChat)
-const originalOpenChat = window.Sqwid.openChat;
-window.Sqwid.openChat = function(chatId) {
-  originalOpenChat(chatId);
-  setTimeout(() => {
-    const savedBg = localStorage.getItem("sqwid_chat_bg_" + currentUser.uid) || "bg_black";
-    window.Sqwid.setChatBackground(savedBg);
-  }, 100);
-};
-
-console.log("✅ Фоны чата и снег загружены");
 console.log("✅ chat-main.js загружен");

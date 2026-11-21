@@ -1,5 +1,5 @@
 /* ============================================================
-   profileNN.js — Профиль собеседника (Стиль Telegram) + Юзернеймы
+   profileNN.js — Профиль собеседника (Стиль Telegram) + Эффекты
    ============================================================ */
 
 console.log("🚀 profileNN.js загружен, жду Sqwid...");
@@ -80,8 +80,12 @@ waitForSqwidNN((S) => {
   function applyProfileStatus(u, uid) {
     const banned = u.banned === true;
     const frozen = u.frozen === true;
+    const isPlus = u.plusUntil && u.plusUntil > Date.now();
 
+    /* ---- Аватарка + Эффект ---- */
     const avaEl = document.getElementById("upAva");
+    const avaWrap = document.getElementById("upAvaWrap");
+    
     if (avaEl) {
       if (banned) {
         avaEl.innerHTML = `<span style="font-size:44px;">🚫</span>`;
@@ -95,17 +99,29 @@ waitForSqwidNN((S) => {
         avaEl.innerHTML = `<span>${escH((u.name || u.email || "?").trim().charAt(0).toUpperCase())}</span>`;
       }
 
+      // 🔥 ПРИМЕНЯЕМ ЭФФЕКТ К ЧУЖОМУ ПРОФИЛЮ
+      if (avaWrap) {
+        const fx = u.avatarFx || "";
+        if (fx && isPlus) {
+          avaWrap.setAttribute("data-fx", fx);
+        } else {
+          avaWrap.removeAttribute("data-fx");
+        }
+      }
+
+      // Рамки
       const wrap = avaEl.parentElement;
       if (wrap) {
         wrap.classList.remove("frame-gold", "frame-fire", "frame-rainbow", "frame-plus");
         if (!banned && !frozen) {
           const frameValue = (u.shopEquipped && u.shopEquipped.frame) || u.avatarFrame;
           if (frameValue) wrap.classList.add("frame-" + frameValue);
-          else if (u.plusUntil && u.plusUntil > Date.now()) wrap.classList.add("frame-plus");
+          else if (isPlus) wrap.classList.add("frame-plus");
         }
       }
     }
 
+    /* ---- Имя ---- */
     const nameEl = document.getElementById("upName");
     if (nameEl) {
       let nameHTML = escH(u.name || u.email || "Пользователь");
@@ -116,7 +132,7 @@ waitForSqwidNN((S) => {
         } else {
           nameHTML = `<span style="color:${u.nickColor};font-weight:800;">${nameHTML}</span>`;
         }
-      } else if (u.plusUntil && u.plusUntil > Date.now()) {
+      } else if (isPlus) {
         nameHTML = `<span class="nick-plus">${nameHTML}</span>`;
       }
 
@@ -134,12 +150,14 @@ waitForSqwidNN((S) => {
       else if (frozen) nameEl.classList.add("frozen-name");
     }
 
+    /* ---- Статус ---- */
     const statusText = document.getElementById("upStatusText");
     if (statusText && window.Sqwid && window.Sqwid.getLastSeenText) {
        const t = window.Sqwid.getLastSeenText(uid);
        statusText.textContent = t || "был(а) недавно";
     }
 
+    /* ---- Bio ---- */
     const bioRow = document.getElementById("upBioRow");
     const bioEl = document.getElementById("upBio");
     if (bioRow && bioEl) {
@@ -168,7 +186,6 @@ waitForSqwidNN((S) => {
         unEl.onclick = null;
       }
 
-      // Блок купленных
       let extraDiv = document.getElementById("upExtraUsernames");
       if (!extraDiv) {
         extraDiv = document.createElement("div");
@@ -188,7 +205,6 @@ waitForSqwidNN((S) => {
           span.style.cssText = "color: #3b82f6; font-weight: 600; cursor: pointer; text-decoration: underline; margin-right: 4px;";
           span.onclick = () => openUsernameInfoModal(uname, u);
           extraDiv.appendChild(span);
-          
           if (index < extraList.length - 1) {
             extraDiv.appendChild(document.createTextNode(", "));
           }
@@ -198,38 +214,40 @@ waitForSqwidNN((S) => {
         extraDiv.style.display = "none";
       }
     }
-/* ---- Анонимный номер (в чужом профиле) ---- */
-let phoneEl = document.getElementById("upPhone");
-if (!phoneEl) {
-  // Создаем элемент, если его нет
-  const bioRow = document.getElementById("upBioRow");
-  if (bioRow && bioRow.parentNode) {
-    phoneEl = document.createElement("div");
-    phoneEl.className = "profile-info-row";
-    phoneEl.id = "upPhoneRow";
-    phoneEl.innerHTML = `
-      <div class="profile-info-value" id="upPhone">—</div>
-      <div class="profile-info-label">Анонимный номер</div>
-    `;
-    bioRow.parentNode.appendChild(phoneEl);
-  }
-}
 
-const upPhoneVal = document.getElementById("upPhone");
-const upPhoneRow = document.getElementById("upPhoneRow");
-if (upPhoneVal && upPhoneRow) {
-  if (u.phone) {
-    upPhoneVal.textContent = u.phone;
-    upPhoneVal.style.color = "#10b981";
-    upPhoneRow.style.display = "block";
-  } else {
-    upPhoneRow.style.display = "none";
-  }
-}
+    /* ---- Анонимный номер ---- */
+    let phoneEl = document.getElementById("upPhone");
+    if (!phoneEl) {
+      const bioRow = document.getElementById("upBioRow");
+      if (bioRow && bioRow.parentNode) {
+        phoneEl = document.createElement("div");
+        phoneEl.className = "profile-info-row";
+        phoneEl.id = "upPhoneRow";
+        phoneEl.innerHTML = `
+          <div class="profile-info-value" id="upPhone">—</div>
+          <div class="profile-info-label">Анонимный номер</div>
+        `;
+        bioRow.parentNode.appendChild(phoneEl);
+      }
+    }
+
+    const upPhoneVal = document.getElementById("upPhone");
+    const upPhoneRow = document.getElementById("upPhoneRow");
+    if (upPhoneVal && upPhoneRow) {
+      if (u.phone) {
+        upPhoneVal.textContent = u.phone;
+        upPhoneVal.style.color = "#10b981";
+        upPhoneRow.style.display = "block";
+      } else {
+        upPhoneRow.style.display = "none";
+      }
+    }
+
+    /* ---- ФОН ПРОФИЛЯ ---- */
     const scroll = document.querySelector("#screen-user-profile .profile-scroll");
     if (scroll) {
       const equippedBg = u.shopEquipped && u.shopEquipped.bg;
-      if (u.profileBg && u.plusUntil > Date.now()) {
+      if (u.profileBg && isPlus) {
         scroll.style.backgroundImage = `url(${u.profileBg})`;
         scroll.style.backgroundSize = "cover";
         scroll.style.backgroundPosition = "center";
@@ -247,7 +265,7 @@ if (upPhoneVal && upPhoneRow) {
   }
 
   /* ============================================================
-     МОДАЛКА ИНФО О ЮЗЕРНЕЙМЕ (ДЛЯ СОБЕСЕДНИКА)
+     МОДАЛКА ИНФО О ЮЗЕРНЕЙМЕ
      ============================================================ */
   async function openUsernameInfoModal(uname, userData) {
     const modal = document.getElementById("modal-username-info");

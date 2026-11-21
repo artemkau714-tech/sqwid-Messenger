@@ -143,16 +143,29 @@ waitForSqwidProfile((S) => {
     if (bioEl) bioEl.textContent = myData.bio || "";
 
     /* ---- Avatar ---- */
-    const ava = document.getElementById("profileAva");
-    if (ava) {
-      if (myData.photo && myData.photo.startsWith("data:image")) {
-        ava.innerHTML = `<img src="${myData.photo}" alt="">`;
-      } else if (myData.photo && !myData.photo.startsWith("data:")) {
-        ava.innerHTML = `<img src="${myData.photo}" alt="">`;
-      } else {
-        ava.innerHTML = `<span>${name.charAt(0).toUpperCase()}</span>`;
-      }
-    }
+const avaWrap = document.getElementById("profileAvaWrap");
+const ava = document.getElementById("profileAva");
+
+if (avaWrap && ava) {
+  // 1. Ставим картинку/букву
+  let imgHTML = "";
+  if (myData.photo && myData.photo.startsWith("data:image")) {
+    imgHTML = `<img src="${myData.photo}" alt="">`;
+  } else if (myData.photo && !myData.photo.startsWith("data:")) {
+    imgHTML = `<img src="${myData.photo}" alt="">`;
+  } else {
+    imgHTML = `<span>${name.charAt(0).toUpperCase()}</span>`;
+  }
+  ava.innerHTML = imgHTML;
+
+  // 2. Ставим эффект (только если есть Plus)
+  const fx = myData.avatarFx || "";
+  if (fx && myData.plusUntil && myData.plusUntil > Date.now()) {
+    avaWrap.setAttribute("data-fx", fx);
+  } else {
+    avaWrap.removeAttribute("data-fx");
+  }
+}
 
     /* ---- Рамка авы ---- */
     const wrap = document.querySelector("#screen-profile .profile-ava-wrap");
@@ -370,26 +383,62 @@ waitForSqwidProfile((S) => {
   if (btnSellToMarket) {
     btnSellToMarket.addEventListener("click", async () => {
       document.getElementById("modal-sell-choice").classList.remove("active");
-      
       try {
+        const normalized = String(sellUsername || "").trim().toLowerCase();
+        if (!/^[a-z0-9_]{3,20}$/.test(normalized)) throw new Error("Некорректный юзернейм");
+
+        const [usersSnap, shopSnap] = await Promise.all([
+          get(ref(db, "users")),
+          get(ref(db, "usernames_shop"))
+        ]);
+        const users = usersSnap.val() || {};
+        const shop = shopSnap.val() || {};
+        if (Object.values(shop).some(item => item && !item.sold && String(item.username || "").toLowerCase() === normalized)) {
+          throw new Error("Этот юзернейм уже выставлен на продажу");
+        }
+
+        const isMain = String(myData.username || "").toLowerCase() === normalized;
+        const isPurchased = Object.keys(myData.purchasedUsernames || {}).some(name => name.toLowerCase() === normalized);
+        if (!isMain && !isPurchased) throw new Error("Вы не владеете этим юзернеймом");
+
+        for (const uid in users) {
+          if (uid === currentUser.uid) continue;
+          const other = users[uid] || {};
+          const names = [other.username, ...Object.keys(other.purchasedUsernames || {})];
+          if (names.some(name => String(name || "").toLowerCase() === normalized)) {
+            throw new Error("Юзернейм уже принадлежит другому пользователю");
+          }
+        }
+
+        const newRef = S.push(ref(db, "usernames_shop"));
+        const registryRef = ref(db, "username_registry/" + normalized);
+        const reserved = await S.runTransaction(registryRef, current => {
+          if (current && (current.uid !== currentUser.uid || current.status === "listed")) return;
+          return { uid: currentUser.uid, username: normalized, status: "listed", listingId: newRef.key, updatedAt: Date.now() };
+        });
+        if (!reserved.committed) throw new Error("Не удалось зарезервировать юзернейм");
+
         const updates = {};
-        updates[`users/${currentUser.uid}/username`] = null;
-        updates[`users/${currentUser.uid}/purchasedUsernames/${sellUsername}`] = null;
-        
-        const newRef = S.push(S.ref(db, "usernames_shop"));
+        if (isMain) updates[`users/${currentUser.uid}/username`] = null;
+        updates[`users/${currentUser.uid}/purchasedUsernames/${normalized}`] = null;
         updates[`usernames_shop/${newRef.key}`] = {
-          id: newRef.key,
-          username: sellUsername,
-          price: sellPrice,
+          id: newRef.key, username: normalized, price: Math.max(0, Number(sellPrice) || 500),
           description: `Продавец: ${myData.name || "Пользователь"}`,
-          category: "custom",
-          addedBy: currentUser.uid,
-          addedAt: Date.now(),
-          sold: false
+          category: "custom", addedBy: currentUser.uid, addedAt: Date.now(), sold: false
         };
-        
-        await S.update(S.ref(db), updates);
-        S.showToast(`@${sellUsername} выставлен в магазин за ${sellPrice} SQ`, "ok", 3000);
+
+        try {
+          await S.update(ref(db), updates);
+        } catch (writeError) {
+          await S.runTransaction(registryRef, current => {
+            if (current && current.uid === currentUser.uid && current.listingId === newRef.key) {
+              return { uid: currentUser.uid, username: normalized, status: "owned", updatedAt: Date.now() };
+            }
+            return current;
+          });
+          throw writeError;
+        }
+        S.showToast("Юзернейм выставлен на продажу", "ok", 3000);
       } catch (e) {
         S.showToast("Ошибка: " + e.message, "error");
       }
@@ -400,29 +449,33 @@ waitForSqwidProfile((S) => {
   if (btnSellToBot) {
     btnSellToBot.addEventListener("click", async () => {
       document.getElementById("modal-sell-choice").classList.remove("active");
-      
       try {
-        const tax = Math.floor(sellPrice * 0.03);
-        const userGets = sellPrice - tax;
-        
+        const normalized = String(sellUsername || "").trim().toLowerCase();
+        const price = Number(sellPrice) || 500;
+        const tax = Math.floor(price * 0.03);
+        const userGets = price - tax;
+        const isMain = String(myData.username || "").toLowerCase() === normalized;
+        const isPurchased = Object.keys(myData.purchasedUsernames || {}).some(name => name.toLowerCase() === normalized);
+        if (!isMain && !isPurchased) throw new Error("Вы не владеете этим юзернеймом");
+
+        const newRef = S.push(ref(db, "usernames_shop"));
+        const registryRef = ref(db, "username_registry/" + normalized);
+        const reserved = await S.runTransaction(registryRef, current => {
+          if (current && (current.uid !== currentUser.uid || current.status === "listed")) return;
+          return { uid: currentUser.uid, username: normalized, status: "listed", listingId: newRef.key, updatedAt: Date.now() };
+        });
+        if (!reserved.committed) throw new Error("Юзернейм уже занят или выставлен");
+
         const updates = {};
-        updates[`users/${currentUser.uid}/username`] = null;
-        updates[`users/${currentUser.uid}/purchasedUsernames/${sellUsername}`] = null;
+        if (isMain) updates[`users/${currentUser.uid}/username`] = null;
+        updates[`users/${currentUser.uid}/purchasedUsernames/${normalized}`] = null;
         updates[`users/${currentUser.uid}/coins`] = (myData.coins || 0) + userGets;
-        
-        const newRef = S.push(S.ref(db, "usernames_shop"));
         updates[`usernames_shop/${newRef.key}`] = {
-          id: newRef.key,
-          username: sellUsername,
-          price: sellPrice,
-          description: "Куплен Сквидиком (автоматически)",
-          category: "custom",
-          addedBy: "SQWID_BOT",
-          addedAt: Date.now(),
-          sold: false
+          id: newRef.key, username: normalized, price,
+          description: "Продажа Сквиду", category: "custom",
+          addedBy: "SQWID_BOT", addedAt: Date.now(), sold: false
         };
-        
-        await S.update(S.ref(db), updates);
+        await S.update(ref(db), updates);
         S.showToast(`Продано Сквиду! Начислено ${userGets} SQ (налог 3%)`, "ok", 3000);
       } catch (e) {
         S.showToast("Ошибка: " + e.message, "error");
@@ -430,9 +483,6 @@ waitForSqwidProfile((S) => {
     });
   }
 
-  /* ============================================================
-     СОХРАНЕНИЕ АНОНИМНОГО НОМЕРА
-     ============================================================ */
   const btnSaveAnonPhone = document.getElementById("btnSaveAnonPhone");
   if (btnSaveAnonPhone) {
     const newBtn = btnSaveAnonPhone.cloneNode(true);
@@ -449,6 +499,21 @@ waitForSqwidProfile((S) => {
       const fullPhone = "+888" + digits;
 
       try {
+        const usersSnap = await get(ref(db, "users"));
+        const users = usersSnap.val() || {};
+        for (const uid in users) {
+          if (uid !== currentUser.uid && users[uid] && users[uid].phone === fullPhone) {
+            return S.showToast("Этот номер уже занят", "error");
+          }
+        }
+
+        const phoneRef = ref(db, "phone_registry/" + digits);
+        const claim = await S.runTransaction(phoneRef, current => {
+          if (current && current.uid !== currentUser.uid) return;
+          return { uid: currentUser.uid, phone: fullPhone, createdAt: Date.now() };
+        });
+        if (!claim.committed) return S.showToast("Этот номер уже занят", "error");
+
         await update(ref(db, "users/" + currentUser.uid), { phone: fullPhone });
         S.showToast("Номер сохранен навсегда!", "ok");
         document.getElementById("modal-anon-phone").classList.remove("active");
