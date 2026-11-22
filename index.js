@@ -4,13 +4,15 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
-  sendEmailVerification, // 🔥 ДОБАВИЛИ
+  sendEmailVerification,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import {
   getDatabase,
   ref,
-  set
+  set,
+  get,
+  update
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -85,7 +87,6 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     const splash = document.getElementById("sqwidSplash");
     if (splash) splash.classList.remove("hidden");
-    // Если почта не подтверждена, все равно кидаем в chat.html, там его встретит проверка
     window.location.href = "chat.html";
   } else {
     hideSplash();
@@ -189,8 +190,7 @@ async function register() {
 
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    
-    // 🔥 ОТПРАВЛЯЕМ ПИСЬМО ПОДТВЕРЖДЕНИЯ
+
     try {
       await sendEmailVerification(cred.user);
     } catch (e) {
@@ -204,10 +204,10 @@ async function register() {
       hideEmail: false,
       createdAt: Date.now()
     });
-    
+
     regStatus.textContent = "Успех! Проверьте почту и войдите.";
     showToast("Письмо отправлено на " + email, "ok", 5000);
-    
+
     setTimeout(() => {
       window.location.href = "chat.html";
     }, 2000);
@@ -246,53 +246,72 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch((err) => console.warn("SW failed:", err));
   });
 }
+
 /* ============================================================
    ВХОД ПО QR
    ============================================================ */
 const btnQrLogin = document.getElementById("btnQrLogin");
+
+async function loginWithQr(phone, pass) {
+  try {
+    const snap = await get(ref(db, "sqwid_accounts/" + phone));
+    if (!snap.exists()) return showToast("Аккаунт не найден", "error");
+
+    const acc = snap.val();
+    if (acc.password !== pass) return showToast("Неверный пароль", "error");
+
+    // Если аккаунт уже создан в Firebase Auth — входим
+    if (acc.uid) {
+      try {
+        await signInWithEmailAndPassword(auth, acc.email, acc.firebasePass);
+        window.location.href = "chat.html";
+        return;
+      } catch (e) {
+        // fallthrough — попробуем создать
+      }
+    }
+
+    // Создаём Firebase-пользователя (первый вход по этому QR)
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, acc.email, acc.firebasePass);
+      await update(ref(db, "sqwid_accounts/" + phone), { uid: cred.user.uid });
+      await set(ref(db, "users/" + cred.user.uid), {
+        name: "Пользователь",
+        email: acc.email,
+        phone: phone,
+        createdAt: Date.now()
+      });
+      window.location.href = "chat.html";
+    } catch (e) {
+      showToast("Ошибка входа по QR: " + (e.code || e.message), "error");
+    }
+  } catch (e) {
+    showToast("Ошибка входа по QR: " + (e.code || e.message), "error");
+  }
+}
+
+// Экспортируем для qr-scanner.js (обычный скрипт)
+window.loginWithQr = loginWithQr;
+
 if (btnQrLogin) {
-  btnQrLogin.onclick = () => {
-    if (window.Sqwid && window.Sqwid.openQrScanner) {
+  btnQrLogin.addEventListener("click", () => {
+    if (window.Sqwid && typeof window.Sqwid.openQrScanner === "function") {
       window.Sqwid.openQrScanner((text) => {
         try {
           const data = JSON.parse(text);
-          if (data.phone && data.pass) loginWithQr(data.phone, data.pass);
-          else showToast("Неверный формат QR", "error");
-        } catch (e) { showToast("Ошибка чтения QR", "error"); }
+          if (data.phone && data.pass) {
+            loginWithQr(data.phone, data.pass);
+          } else {
+            showToast("Неверный формат QR", "error");
+          }
+        } catch (e) {
+          showToast("Ошибка чтения QR", "error");
+        }
       });
     } else {
-      showToast("Сканер загружается...", "info");
+      showToast("Сканер ещё не загружен. Обновите страницу.", "warn");
     }
-  };
+  });
 }
 
-async function loginWithQr(phone, pass) {
-  const snap = await get(ref(db, "sqwid_accounts/" + phone));
-  if (!snap.exists()) return showToast("Аккаунт не найден", "error");
-
-  const acc = snap.val();
-  if (acc.password !== pass) return showToast("Неверный пароль", "error");
-
-  if (acc.uid) {
-    try {
-      await signInWithEmailAndPassword(auth, acc.email, acc.firebasePass);
-      window.location.href = "chat.html";
-      return;
-    } catch (e) {}
-  }
-
-  try {
-    const cred = await createUserWithEmailAndPassword(auth, acc.email, acc.firebasePass);
-    await update(ref(db, "sqwid_accounts/" + phone), { uid: cred.user.uid });
-    await set(ref(db, "users/" + cred.user.uid), {
-      name: "Пользователь",
-      email: acc.email,
-      phone: phone,
-      createdAt: Date.now()
-    });
-    window.location.href = "chat.html";
-  } catch (e) {
-    showToast("Ошибка: " + e.message, "error");
-  }
-}
 console.log("✅ index.js загружен");

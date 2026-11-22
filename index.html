@@ -102,7 +102,7 @@
         <input id="regName" type="text" maxlength="30">
       </div>
 
-      <!-- НОВЫЙ БЛОК: СОГЛАШЕНИЕ -->
+      <!-- СОГЛАШЕНИЕ -->
       <div class="reg-agreement">
         <label class="reg-checkbox-label">
           <input type="checkbox" id="regAgreeCheckbox">
@@ -119,6 +119,45 @@
     <div id="regStatus" class="reg-status"></div>
   </div>
 
+  <!-- ================= QR-СКАНЕР ================= -->
+  <div id="modal-qr-scanner" class="modal qr-modal">
+    <div class="qr-modal-inner">
+      <div class="qr-modal-head">
+        <div class="qr-modal-title">Сканирование QR</div>
+        <button id="btnCloseQrScanner" class="qr-close-btn" type="button">✕</button>
+      </div>
+
+      <div class="qr-video-wrap">
+        <video id="qrScannerVideo" playsinline muted autoplay></video>
+        <div class="qr-frame"></div>
+      </div>
+
+      <div class="qr-modal-actions">
+        <button id="btnQrFlash" class="qr-action-btn" type="button">⚡ Вспышка</button>
+        <button id="btnQrGallery" class="qr-action-btn" type="button">🖼 Из галереи</button>
+      </div>
+
+      <input type="file" id="qrGalleryInput" accept="image/*" style="display:none;">
+      <div class="qr-hint">Наведите камеру на QR-код</div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА РЕЗУЛЬТАТА (для общего случая) -->
+  <div id="modal-qr-result" class="modal qr-modal">
+    <div class="qr-modal-inner">
+      <div class="qr-modal-head">
+        <div class="qr-modal-title">Результат</div>
+      </div>
+      <div id="qrResultLink" class="qr-result-text"></div>
+      <div class="qr-modal-actions">
+        <button id="btnQrResultOpen" class="qr-action-btn" type="button">Открыть</button>
+        <button id="btnQrResultBack" class="qr-action-btn" type="button">Назад</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Скрипты: сначала сканер (обычный), потом index.js (module) -->
+  <script src="qr-scanner.js"></script>
   <script type="module" src="index.js"></script>
 </body>
 </html>
