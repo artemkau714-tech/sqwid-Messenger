@@ -2463,6 +2463,85 @@
 
   </div>
 </div>
+  <!-- АДМИН-ПАНЕЛЬ -->
+<div id="modal-admin-panel" class="modal">
+  <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;">
+    <h2 style="text-align: center; margin-bottom: 1rem;">🛠 Админ-Панель</h2>
+    
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; overflow-x: auto;">
+      <button class="btn-create" id="apTabProducts" style="flex-shrink:0; width:auto; padding:0.5rem 1rem;">Товары</button>
+      <button class="btn-secondary" id="apTabStats" style="flex-shrink:0; width:auto; padding:0.5rem 1rem;">Статистика</button>
+      <button class="btn-secondary" id="apTabAccounts" style="flex-shrink:0; width:auto; padding:0.5rem 1rem;">Аккаунты</button>
+    </div>
+
+    <!-- ТОВАРЫ -->
+    <div id="apProductsPane" style="flex:1; overflow-y:auto;">
+      <button class="btn-create" id="apAddProductBtn" style="width:100%; margin-bottom:1rem;">➕ Добавить товар</button>
+      <div id="apProductsList" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
+    </div>
+
+    <!-- СТАТИСТИКА -->
+    <div id="apStatsPane" style="display:none; flex:1; overflow-y:auto;">
+      <div class="settings-card" style="text-align:center; margin-bottom:1rem;">
+        <div style="font-size:0.8rem; color:var(--text-3);">Онлайн сейчас</div>
+        <div id="apOnlineCount" style="font-size:2.5rem; font-weight:900; color:var(--accent);">0</div>
+      </div>
+      <div class="settings-card" style="text-align:center;">
+        <div style="font-size:0.8rem; color:var(--text-3);">Всего юзеров</div>
+        <div id="apTotalUsers" style="font-size:2.5rem; font-weight:900; color:var(--text);">0</div>
+      </div>
+    </div>
+
+    <!-- АККАУНТЫ -->
+    <div id="apAccountsPane" style="display:none; flex:1; overflow-y:auto;">
+      <div class="settings-field">
+        <label>Номер (например, +88812345678)</label>
+        <input id="apAccPhone" placeholder="+88812345678" class="settings-input">
+      </div>
+      <div class="settings-field">
+        <label>Секретный пароль</label>
+        <input id="apAccPass" placeholder="секрет" class="settings-input">
+      </div>
+      <button class="btn-create" id="apAddAccountBtn" style="width:100%; margin-top:1rem;">Добавить аккаунт</button>
+      <div id="apAccountsList" style="margin-top:1rem; display:flex; flex-direction:column; gap:0.5rem;"></div>
+    </div>
+
+    <button class="menu-row cancel" id="btnCloseAdminPanel" style="margin-top:1rem;">Закрыть</button>
+  </div>
+</div>
+
+<!-- МОДАЛКА ДОБАВЛЕНИЯ ТОВАРА -->
+<div id="modal-add-product" class="modal">
+  <div class="modal-content" style="padding:1.25rem;">
+    <h2 style="text-align:center; margin-bottom:1rem;">Новый товар</h2>
+    <div class="settings-field">
+      <label>Название</label>
+      <input id="apProdName" placeholder="Например: Золотая звезда" class="settings-input">
+    </div>
+    <div class="settings-field">
+      <label>Цена (SQ)</label>
+      <input id="apProdPrice" type="number" min="1" value="1000" class="settings-input">
+    </div>
+    <div class="settings-field">
+      <label>Тип</label>
+      <select id="apProdType" class="settings-input">
+        <option value="emoji">Значок (эмодзи)</option>
+        <option value="svg_badge">SVG-значок</option>
+        <option value="avatar_fx">Эффект аватара</option>
+      </select>
+    </div>
+    <div class="settings-field">
+      <label>Значение</label>
+      <input id="apProdValue" placeholder="Например: 🦄 или paws" class="settings-input">
+    </div>
+    <div class="settings-field">
+      <label>Иконка (картинка)</label>
+      <input id="apProdImage" type="file" accept="image/*" class="settings-input" style="padding:0.5rem;">
+    </div>
+    <button class="btn-create" id="apSaveProduct" style="width:100%; margin-top:1rem;">Сохранить</button>
+    <button class="btn-secondary" id="apCancelProduct" style="width:100%; margin-top:0.5rem;">Отмена</button>
+  </div>
+</div>
   <script src="i18n.js"></script>
   <script type="module" src="chat-main.js"></script>
   <script type="module" src="moderation.js"></script>
@@ -2498,6 +2577,7 @@
   <script type="module" src="qr-scanner.js"></script>
   <script type="module" src="floating-bg.js"></script>
   <!-- ПОДКЛЮЧАЕМ ПАНЕЛЬ ЭМОДЗИ -->
+  <script type="module" src="admin-panel.js"></script>
   <script type="module" src="emoji.js"></script>
     <script type="module" src="sqwid-ai.js"></script>
      <script type="module" src="console.js"></script>

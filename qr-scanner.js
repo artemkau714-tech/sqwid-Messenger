@@ -1,5 +1,5 @@
 /* ============================================================
-   qr-scanner.js — ФИНАЛЬНЫЙ ФИКС (Обработка ошибок + Крестик)
+   qr-scanner.js — ФИНАЛЬНЫЙ ФИКС (Поддержка входа по QR)
    ============================================================ */
 
 console.log("🚀 qr-scanner.js загружен");
@@ -37,13 +37,8 @@ waitForSqwidQrScanner((S) => {
   // ЗАПУСК КАМЕРЫ
   // ============================================================
   async function startCamera() {
-    // Проверка HTTPS
     if (location.protocol !== "https:" && location.hostname !== "localhost") {
-      S.showAlert(
-        "Камера работает только по защищённому соединению (HTTPS).\n\n" +
-        "Если вы открываете приложение по IP или файлу — камера не запустится.",
-        "Нужен HTTPS"
-      );
+      S.showAlert("Камера работает только по HTTPS.", "Нужен HTTPS");
       return;
     }
 
@@ -71,41 +66,27 @@ waitForSqwidQrScanner((S) => {
       
     } catch (err) {
       console.error("Ошибка камеры:", err);
-      
       let msg = "Не удалось запустить камеру.\n\n";
-      if (err.name === "NotAllowedError") {
-        msg += "Вы запретили доступ к камере.\nЗайдите в настройки браузера и разрешите камеру для этого сайта.";
-      } else if (err.name === "NotFoundError") {
-        msg += "Камера не найдена на устройстве.";
-      } else {
-        msg += "Ошибка: " + err.message;
-      }
+      if (err.name === "NotAllowedError") msg += "Вы запретили доступ к камере.";
+      else if (err.name === "NotFoundError") msg += "Камера не найдена.";
+      else msg += "Ошибка: " + err.message;
       
       S.showAlert(msg, "Ошибка доступа");
-      // Закрываем сканер, чтобы не висел черный экран
       stopCamera();
       modalScanner.classList.remove("active");
     }
   }
 
   function stopCamera() {
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+    }
     if (animationFrame) {
       cancelAnimationFrame(animationFrame);
       animationFrame = null;
     }
-    if (currentTrack) {
-      try {
-        if (flashOn) currentTrack.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
-      } catch (e) {}
-    }
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      stream = null;
-    }
     currentTrack = null;
-    flashOn = false;
-    const flashButton = document.getElementById("btnQrFlash");
-    if (flashButton) flashButton.style.opacity = "0.75";
     video.srcObject = null;
   }
 
@@ -161,79 +142,69 @@ waitForSqwidQrScanner((S) => {
     stopCamera();
     modalScanner.classList.remove("active");
 
-    if (resultLink) resultLink.textContent = text;
-    if (modalResult) modalResult.classList.add("active");
-    else S.showAlert("QR-код распознан:\\n" + text, "Результат");
+    // 🔥 ЕСЛИ ЕСТЬ КОЛБЭК (для входа по QR в index.js)
+    if (window._qrCallback) {
+      window._qrCallback(text);
+      window._qrCallback = null;
+      return;
+    }
 
+    // Иначе показываем модалку как раньше
+    resultLink.textContent = text;
+    modalResult.classList.add("active");
     setTimeout(() => { lastScannedText = null; }, 2000);
   }
 
   // ============================================================
   // ОТКРЫТИЕ / ЗАКРЫТИЕ
   // ============================================================
-  window.Sqwid.openQrScanner = function() {
+  window.Sqwid.openQrScanner = function(callback) {
+    window._qrCallback = callback || null;
     lastScannedText = null;
     modalScanner.classList.add("active");
-    if (stream) stopCamera();
     startCamera();
   };
 
-  // Одна click-привязка: touchend + pointerdown + click давали дубли на Android.
   function forceBind(id, callback) {
     const el = document.getElementById(id);
-    if (!el || el.dataset.qrBound === "1") return;
-    el.dataset.qrBound = "1";
-    el.addEventListener("click", async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      try {
-        await callback(e);
-      } catch (error) {
-        console.error("QR button error:", error);
-        S.showToast("Не удалось выполнить действие", "error");
-      }
-    });
+    if (!el) return;
+    const newEl = el.cloneNode(true);
+    el.parentNode.replaceChild(newEl, el);
+    
+    const handler = (e) => {
+      if (e) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); }
+      callback();
+    };
+    
+    newEl.addEventListener("click", handler, true);
+    newEl.addEventListener("touchend", handler, { passive: false, capture: true });
+    newEl.addEventListener("pointerdown", handler, true);
   }
 
-  // 1. Крестик (работает всегда, даже если камера висит)
   forceBind("btnCloseQrScanner", () => {
     stopCamera();
     modalScanner.classList.remove("active");
+    window._qrCallback = null;
   });
 
-  // 2. Фонарик
   forceBind("btnQrFlash", async () => {
-    if (!currentTrack || !stream) {
-      return S.showToast("Сначала дождитесь запуска камеры", "info");
-    }
+    if (!currentTrack) return S.showToast("Камера не запущена", "warn");
     try {
-      if (typeof currentTrack.getCapabilities !== "function" ||
-          typeof currentTrack.applyConstraints !== "function") {
-        return S.showToast("Управление вспышкой не поддерживается браузером", "info");
-      }
       const caps = currentTrack.getCapabilities();
-      if (!caps || !caps.torch) {
-        return S.showToast("На этой камере нет управляемой вспышки", "info");
+      if (caps.torch) {
+        flashOn = !flashOn;
+        await currentTrack.applyConstraints({ advanced: [{ torch: flashOn }] });
+        document.getElementById("btnQrFlash").style.opacity = flashOn ? "1" : "0.5";
+      } else {
+        S.showToast("Вспышка не поддерживается", "info");
       }
-      const nextState = !flashOn;
-      await currentTrack.applyConstraints({ advanced: [{ torch: nextState }] });
-      flashOn = nextState;
-      const button = document.getElementById("btnQrFlash");
-      if (button) button.style.opacity = flashOn ? "1" : "0.75";
-    } catch (e) {
-      console.warn("Torch error:", e);
-      S.showToast("Не удалось переключить фонарик", "error");
-    }
+    } catch (e) { S.showToast("Ошибка вспышки", "error"); }
   });
 
-  // 3. Галерея
   forceBind("btnQrGallery", () => {
-    const input = document.getElementById("qrGalleryInput");
-    if (!input) return S.showToast("Выбор фото недоступен", "error");
-    input.click();
+    document.getElementById("qrGalleryInput").click();
   });
 
-  // Обработка фото
   const galleryInput = document.getElementById("qrGalleryInput");
   if (galleryInput) {
     galleryInput.addEventListener("change", async (e) => {
@@ -241,66 +212,47 @@ waitForSqwidQrScanner((S) => {
       if (!file) return;
       const img = new Image();
       const reader = new FileReader();
-      reader.onload = async (ev) => {
+      reader.onload = (ev) => {
         img.onload = async () => {
-          try {
-            let foundText = null;
-            if (!detector && "BarcodeDetector" in window) {
-              try { detector = new BarcodeDetector({ formats: ["qr_code"] }); } catch (err) {}
-            }
-            if (detector) {
-              try {
-                const codes = await detector.detect(img);
-                if (codes && codes.length) foundText = codes[0].rawValue;
-              } catch (err) {
-                console.warn("BarcodeDetector image scan:", err);
-              }
-            }
-            if (!foundText) {
-              await loadJsQr();
-              if (window.jsQR) {
-                const canvas = document.createElement("canvas");
-                canvas.width = img.naturalWidth || img.width;
-                canvas.height = img.naturalHeight || img.height;
-                const ctx = canvas.getContext("2d", { willReadFrequently: true });
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const code = window.jsQR(imageData.data, imageData.width, imageData.height);
-                if (code && code.data) foundText = code.data;
-              }
-            }
-            if (foundText) {
-              handleScannedCode(foundText);
-              stopCamera();
-              modalScanner.classList.remove("active");
-            } else {
-              S.showAlert("QR-код не найден на выбранном изображении", "Ошибка");
-            }
-          } catch (err) {
-            console.error("QR gallery scan error:", err);
-            S.showAlert("Не удалось обработать изображение", "Ошибка");
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width; canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          
+          let foundText = null;
+          if (detector) {
+            try { const b = await detector.detect(img); if (b.length > 0) foundText = b[0].rawValue; } catch(err) {}
+          }
+          if (!foundText && window.jsQR) {
+            const code = window.jsQR(imageData.data, imageData.width, imageData.height);
+            if (code && code.data) foundText = code.data;
+          }
+
+          if (foundText) {
+            handleScannedCode(foundText);
+            stopCamera();
+            modalScanner.classList.remove("active");
+          } else {
+            S.showAlert("QR-код не найден", "Ошибка");
           }
         };
-        img.onerror = () => S.showAlert("Не удалось открыть это изображение", "Ошибка");
         img.src = ev.target.result;
       };
-      reader.onerror = () => S.showAlert("Не удалось прочитать выбранный файл", "Ошибка");
       reader.readAsDataURL(file);
       galleryInput.value = "";
     });
   }
 
-  // 4. Открыть ссылку
   forceBind("btnQrResultOpen", () => {
     let url = resultLink.textContent;
     if (url && !url.startsWith("http")) url = "https://" + url;
     window.open(url, "_blank");
   });
 
-  // 5. Назад
   forceBind("btnQrResultBack", () => {
     modalResult.classList.remove("active");
   });
 
-  console.log("✅ qr-scanner.js готов (Финальный фикс)");
+  console.log("✅ qr-scanner.js готов");
 });
